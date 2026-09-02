@@ -379,7 +379,7 @@ function renderPosBox() {
   const box = $('posBox'); if (!box) return;
   const m = S.pos_mode;
   if (m === 'corner') box.innerHTML = `<h2>Origin</h2><div class="row"><button class="btn filled" data-cmd="home">Origin = home</button></div>`;
-  else if (m === 'jog') box.innerHTML = `<h2>Move to the corner</h2>` + jogHtml() + `<div class="row"><button class="btn filled" data-cmd="set_origin">Set origin here</button></div>`;
+  else if (m === 'jog') box.innerHTML = `<h2>Move to the corner</h2><div class="row"><button class="btn filled" data-cmd="set_origin">Set origin here</button></div>` + jogHtml();
   else box.innerHTML = `<h2>By hand</h2><div class="row"><button class="btn tonal" data-cmd="release_motors">Release motors</button><button class="btn tonal" data-cmd="lock_motors">Lock motors</button><button class="btn filled" data-cmd="origin_by_hand">Set origin here</button></div>
     <p>Release, push the carriage with the pen tip onto the paper corner, then set the origin. The travel range is unknown afterwards; the machine frame is hidden.</p>`;
   wirePanel.wireCmds(box);
