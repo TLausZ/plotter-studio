@@ -34,7 +34,7 @@
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 body{font:400 14px/20px var(--f);letter-spacing:.25px;color:var(--md-on-surface);background:var(--md-surface);
-  display:grid;grid-template-rows:64px 1fr;height:100vh;overflow:hidden}
+  display:flex;flex-direction:column;height:100vh;overflow:hidden}
 button,input,select{font:inherit;color:inherit}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 
@@ -60,7 +60,7 @@ button,input,select{font:inherit;color:inherit}
 .outlined{color:var(--md-primary);border:1px solid var(--md-outline)}
 .text{color:var(--md-primary);padding:0 12px}
 .danger{background:var(--md-error);color:var(--md-on-error)}
-.icon-btn{width:48px;height:48px;padding:0;border-radius:24px;font-size:22px}
+.icon-btn{width:44px;height:44px;padding:0;border-radius:22px;font-size:20px}
 .icon-btn.tonal{background:var(--md-surface-container-lowest);color:var(--md-on-surface);border:1px solid var(--md-outline)}
 
 /* segmented buttons */
@@ -71,23 +71,22 @@ button,input,select{font:inherit;color:inherit}
 .seg .btn.on::after{content:"✓";font-size:13px;margin-right:2px;order:-1}
 .seg.small .btn{height:32px;padding:0 12px;font-size:13px}
 
-/* text fields (outlined) */
-.tf{position:relative;display:inline-flex;flex-direction:column;min-width:0}
-.tf input,.tf select{height:56px;padding:16px 16px 0;border:1px solid var(--md-outline);border-radius:4px;background:var(--md-surface-container-lowest);
+/* text fields (outlined); the label sits in normal flow, not absolute, so multi-column layout cannot misplace it */
+.tf{display:flex;flex-direction:column;min-width:0}
+.tf label{position:relative;z-index:1;align-self:flex-start;margin:0 0 -8px 12px;padding:0 4px;background:var(--md-surface-container-low);
+  font:400 12px/16px var(--f);letter-spacing:.4px;color:var(--md-on-surface-variant);pointer-events:none;white-space:nowrap}
+.tf input,.tf select{height:48px;padding:14px 14px 0;border:1px solid var(--md-outline);border-radius:4px;background:var(--md-surface-container-lowest);
   color:var(--md-on-surface);width:100%;outline:0;appearance:none;-webkit-appearance:none}
 .tf input.mono{font-family:var(--f-mono)}
-.tf label{position:absolute;left:12px;top:-8px;padding:0 4px;background:var(--md-surface-container-low);
-  font:400 12px/16px var(--f);letter-spacing:.4px;color:var(--md-on-surface-variant);pointer-events:none}
 .tf:focus-within input,.tf:focus-within select{border:2px solid var(--md-primary);padding-left:15px}
 .tf:focus-within label{color:var(--md-primary)}
-.tf .suffix{position:absolute;right:14px;top:18px;color:var(--md-on-surface-variant);font-size:14px;pointer-events:none}
 .tf select{padding-top:12px;background-image:linear-gradient(45deg,transparent 50%,var(--md-on-surface-variant) 50%),linear-gradient(135deg,var(--md-on-surface-variant) 50%,transparent 50%);
-  background-position:calc(100% - 20px) 26px,calc(100% - 15px) 26px;background-size:5px 5px;background-repeat:no-repeat;padding-right:36px}
-.tf.w{width:110px} .tf.grow{flex:1}
+  background-position:calc(100% - 20px) 22px,calc(100% - 15px) 22px;background-size:5px 5px;background-repeat:no-repeat;padding-right:36px}
+.tf.w{width:150px} .tf.grow{flex:1}
 
 /* checkbox, radio */
 input[type=checkbox],input[type=radio]{accent-color:var(--md-primary);width:18px;height:18px;margin:0}
-.radio{display:flex;align-items:center;gap:12px;min-height:48px;cursor:pointer;padding:0 4px;border-radius:8px}
+.radio{display:flex;align-items:center;gap:12px;min-height:40px;cursor:pointer;padding:0 4px;border-radius:8px}
 .radio:hover{background:var(--md-surface-container)}
 
 /* top app bar */
@@ -102,33 +101,38 @@ header{display:flex;align-items:center;gap:16px;padding:0 16px 0 24px;background
 .chip.error{background:var(--md-error-container);color:var(--md-on-error-container);border-color:transparent}
 .pen{font:500 14px/20px var(--f)} .pen.down{color:var(--md-error)} .pen.up{color:var(--md-tertiary)}
 
-/* layout */
-main{display:grid;grid-template-columns:var(--side) 1fr;grid-template-rows:1fr auto;min-height:0}
-aside{grid-row:1/3;display:flex;flex-direction:column;min-height:0;background:var(--md-surface-container-low)}
-.tabs{display:grid;grid-template-columns:repeat(5,1fr);background:var(--md-surface);border-bottom:1px solid var(--md-outline-variant)}
-.tabs li{list-style:none;position:relative;height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+/* layout: app bar, tabs with navigation, board (about half the height), step panel in columns, log */
+header{flex:0 0 64px}
+.bar{flex:0 0 56px;display:flex;align-items:stretch;background:var(--md-surface);border-bottom:1px solid var(--md-outline-variant)}
+.tabs{display:flex;margin:0;padding:0 8px;flex:1}
+.tabs li{list-style:none;position:relative;min-width:104px;padding:0 12px;display:flex;align-items:center;justify-content:center;gap:8px;
   cursor:pointer;color:var(--md-on-surface-variant);font:500 14px/20px var(--f);letter-spacing:.1px;user-select:none}
 .tabs li:hover{background:var(--md-surface-container)}
-.tabs li b{font:500 16px/20px var(--f-mono)}
+.tabs li b{font:500 15px/20px var(--f-mono)}
 .tabs li.active{color:var(--md-primary)}
 .tabs li.active::after{content:"";position:absolute;left:12px;right:12px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:var(--md-primary)}
 .tabs li.done b::after{content:" ✓";font-size:11px}
-.tabs{margin:0;padding:0}
-.panel{padding:20px 20px 28px;overflow:auto;flex:1}
-.panel h1{font:400 28px/36px var(--f);letter-spacing:0;margin:0 0 4px}
-.panel h2{font:500 12px/16px var(--f);letter-spacing:.5px;text-transform:uppercase;color:var(--md-on-surface-variant);margin:24px 0 12px}
-.panel p{margin:0 0 16px;color:var(--md-on-surface-variant)}
-.row{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.nav{display:flex;gap:8px;padding:8px 16px;align-items:center}
+.board{flex:0 0 34vh;min-height:200px}
+.panel{flex:1 1 auto;min-height:0;overflow:auto;padding:10px 24px 6px;background:var(--md-surface-container-low);
+  display:flex;flex-wrap:wrap;gap:4px 32px;align-content:flex-start}
+.hdr{flex:1 0 100%}
+.grp{flex:0 1 340px;min-width:280px} .grp.wide{flex-basis:420px}
+.panel h1{font:400 20px/28px var(--f);letter-spacing:0;margin:0 0 2px}
+.hdr p{margin:0 0 6px}
+.panel h2{font:500 12px/16px var(--f);letter-spacing:.5px;text-transform:uppercase;color:var(--md-on-surface-variant);margin:6px 0 8px}
+.panel p{margin:0 0 10px;color:var(--md-on-surface-variant)}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
 .card{background:var(--md-surface-container-lowest);border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:var(--e1)}
-.jog{display:grid;grid-template-columns:48px 48px 48px auto;grid-template-rows:48px 48px 48px;gap:6px;align-items:center;margin:4px 0 8px}
+.jog{display:grid;grid-template-columns:44px 44px 44px auto;grid-template-rows:44px 44px 44px;gap:5px;align-items:center;margin:2px 0 6px}
 .jog .sizes{grid-row:1/4;grid-column:4;padding-left:16px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 .jog .sizes .seg{flex-direction:column}
 .jog .sizes .seg .btn{border-radius:0;margin:-1px 0 0;height:36px;padding:0 14px;font-family:var(--f-mono);width:100px;justify-content:flex-start}
 .jog .sizes .seg .btn:first-child{border-radius:18px 18px 0 0;margin:0} .jog .sizes .seg .btn:last-child{border-radius:0 0 18px 18px}
-.hint{font:400 12px/18px var(--f);letter-spacing:.4px;color:var(--md-on-surface-variant);margin:4px 0 12px}
+.hint{font:400 12px/18px var(--f);letter-spacing:.4px;color:var(--md-on-surface-variant);margin:2px 0 8px}
 .hint kbd{font-family:var(--f-mono);border:1px solid var(--md-outline-variant);border-radius:4px;padding:0 5px;background:var(--md-surface)}
 .layers{width:100%;border-collapse:collapse;margin-bottom:16px}
-.layers td,.layers th{padding:10px 8px;border-bottom:1px solid var(--md-outline-variant);text-align:left}
+.layers td,.layers th{padding:7px 8px;border-bottom:1px solid var(--md-outline-variant);text-align:left}
 .layers th{font:500 12px/16px var(--f);letter-spacing:.5px;color:var(--md-on-surface-variant)}
 .layers td{font:400 14px/20px var(--f)}
 .progress{height:4px;border-radius:2px;background:var(--md-surface-container-highest);margin:16px 0 8px;position:relative;overflow:hidden}
@@ -136,7 +140,7 @@ aside{grid-row:1/3;display:flex;flex-direction:column;min-height:0;background:va
 .msg{padding:12px 16px;border-radius:12px;background:#FFFFFF;border-left:4px solid var(--md-amber);margin-bottom:16px}
 
 /* board: the drafting sheet stays as it is */
-.board{position:relative;background:var(--mat);min-height:0;overflow:hidden}
+.board{position:relative;background:var(--mat);overflow:hidden}
 .board svg{width:100%;height:100%;display:block}
 .stroke{fill:none;stroke:var(--ink-faint);stroke-linecap:round;stroke-linejoin:round}
 .stroke.done{stroke:var(--ink)}
@@ -147,12 +151,9 @@ aside{grid-row:1/3;display:flex;flex-direction:column;min-height:0;background:va
 .tb text{font-family:var(--f-draft);font-size:2.6px;fill:var(--ink)} .tb .k{fill:var(--ink-muted);font-size:2.1px;letter-spacing:.1px}
 .tb .v{font-family:var(--f-draft-mono)} .tb rect,.tb line{stroke:var(--ink);stroke-width:.3;fill:none}
 
-/* log + bottom bar */
-footer{grid-column:2;display:grid;grid-template-rows:auto auto;background:var(--md-surface)}
-.log{margin:0;padding:10px 16px;height:104px;overflow:auto;font:400 12px/18px var(--f-mono);color:var(--md-on-surface-variant);white-space:pre-wrap;
-  background:var(--md-surface-container-low);border-top:1px solid var(--md-outline-variant)}
-.nav{display:flex;gap:8px;padding:12px 16px;align-items:center;background:var(--md-surface-container);}
-.nav .sp{flex:1}
+/* log */
+.log{flex:0 0 60px;margin:0;padding:6px 16px;overflow:auto;font:400 12px/18px var(--f-mono);color:var(--md-on-surface-variant);white-space:pre-wrap;
+  background:var(--md-surface-container-lowest);border-top:1px solid var(--md-outline-variant)}
 
 /* dialog */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.32);display:none;align-items:center;justify-content:center;z-index:10}
@@ -164,12 +165,11 @@ footer{grid-column:2;display:grid;grid-template-rows:auto auto;background:var(--
 
 @media (max-width: 900px){
   body{overflow:auto;height:auto}
-  main{grid-template-columns:1fr;grid-template-rows:auto auto auto}
-  aside{grid-row:auto}
-  .board{height:56vw;min-height:280px;order:-1}
-  footer{grid-column:1}
+  .board{flex:0 0 56vw}
+  .panel{overflow:visible} .grp{flex-basis:100%}
   header{padding:0 16px} .brand span{display:none}
   .btn{height:44px}
+  .tabs li{min-width:0;padding:0 8px}
 }
 @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
 </style>
@@ -186,21 +186,16 @@ footer{grid-column:2;display:grid;grid-template-rows:auto auto;background:var(--
     <button class="btn" data-unit="mm">mm</button><button class="btn" data-unit="cm">cm</button><button class="btn" data-unit="in">in</button>
   </div>
 </header>
-<main>
-  <aside>
-    <ol class="tabs" id="steps"></ol>
-    <section class="panel" id="panel"></section>
-  </aside>
-  <section class="board"><svg id="preview" xmlns="http://www.w3.org/2000/svg"></svg></section>
-  <footer>
-    <pre class="log" id="log"></pre>
-    <div class="nav">
-      <button class="btn outlined" id="back">Back</button><button class="btn tonal" id="next">Next</button>
-      <span class="sp"></span>
-      <button class="btn danger" id="stop">Stop</button>
-    </div>
-  </footer>
-</main>
+<nav class="bar">
+  <ol class="tabs" id="steps"></ol>
+  <div class="nav">
+    <button class="btn outlined" id="back">Back</button><button class="btn tonal" id="next">Next</button>
+    <button class="btn danger" id="stop">Stop</button>
+  </div>
+</nav>
+<section class="board"><svg id="preview" xmlns="http://www.w3.org/2000/svg"></svg></section>
+<section class="panel" id="panel"></section>
+<pre class="log" id="log"></pre>
 <div class="scrim" id="overlay">
   <div class="dialog" role="dialog" aria-modal="true">
     <h3>Pause before layer <span id="pauseName"></span></h3>
@@ -279,9 +274,9 @@ function showStep(i) { step = Math.max(0, Math.min(4, i)); renderSteps(); render
 
 // ---------------------------------------------------------------- panel
 const tf = (id, label, value, opts = {}) =>
-  `<div class="tf ${opts.cls || 'w'}"><input id="${id}" class="${opts.mono === false ? '' : 'mono'}" value="${value}" ${opts.attrs || ''}><label>${label}</label>${opts.suffix ? `<span class="suffix">${opts.suffix}</span>` : ''}</div>`;
+  `<div class="tf ${opts.cls || 'w'}"><label for="${id}">${label}${opts.suffix ? ' (' + opts.suffix + ')' : ''}</label><input id="${id}" class="${opts.mono === false ? '' : 'mono'}" value="${value}" ${opts.attrs || ''}></div>`;
 const sel = (id, label, options, current, cls = 'grow', attrs = '') =>
-  `<div class="tf ${cls}"><select id="${id}" ${attrs}>${options.map(o => `<option ${o === current ? 'selected' : ''}>${o}</option>`).join('')}</select><label>${label}</label></div>`;
+  `<div class="tf ${cls}"><label for="${id}">${label}</label><select id="${id}" ${attrs}>${options.map(o => `<option ${o === current ? 'selected' : ''}>${o}</option>`).join('')}</select></div>`;
 function jogHtml() {
   const sizes = JOG[u()].map((v, i) => `<button class="btn ${i === jogIdx ? 'on' : ''}" data-jog="${i}">${v} ${u()}</button>`).join('');
   return `<div class="jog">
@@ -291,60 +286,55 @@ function jogHtml() {
     <div class="sizes"><span class="label-medium" style="color:var(--md-on-surface-variant)">Step</span><div class="seg">${sizes}</div></div></div>
     <div class="hint"><kbd>←↑↓→</kbd> move · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> step · <kbd>space</kbd> pen · <kbd>⇧↑</kbd><kbd>⇧↓</kbd> pen height ±0.5 mm · <kbd>esc</kbd> stop</div>`;
 }
+// Each step is a header plus groups; groups sit side by side and wrap, so everything stays above the fold.
+const grp = (title, body, cls = '') => `<div class="grp ${cls}">${title ? `<h2>${title}</h2>` : ''}${body}</div>`;
+const hdr = (title, text) => `<div class="hdr"><h1>${title}</h1>${text ? `<p>${text}</p>` : ''}</div>`;
 function renderPanel() {
   const st = S.state, pr = st.profile;
   let h = '';
   if (step === 0) {
     const cur = S.sim && !st.connected ? 'Simulation' : (st.transport || (S.ports[1] || 'Simulation'));
-    h = `<h1>Connect</h1><p>Drawing: <b>${S.svg_name}</b>${S.svg_error ? ' <span style="color:var(--md-error)">(' + S.svg_error + ')</span>' : ''}</p>
-      <div class="row">${sel('port', 'Port', S.ports, cur, 'grow', st.connected ? 'disabled' : '')}
-      <button class="btn ${st.connected ? 'outlined' : 'filled'}" data-cmd="${st.connected ? 'disconnect' : 'connect'}" id="connBtn">${st.connected ? 'Disconnect' : 'Connect'}</button></div>
-      <div class="row">${sel('model', 'Model', S.models, st.model)}</div>
-      <h2>Reference</h2>
-      <div class="row"><button class="btn filled" data-cmd="home" ${st.connected ? '' : 'disabled'}>Home</button></div>
-      <p>Home moves the carriage to the reference corner and sets the origin there. After that the software knows the travel range.</p>`;
+    h = hdr('Connect', `Drawing: <b>${S.svg_name}</b>${S.svg_error ? ' <span style="color:var(--md-error)">(' + S.svg_error + ')</span>' : ''}`)
+      + grp('Machine', `<div class="row">${sel('port', 'Port', S.ports, cur, 'grow', st.connected ? 'disabled' : '')}
+        <button class="btn ${st.connected ? 'outlined' : 'filled'}" data-cmd="${st.connected ? 'disconnect' : 'connect'}" id="connBtn">${st.connected ? 'Disconnect' : 'Connect'}</button></div>
+        <div class="row">${sel('model', 'Model', S.models, st.model)}</div>`)
+      + grp('Reference', `<div class="row"><button class="btn filled" data-cmd="home" ${st.connected ? '' : 'disabled'}>Home</button></div>
+        <p>Home moves the carriage to the reference corner and sets the origin there. After that the software knows the travel range.</p>`);
   } else if (step === 1) {
     const fmts = Object.keys(S.formats).concat(['Custom']);
-    h = `<h1>Paper</h1><p>Tape the sheet to the table. Choose its size and tell the software where its top-left corner is.</p>
-      <div class="row">${sel('fmt', 'Format', fmts, S.paper_name)}${sel('orient', 'Orientation', ['landscape', 'portrait'], S.orient, 'w', '')}</div>
-      <div class="row">${tf('pw', 'Width', toU(S.paper[0]), {suffix: u()})}${tf('ph', 'Height', toU(S.paper[1]), {suffix: u()})}<button class="btn outlined" id="paperApply">Apply</button></div>
-      <h2>Paper position</h2>
-      <label class="radio"><input type="radio" name="pm" value="corner" ${S.pos_mode === 'corner' ? 'checked' : ''}>Against the stop corner (origin = home)</label>
-      <label class="radio"><input type="radio" name="pm" value="jog" ${S.pos_mode === 'jog' ? 'checked' : ''}>Jog the pen to the paper corner</label>
-      <label class="radio"><input type="radio" name="pm" value="hand" ${S.pos_mode === 'hand' ? 'checked' : ''}>Push the carriage to the corner by hand</label>
-      <div id="posBox"></div>
-      <h2>Check</h2>
-      <div class="row"><button class="btn tonal" data-cmd="frame" data-args='{"kind":"paper"}'>Trace paper frame, pen up</button></div>
-      <p>Shows whether the sheet lies where the software assumes it is.</p>`;
+    h = hdr('Paper', 'Tape the sheet to the table. Choose its size and tell the software where its top-left corner is.')
+      + grp('Sheet', `<div class="row">${sel('fmt', 'Format', fmts, S.paper_name)}${sel('orient', 'Orientation', ['landscape', 'portrait'], S.orient, 'w', '')}</div>
+        <div class="row">${tf('pw', 'Width', toU(S.paper[0]), {suffix: u()})}${tf('ph', 'Height', toU(S.paper[1]), {suffix: u()})}<button class="btn outlined" id="paperApply">Apply</button></div>
+        <div class="row"><button class="btn tonal" data-cmd="frame" data-args='{"kind":"paper"}'>Trace paper frame, pen up</button></div>`)
+      + grp('Paper position', `<label class="radio"><input type="radio" name="pm" value="corner" ${S.pos_mode === 'corner' ? 'checked' : ''}>Against the stop corner (origin = home)</label>
+        <label class="radio"><input type="radio" name="pm" value="jog" ${S.pos_mode === 'jog' ? 'checked' : ''}>Jog the pen to the paper corner</label>
+        <label class="radio"><input type="radio" name="pm" value="hand" ${S.pos_mode === 'hand' ? 'checked' : ''}>Push the carriage to the corner by hand</label>`)
+      + `<div class="grp wide" id="posBox"></div>`;
   } else if (step === 2) {
-    h = `<h1>Pen</h1>
-      <div class="row">${sel('prof', 'Profile', Object.keys(S.profiles), S.profile_name)}</div>
-      <div class="row">${tf('profName', 'Save as', S.profile_name, {cls: 'grow', mono: false})}<button class="btn outlined" id="profSave">Save</button></div>
-      <p>Insert the pen. Lower it and adjust in 0.5 mm steps until it sits cleanly on the paper. Raise it and check that it clears the sheet.</p>
-      <div class="row">${tf('pen_up', 'Up', pr.pen_up, {suffix: 'mm'})}<button class="btn outlined" data-nz="pen_up,-0.5">−0.5</button><button class="btn outlined" data-nz="pen_up,0.5">+0.5</button></div>
-      <div class="row">${tf('pen_down', 'Down', pr.pen_down, {suffix: 'mm'})}<button class="btn outlined" data-nz="pen_down,-0.5">−0.5</button><button class="btn outlined" data-nz="pen_down,0.5">+0.5</button></div>
-      <div class="row"><button class="btn tonal" data-cmd="pen_up">Up</button><button class="btn tonal" data-cmd="pen_down">Down</button><button class="btn outlined" data-cmd="cycle">Cycle</button><button class="btn outlined" data-cmd="test_stroke">Test stroke</button></div>
-      <h2>Move carriage</h2>${jogHtml()}`;
+    h = hdr('Pen', 'Insert the pen. Lower it and adjust in 0.5 mm steps until it sits cleanly on the paper. Raise it and check that it clears the sheet.')
+      + grp('Profile', `<div class="row">${sel('prof', 'Profile', Object.keys(S.profiles), S.profile_name)}</div>
+        <div class="row">${tf('profName', 'Save as', S.profile_name, {cls: 'grow', mono: false})}<button class="btn outlined" id="profSave">Save</button></div>`)
+      + grp('Heights', `<div class="row">${tf('pen_up', 'Up', pr.pen_up, {suffix: 'mm'})}<button class="btn outlined" data-nz="pen_up,-0.5">−0.5</button><button class="btn outlined" data-nz="pen_up,0.5">+0.5</button></div>
+        <div class="row">${tf('pen_down', 'Down', pr.pen_down, {suffix: 'mm'})}<button class="btn outlined" data-nz="pen_down,-0.5">−0.5</button><button class="btn outlined" data-nz="pen_down,0.5">+0.5</button></div>
+        <div class="row"><button class="btn tonal" data-cmd="pen_up">Up</button><button class="btn tonal" data-cmd="pen_down">Down</button><button class="btn outlined" data-cmd="cycle">Cycle</button><button class="btn outlined" data-cmd="test_stroke">Test stroke</button></div>`)
+      + grp('Move carriage', jogHtml(), 'wide');
   } else if (step === 3) {
-    h = `<h1>Speed</h1>
-      <div class="row">${tf('feed_draw', 'Drawing', pr.feed_draw, {cls: 'grow', suffix: 'mm/min'})}</div>
-      <div class="row">${tf('feed_travel', 'Travel', pr.feed_travel, {cls: 'grow', suffix: 'mm/min'})}</div>
-      <div class="row">${tf('line_width', 'Line width, measured', pr.line_width, {cls: 'grow', suffix: 'mm'})}</div>
-      <div class="row"><button class="btn outlined" id="profSave2">Save profile "${S.profile_name}"</button></div>
-      <h2>Test patterns at the pen position</h2>
-      <div class="row">${S.tests.map(t => `<button class="btn tonal" data-cmd="test" data-args='{"name":"${t}"}'>${t}</button>`).join('')}</div>
-      <p>Line width: measure where the double lines separate, divide by 10. Speed: rows at 1000 to 8000 mm/min. Accuracy: square and circle twice in opposite directions, star, rulers. Pen height: rows at Z 3.0 to 6.5 mm.</p>
-      <h2>Move carriage</h2>${jogHtml()}`;
+    h = hdr('Speed', '')
+      + grp('Feed rates', `<div class="row">${tf('feed_draw', 'Drawing', pr.feed_draw, {cls: 'grow', suffix: 'mm/min'})}${tf('feed_travel', 'Travel', pr.feed_travel, {cls: 'grow', suffix: 'mm/min'})}</div>
+        <div class="row">${tf('line_width', 'Line width, measured', pr.line_width, {cls: 'grow', suffix: 'mm'})}<button class="btn outlined" id="profSave2">Save profile</button></div>`)
+      + grp('Test patterns at the pen position', `<div class="row">${S.tests.map(t => `<button class="btn tonal" data-cmd="test" data-args='{"name":"${t}"}'>${t}</button>`).join('')}</div>
+        <p>Line width: measure where the double lines separate, divide by 10. Speed: rows at 1000 to 8000 mm/min. Accuracy: square and circle twice in opposite directions, star, rulers. Pen height: rows at Z 3.0 to 6.5 mm.</p>`)
+      + grp('Move carriage', jogHtml(), 'wide');
   } else {
     const rows = S.layers.map((l, i) => `<tr><td><input type="checkbox" data-layer="${i}" data-k="enabled" ${l.enabled ? 'checked' : ''} aria-label="Plot layer ${l.name}"></td>
       <td><input type="checkbox" data-layer="${i}" data-k="pause" ${l.pause ? 'checked' : ''} aria-label="Pause before ${l.name}"></td><td>${l.name} <span class="mono" style="color:var(--md-on-surface-variant)">${l.n}</span></td></tr>`).join('');
     const p = S.progress, pct = p && p.total ? 100 * p.done / p.total : 0;
-    h = `<h1>Plot</h1><p>${S.svg_name} · page ${fmt(S.page[0])} × ${fmt(S.page[1])} · paper ${fmt(S.paper[0])} × ${fmt(S.paper[1])}</p>
-      <div class="row"><div class="seg">${[['1:1', '1:1'], ['center', 'Centered'], ['fit', 'Fit to paper']].map(([v, t]) => `<button class="btn ${S.placement === v ? 'on' : ''}" data-pl="${v}">${t}</button>`).join('')}</div></div>
-      ${st.origin_set ? '' : '<div class="msg">Origin not set. Go to step 2, or plot from the current position.</div>'}
-      <table class="layers"><tr><th>Plot</th><th>Pause before</th><th>Layer · paths</th></tr>${rows || '<tr><td colspan="3">No layers. Open an SVG with paths.</td></tr>'}</table>
-      <div class="row"><button class="btn filled" data-cmd="plot">Start plot</button><button class="btn danger" data-cmd="stop">Stop</button><button class="btn outlined" data-cmd="frame" data-args='{"kind":"drawing"}'>Trace drawing frame</button></div>
-      <div class="progress"><i id="pbar" style="width:${pct}%"></i></div><div class="mono body-small" id="ptxt">${progressText()}</div>`;
+    h = hdr('Plot', `${S.svg_name} · page ${fmt(S.page[0])} × ${fmt(S.page[1])} · paper ${fmt(S.paper[0])} × ${fmt(S.paper[1])}`)
+      + grp('Placement', `<div class="row"><div class="seg">${[['1:1', '1:1'], ['center', 'Centered'], ['fit', 'Fit to paper']].map(([v, t]) => `<button class="btn ${S.placement === v ? 'on' : ''}" data-pl="${v}">${t}</button>`).join('')}</div></div>
+        ${st.origin_set ? '' : '<div class="msg">Origin not set. Go to step 2, or plot from the current position.</div>'}`)
+      + grp('Layers', `<table class="layers"><tr><th>Plot</th><th>Pause before</th><th>Layer · paths</th></tr>${rows || '<tr><td colspan="3">No layers. Open an SVG with paths.</td></tr>'}</table>`)
+      + grp('Run', `<div class="row"><button class="btn filled" data-cmd="plot">Start plot</button><button class="btn danger" data-cmd="stop">Stop</button><button class="btn outlined" data-cmd="frame" data-args='{"kind":"drawing"}'>Trace drawing frame</button></div>
+        <div class="progress"><i id="pbar" style="width:${pct}%"></i></div><div class="mono body-small" id="ptxt">${progressText()}</div>`);
   }
   $('panel').innerHTML = h;
   wirePanel();
@@ -388,9 +378,9 @@ function pushProfileFields() { const a = {}; ['pen_up', 'pen_down', 'feed_draw',
 function renderPosBox() {
   const box = $('posBox'); if (!box) return;
   const m = S.pos_mode;
-  if (m === 'corner') box.innerHTML = `<div class="row"><button class="btn filled" data-cmd="home">Origin = home</button></div>`;
-  else if (m === 'jog') box.innerHTML = jogHtml() + `<div class="row"><button class="btn filled" data-cmd="set_origin">Set origin here</button></div>`;
-  else box.innerHTML = `<div class="row"><button class="btn tonal" data-cmd="release_motors">Release motors</button><button class="btn tonal" data-cmd="lock_motors">Lock motors</button><button class="btn filled" data-cmd="origin_by_hand">Set origin here</button></div>
+  if (m === 'corner') box.innerHTML = `<h2>Origin</h2><div class="row"><button class="btn filled" data-cmd="home">Origin = home</button></div>`;
+  else if (m === 'jog') box.innerHTML = `<h2>Move to the corner</h2>` + jogHtml() + `<div class="row"><button class="btn filled" data-cmd="set_origin">Set origin here</button></div>`;
+  else box.innerHTML = `<h2>By hand</h2><div class="row"><button class="btn tonal" data-cmd="release_motors">Release motors</button><button class="btn tonal" data-cmd="lock_motors">Lock motors</button><button class="btn filled" data-cmd="origin_by_hand">Set origin here</button></div>
     <p>Release, push the carriage with the pen tip onto the paper corner, then set the origin. The travel range is unknown afterwards; the machine frame is hidden.</p>`;
   wirePanel.wireCmds(box);
 }
