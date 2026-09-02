@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+<name>iDraw Interactive</name>
+<id>command.idraw.interactive</id>
+<dependency type="executable" location="extensions">idraw_interactive.py</dependency>
+<param name="info" type="description">Opens the control window with the current document.</param>
+<param name="sim" type="bool" gui-text="Simulation (no device needed)">false</param>
+<effect needs-live-preview="false">
+<object-type>all</object-type>
+<effects-menu>
+<submenu name="iDraw"/>
+</effects-menu>
+</effect>
+<script>
+<command location="inx" interpreter="python">idraw_interactive.py</command>
+</script>
+</inkscape-extension>

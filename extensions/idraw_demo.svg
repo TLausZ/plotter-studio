@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+     width="297mm" height="210mm" viewBox="0 0 297 210">
+  <g inkscape:groupmode="layer" inkscape:label="1 Frame">
+    <rect x="15" y="15" width="267" height="180" fill="none" stroke="#000" stroke-width="0.4"/>
+    <circle cx="80" cy="105" r="50" fill="none" stroke="#000" stroke-width="0.4"/>
+    <circle cx="80" cy="105" r="35" fill="none" stroke="#000" stroke-width="0.4"/>
+    <circle cx="80" cy="105" r="20" fill="none" stroke="#000" stroke-width="0.4"/>
+  </g>
+  <g inkscape:groupmode="layer" inkscape:label="!2 Detail red">
+    <path d="M 160,60 C 200,20 240,100 270,60 S 230,160 200,120 S 160,180 170,150" fill="none" stroke="#c00" stroke-width="0.4"/>
+    <path d="M 160,150 l 20,0 l 0,20 l -20,0 z M 190,150 l 20,0 l 0,20 l -20,0 z" fill="none" stroke="#c00" stroke-width="0.4"/>
+    <polyline points="150,180 170,190 190,180 210,190 230,180 250,190 270,180" fill="none" stroke="#c00" stroke-width="0.4"/>
+  </g>
+  <g inkscape:groupmode="layer" inkscape:label="%Notes">
+    <line x1="0" y1="0" x2="297" y2="210" stroke="#0a0" stroke-width="0.3"/>
+  </g>
+</svg>
