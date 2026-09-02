@@ -9,7 +9,7 @@ This document is for people and agents building on it: other features, other pla
 ```
 inkscape-extension/
   README.md                          this file
-  DESIGN.md                          design tokens and rationale of the web UI
+  DESIGN.md                          Material Design 3 tokens (seed: the mat green, light and dark) and rationale of the web UI
   iDraw Extension Analysis 2026-09-02.md   how the original plugin works, firmware commands, axis mapping
   extensions/                        working copy; Inkscape reads ~/Library/Application Support/org.inkscape.Inkscape/config/inkscape/extensions
     idraw_core.py                    plotter logic without UI (transport, state, plot run, tests, SVG loading)
