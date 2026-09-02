@@ -1,44 +1,30 @@
 ---
 version: alpha
 name: iDraw Interactive
-description: Material Design 3 chrome, seeded from the cutting-mat green, around a drafting board that stays a drafting board.
+description: Material Design 3 components on the drafting palette (light panel, ink black, white controls) around a drafting board that stays a drafting board.
 omitted:
   - elevation-levels-4-5
 colors:
-  primary: "#276A55"
+  primary: "#1B1B1B"
   on-primary: "#FFFFFF"
-  primary-container: "#ABF2D6"
-  on-primary-container: "#002114"
-  secondary: "#4C6359"
-  secondary-container: "#CEE9DB"
-  on-secondary-container: "#092017"
-  tertiary: "#3E6373"
-  tertiary-container: "#C1E8FB"
-  on-tertiary-container: "#001F2A"
-  error: "#BA1A1A"
-  error-container: "#FFDAD6"
-  on-error-container: "#410002"
-  surface: "#F5FBF5"
-  on-surface: "#171D1A"
-  surface-variant: "#DBE5DE"
-  on-surface-variant: "#404944"
+  primary-container: "#E2E4DD"
+  secondary-container: "#E2E4DD"
+  on-secondary-container: "#1B1B1B"
+  tertiary: "#1F5FBF"
+  error: "#C8102E"
+  on-error: "#FFFFFF"
+  error-container: "#F7D6DA"
+  amber: "#C98A00"
+  surface: "#ECEDE8"
+  on-surface: "#1B1B1B"
+  on-surface-variant: "#5C5F58"
   surface-container-lowest: "#FFFFFF"
-  surface-container-low: "#EFF5EF"
-  surface-container: "#E9EFEA"
-  surface-container-high: "#E3EAE4"
-  surface-container-highest: "#DDE4DE"
-  outline: "#707973"
-  outline-variant: "#BFC9C2"
-  dark-primary: "#8FD5BB"
-  dark-on-primary: "#003828"
-  dark-secondary-container: "#354B41"
-  dark-tertiary: "#A6CCDF"
-  dark-error: "#FFB4AB"
-  dark-surface: "#0F1512"
-  dark-on-surface: "#DEE4DF"
-  dark-surface-container-low: "#171D1A"
-  dark-surface-container-high: "#252B28"
-  dark-outline: "#89938C"
+  surface-container-low: "#ECEDE8"
+  surface-container: "#E2E4DD"
+  surface-container-high: "#FFFFFF"
+  surface-container-highest: "#D6D9D0"
+  outline: "#C9CCC3"
+  outline-variant: "#D8DBD3"
   mat: "#2E5C4C"
   paper: "#FFFFFF"
   ink: "#1B1B1B"
@@ -174,11 +160,11 @@ The page has one job: get a drawing from Inkscape onto paper correctly, then wat
 
 ## Colors
 
-The scheme is M3 tonal, seed `#2E5C4C`. Primary carries the main action of each step (filled button), the active tab indicator, and progress. Secondary container carries tonal buttons and the selected segment of segmented controls. Tertiary is reserved for the pen-up state and the paused chip. Error is Stop and the pen-down state, because ink flowing and stopping are the two things that must never be missed. Surface containers build the side sheet (low), the top bar (surface), the bottom bar (container) and the dialog (high).
+The palette is the drafting palette, mapped onto M3 colour roles rather than generated from a seed: primary is ink black, so the one filled button per step, the active tab indicator, selected segments and the progress bar are black on the light neutral panel. Controls are white with a light outline. Surface containers are neutral greys (`#ECEDE8`, `#E2E4DD`), the dialog is white.
 
-Dark scheme follows the system setting with the corresponding M3 dark tones; the board keeps its mat and white sheet in both, because the paper is physical and does not change with the theme.
+Three signal colours with one meaning each: error red for pen down and Stop, blue (tertiary) for pen up, amber for paused, notices and the origin. Green is never a status; the mat is green. Single light scheme by choice; the sheet is physical and does not change with the system theme.
 
-Board colours are outside the M3 scheme on purpose: pending strokes in `ink-faint`, plotted strokes in `ink`, pen cross red when down and blue when up, origin amber.
+Board colours stay outside the roles: pending strokes in `ink-faint`, plotted strokes in `ink`, pen cross red when down and blue when up.
 
 ## Typography
 
@@ -200,11 +186,11 @@ M3 shape scale: buttons and chips full, text fields extra-small (4 px), status c
 
 ## Components
 
-App bar: name, status chip whose container follows the state (secondary container when ready, primary when moving or plotting, tertiary container when paused, error container on error), position in Roboto Mono, pen state coloured, unit segmented buttons with the M3 check mark on the selection.
+App bar: name, status chip whose container follows the state (ink outline when ready, ink fill when moving or plotting, amber when paused, error container on error), position in Roboto Mono, pen state coloured, unit segmented buttons with the M3 check mark on the selection.
 
 Primary tabs: five, numbered, active one in primary with a 3 px indicator; a tick after the number when the step's physical result is verified.
 
-Text fields: outlined, 56 px, label floating in the outline, unit as a suffix; selects share the same outline. Buttons: filled for the one main action of a step, tonal for machine actions (pen up/down, tests, trace), outlined for secondary actions, text for dialog actions, error for Stop. Icon buttons for jogging.
+Text fields: outlined, 56 px, label floating in the outline, unit as a suffix; selects share the same outline. Buttons: filled (ink) for the one main action of a step, white outlined for everything else, text for dialog actions, error for Stop. Icon buttons for jogging.
 
 Segmented buttons: unit switch, jog step, placement. Checkboxes and radios use the platform control tinted with primary.
 
