@@ -69,7 +69,7 @@ browser (idraw_web.html)  <-- HTTP/SSE -->  idraw_server.Session  -->  idraw_cor
 
 `idraw_server.Session` adds what a UI needs: the loaded SVG (page, layers), paper, placement, unit, profiles, and a fan-out of the plotter's events to every connected browser. The HTTP interface is three routes: `GET /api/snapshot` (everything), `GET /api/events` (server-sent events), `POST /api/cmd` (`{"cmd": name, ...}`). The command list is in the module docstring of `idraw_server.py`.
 
-`idraw_web.html` keeps one snapshot object, re-renders the side panel from it, and draws the board as inline SVG in millimetre units, so the preview is exact by construction.
+`idraw_web.html` keeps one snapshot object, re-renders the step panel from it, and draws the board as inline SVG in millimetre units, so the preview is exact by construction. The view fits the sheet by default; the Sheet/Machine toggle zooms out to the travel range.
 
 ### Building another UI
 
