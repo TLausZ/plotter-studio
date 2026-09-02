@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iDraw Interactive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Tokens: see DESIGN.md. The board is a cutting mat, the paper is the only white. */
+:root{
+  --mat:#2E5C4C; --mat-line:rgba(255,255,255,.09); --mat-line-strong:rgba(255,255,255,.16);
+  --paper:#fff; --ink:#1B1B1B; --ink-muted:#5C5F58; --ink-faint:#B8BDB5;
+  --panel:#ECEDE8; --panel-2:#E2E4DD; --line:#C9CCC3;
+  --red:#C8102E; --blue:#1F5FBF; --amber:#C98A00;
+  --f-ui:"Barlow",system-ui,-apple-system,"Helvetica Neue",sans-serif;
+  --f-mono:"IBM Plex Mono",Menlo,Consolas,monospace;
+  --side:360px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font:15px/1.4 var(--f-ui);color:var(--ink);background:var(--panel);
+  display:grid;grid-template-rows:48px 1fr;height:100vh;overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+button{background:var(--paper);border:1px solid var(--line);border-radius:0;padding:8px 12px;
+  min-height:38px;cursor:pointer;transition:background .08s}
+button:hover{background:var(--panel-2)}
+button:active{background:var(--line)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+button.primary{background:var(--ink);color:var(--paper);border-color:var(--ink);font-weight:600}
+button.primary:hover{background:#000}
+button.danger{background:var(--red);color:#fff;border-color:var(--red);font-weight:600}
+button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+button:disabled{opacity:.45;cursor:default}
+input[type=text],input[type=number],select{background:var(--paper);border:1px solid var(--line);padding:7px 8px;min-height:38px;width:100%}
+input.mono{font-family:var(--f-mono)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* top bar */
+header{display:flex;align-items:center;gap:20px;padding:0 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+.brand{font-weight:600;font-size:17px;letter-spacing:.01em}
+.brand span{font-weight:400;color:var(--ink-muted)}
+.readout{display:flex;gap:18px;align-items:baseline;margin-left:auto;font-size:14px}
+.status{font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:12px;padding:3px 8px;border:1px solid var(--line)}
+.status.ready{border-color:var(--ink)} .status.moving,.status.plotting{background:var(--ink);color:#fff;border-color:var(--ink)}
+.status.paused{background:var(--amber);color:#fff;border-color:var(--amber)} .status.error{background:var(--red);color:#fff;border-color:var(--red)}
+.pen.down{color:var(--red);font-weight:600} .pen.up{color:var(--blue);font-weight:600}
+.units{display:flex} .units button{min-height:30px;padding:2px 10px;margin-left:-1px;font-size:13px}
+
+/* layout */
+main{display:grid;grid-template-columns:var(--side) 1fr;grid-template-rows:1fr auto;min-height:0}
+aside{grid-row:1/3;border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--panel)}
+.steps{list-style:none;margin:0;padding:0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr)}
+.steps li{padding:10px 6px 8px;text-align:center;cursor:pointer;border-right:1px solid var(--line);font-size:13px;color:var(--ink-muted);user-select:none}
+.steps li:last-child{border-right:0}
+.steps li b{display:block;font-family:var(--f-mono);font-size:18px;font-weight:500;color:var(--ink-faint)}
+.steps li.active{background:var(--paper);color:var(--ink)} .steps li.active b{color:var(--ink)}
+.steps li.done b{color:var(--ink)} .steps li.done b::after{content:" ✓";font-size:12px}
+.panel{padding:16px;overflow:auto;flex:1}
+.panel h1{font-size:22px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em}
+.panel h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);margin:20px 0 8px}
+.panel p{margin:0 0 12px;color:var(--ink-muted)}
+.row{display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.row label{min-width:100px;color:var(--ink-muted)}
+.row .u{color:var(--ink-muted);font-size:13px}
+.row input{width:84px}
+.grow{flex:1}
+.radio{display:block;padding:6px 0;cursor:pointer} .radio input{margin-right:8px;width:auto;min-height:0}
+.jog{display:grid;grid-template-columns:44px 44px 44px auto;grid-template-rows:44px 44px 44px;gap:4px;align-items:center;margin:8px 0}
+.jog button{min-height:44px;padding:0;font-size:18px}
+.jog .sizes{grid-row:1/4;grid-column:4;padding-left:14px;display:flex;flex-direction:column;gap:4px}
+.jog .sizes button{min-height:32px;font-family:var(--f-mono);font-size:13px;padding:0 10px}
+.hint{font-size:12px;color:var(--ink-muted);margin:4px 0 12px}
+.hint kbd{font-family:var(--f-mono);border:1px solid var(--line);padding:0 4px;background:var(--paper)}
+.layers{width:100%;border-collapse:collapse;margin-bottom:12px}
+.layers td,.layers th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left;font-weight:500}
+.layers th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted)}
+.layers input{width:auto;min-height:0}
+.progress{height:8px;background:var(--panel-2);margin:12px 0 6px;position:relative}
+.progress i{position:absolute;left:0;top:0;bottom:0;background:var(--ink);width:0;transition:width .2s}
+.msg{padding:8px 10px;border-left:3px solid var(--amber);background:var(--paper);margin-bottom:12px;font-size:14px}
+
+/* board */
+.board{position:relative;background:var(--mat);min-height:0;overflow:hidden}
+.board svg{width:100%;height:100%;display:block}
+.stroke{fill:none;stroke:var(--ink-faint);stroke-linecap:round;stroke-linejoin:round}
+.stroke.done{stroke:var(--ink)}
+.pen line{stroke-width:.6} .pen circle{fill:none;stroke-width:.5}
+.pen.up{stroke:var(--blue)} .pen.down{stroke:var(--red)}
+.ruler text{font-family:var(--f-mono);font-size:2.4px;fill:rgba(255,255,255,.75)}
+.ruler line{stroke:rgba(255,255,255,.55);stroke-width:.25}
+.tb text{font-family:var(--f-ui);font-size:2.6px;fill:var(--ink)} .tb .k{fill:var(--ink-muted);font-size:2.1px;letter-spacing:.1px}
+.tb .v{font-family:var(--f-mono)} .tb rect,.tb line{stroke:var(--ink);stroke-width:.3;fill:none}
+
+/* log + nav */
+footer{grid-column:2;border-top:1px solid var(--line);background:var(--panel);display:grid;grid-template-rows:auto auto}
+.log{margin:0;padding:8px 14px;height:96px;overflow:auto;font:12px/1.5 var(--f-mono);color:var(--ink-muted);white-space:pre-wrap;background:var(--paper)}
+.nav{display:flex;gap:8px;padding:8px 14px;border-top:1px solid var(--line)}
+.nav .sp{flex:1}
+
+/* pause dialog */
+.overlay{position:fixed;inset:0;background:rgba(27,27,27,.55);display:none;align-items:center;justify-content:center;z-index:10}
+.overlay.show{display:flex}
+.dialog{background:var(--paper);padding:24px;min-width:320px;max-width:90vw;border-top:4px solid var(--amber)}
+.dialog h3{margin:0 0 8px;font-size:18px}
+.dialog .row{margin-top:16px;justify-content:flex-end}
+
+@media (max-width: 900px){
+  body{overflow:auto;height:auto}
+  main{grid-template-columns:1fr;grid-template-rows:auto auto auto}
+  aside{grid-row:auto;border-right:0;border-bottom:1px solid var(--line)}
+  .board{height:56vw;min-height:280px;order:-1}
+  footer{grid-column:1}
+  button{min-height:44px}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">iDraw <span>Interactive</span></div>
+  <div class="readout">
+    <span id="status" class="status">disconnected</span>
+    <span id="pos" class="mono">X — Y —</span>
+    <span id="penlbl" class="pen">pen ?</span>
+  </div>
+  <div class="units" id="units">
+    <button data-unit="mm">mm</button><button data-unit="cm">cm</button><button data-unit="in">in</button>
+  </div>
+</header>
+<main>
+  <aside>
+    <ol class="steps" id="steps"></ol>
+    <section class="panel" id="panel"></section>
+  </aside>
+  <section class="board"><svg id="preview" xmlns="http://www.w3.org/2000/svg"></svg></section>
+  <footer>
+    <pre class="log" id="log"></pre>
+    <div class="nav">
+      <button id="back">Back</button><button id="next">Next</button>
+      <span class="sp"></span>
+      <button id="stop" class="danger">Stop</button>
+    </div>
+  </footer>
+</main>
+<div class="overlay" id="overlay">
+  <div class="dialog">
+    <h3>Pause before layer <span id="pauseName"></span></h3>
+    <p>Change the pen, then continue. Stop ends the plot; the pen stays up.</p>
+    <div class="row"><button id="pauseStop">Stop</button><button id="pauseGo" class="primary">Continue</button></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const STEPS = ['Connect','Paper','Pen','Speed','Plot'];
+const UNIT = {mm:1, cm:10, in:25.4};
+const DEC = {mm:1, cm:2, in:2};
+const JOG = {mm:[1,10,50], cm:[0.1,1,5], in:[0.05,0.5,2]};
+let S = null;            // snapshot from the server
+let step = 0;
+let jogIdx = 1;
+let done = 0;            // strokes plotted so far
+const $ = id => document.getElementById(id);
+
+// ---------------------------------------------------------------- units
+const u = () => S ? S.unit : 'mm';
+const toU = mm => (mm / UNIT[u()]).toFixed(DEC[u()]);
+const fromU = v => parseFloat(v) * UNIT[u()];
+const fmt = mm => toU(mm) + ' ' + u();
+
+// ---------------------------------------------------------------- server
+async function cmd(name, args) {
+  const r = await fetch('/api/cmd', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(Object.assign({cmd:name}, args || {}))});
+  const j = await r.json();
+  if (j.error) logLine('! ' + j.error);
+  return j;
+}
+function connectEvents() {
+  const es = new EventSource('/api/events');
+  es.addEventListener('snapshot', e => { S = JSON.parse(e.data); done = S.progress ? S.progress.i : 0; renderAll(); });
+  es.addEventListener('state', e => { if (!S) return; S.state = JSON.parse(e.data); renderReadout(); renderPen(); if (step === 2) syncPenFields(); });
+  es.addEventListener('log', e => logLine(JSON.parse(e.data)));
+  es.addEventListener('progress', e => { const p = JSON.parse(e.data); done = p.i; S.progress = p; renderProgress(); markDone(); });
+  es.addEventListener('pause', e => { $('pauseName').textContent = JSON.parse(e.data); $('overlay').classList.add('show'); });
+  es.addEventListener('done', e => { $('overlay').classList.remove('show'); logLine('Plot ' + JSON.parse(e.data) + '.'); });
+  es.addEventListener('error', e => { if (e.data) logLine('! ' + JSON.parse(e.data)); });
+  es.onerror = () => { $('status').textContent = 'no server'; $('status').className = 'status error'; };
+}
+function logLine(t) {
+  const el = $('log'); el.textContent += t + '\n';
+  const lines = el.textContent.split('\n'); if (lines.length > 300) el.textContent = lines.slice(-300).join('\n');
+  el.scrollTop = el.scrollHeight;
+}
+
+// ---------------------------------------------------------------- render
+function renderAll() {
+  $('log').textContent = S.log.join('\n') + '\n'; $('log').scrollTop = 1e9;
+  document.querySelectorAll('#units button').forEach(b => b.classList.toggle('on', b.dataset.unit === S.unit));
+  renderSteps(); renderPanel(); renderReadout(); renderPreview();
+  if (S.pause_layer) { $('pauseName').textContent = S.pause_layer; $('overlay').classList.add('show'); }
+}
+function renderSteps() {
+  const st = S.state;
+  const doneFlags = [st.connected && st.homed, st.origin_set, false, false, false];
+  $('steps').innerHTML = STEPS.map((n, i) =>
+    `<li class="${i === step ? 'active' : ''} ${doneFlags[i] ? 'done' : ''}" data-i="${i}"><b>${i + 1}</b>${n}</li>`).join('');
+  $('steps').querySelectorAll('li').forEach(li => li.onclick = () => showStep(+li.dataset.i));
+}
+function renderReadout() {
+  const st = S.state;
+  const s = $('status'); s.textContent = st.status; s.className = 'status ' + st.status;
+  $('pos').textContent = 'X ' + toU(st.x) + '  Y ' + toU(st.y) + ' ' + u();
+  const pen = $('penlbl');
+  pen.textContent = st.z_up === null ? 'pen ?' : (st.z_up ? 'pen up' : 'pen down');
+  pen.className = 'pen ' + (st.z_up === null ? '' : (st.z_up ? 'up' : 'down'));
+}
+function showStep(i) { step = Math.max(0, Math.min(4, i)); renderSteps(); renderPanel(); }
+
+// ---------------------------------------------------------------- panel
+function jogHtml() {
+  const sizes = JOG[u()].map((v, i) => `<button data-jog="${i}" class="${i === jogIdx ? 'on' : ''}">${v} ${u()}</button>`).join('');
+  return `<div class="jog">
+    <span></span><button data-move="0,-1">↑</button><span></span>
+    <button data-move="-1,0">←</button><button data-cmd="goto" data-args='{"x":0,"y":0}' title="Go to origin">⌂</button><button data-move="1,0">→</button>
+    <span></span><button data-move="0,1">↓</button><span></span>
+    <div class="sizes"><span class="hint" style="margin:0">Step</span>${sizes}</div></div>
+    <div class="hint"><kbd>←↑↓→</kbd> move · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> step · <kbd>space</kbd> pen · <kbd>⇧↑</kbd><kbd>⇧↓</kbd> pen height ±0.5 mm · <kbd>esc</kbd> stop</div>`;
+}
+function renderPanel() {
+  const st = S.state, pr = st.profile;
+  let h = '';
+  if (step === 0) {
+    const sel = S.sim && !st.connected ? 'Simulation' : (st.transport || (S.ports[1] || 'Simulation'));
+    h = `<h1>Connect</h1><p>Drawing: <b>${S.svg_name}</b>${S.svg_error ? ' <span style="color:var(--red)">(' + S.svg_error + ')</span>' : ''}</p>
+      <div class="row"><select id="port" ${st.connected ? 'disabled' : ''}>${S.ports.map(p => `<option ${p === sel ? 'selected' : ''}>${p}</option>`).join('')}</select>
+      <button data-cmd="${st.connected ? 'disconnect' : 'connect'}" id="connBtn" class="${st.connected ? '' : 'primary'}">${st.connected ? 'Disconnect' : 'Connect'}</button></div>
+      <div class="row"><label>Model</label><select id="model">${S.models.map(m => `<option ${m === st.model ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
+      <h2>Reference</h2>
+      <div class="row"><button data-cmd="home" class="primary" ${st.connected ? '' : 'disabled'}>Home</button></div>
+      <p>Home moves the carriage to the reference corner and sets the origin there. After that the software knows the travel range.</p>`;
+  } else if (step === 1) {
+    const fmts = Object.keys(S.formats).concat(['Custom']);
+    h = `<h1>Paper</h1><p>Tape the sheet to the table. Choose its size and tell the software where its top-left corner is.</p>
+      <div class="row"><select id="fmt" class="grow">${fmts.map(f => `<option ${f === S.paper_name ? 'selected' : ''}>${f}</option>`).join('')}</select>
+      <select id="orient"><option ${S.orient === 'landscape' ? 'selected' : ''}>landscape</option><option ${S.orient === 'portrait' ? 'selected' : ''}>portrait</option></select></div>
+      <div class="row"><label>Width</label><input class="mono" id="pw" value="${toU(S.paper[0])}"><span class="u">${u()}</span></div>
+      <div class="row"><label>Height</label><input class="mono" id="ph" value="${toU(S.paper[1])}"><span class="u">${u()}</span> <button id="paperApply">Apply</button></div>
+      <h2>Paper position</h2>
+      <label class="radio"><input type="radio" name="pm" value="corner" ${S.pos_mode === 'corner' ? 'checked' : ''}>Against the stop corner (origin = home)</label>
+      <label class="radio"><input type="radio" name="pm" value="jog" ${S.pos_mode === 'jog' ? 'checked' : ''}>Jog the pen to the paper corner</label>
+      <label class="radio"><input type="radio" name="pm" value="hand" ${S.pos_mode === 'hand' ? 'checked' : ''}>Push the carriage to the corner by hand</label>
+      <div id="posBox"></div>
+      <h2>Check</h2>
+      <div class="row"><button data-cmd="frame" data-args='{"kind":"paper"}'>Trace paper frame, pen up</button></div>
+      <p>Shows whether the sheet lies where the software assumes it is.</p>`;
+  } else if (step === 2) {
+    h = `<h1>Pen</h1>
+      <div class="row"><label>Profile</label><select id="prof" class="grow">${Object.keys(S.profiles).map(p => `<option ${p === S.profile_name ? 'selected' : ''}>${p}</option>`).join('')}</select></div>
+      <div class="row"><label>Save as</label><input id="profName" class="grow" value="${S.profile_name}"><button id="profSave">Save</button></div>
+      <p>Insert the pen. Lower it and adjust in 0.5 mm steps until it sits cleanly on the paper. Raise it and check that it clears the sheet.</p>
+      <div class="row"><label>Up (Z mm)</label><input class="mono" id="pen_up" value="${pr.pen_up}"><button data-nz="pen_up,-0.5">−0.5</button><button data-nz="pen_up,0.5">+0.5</button></div>
+      <div class="row"><label>Down (Z mm)</label><input class="mono" id="pen_down" value="${pr.pen_down}"><button data-nz="pen_down,-0.5">−0.5</button><button data-nz="pen_down,0.5">+0.5</button></div>
+      <div class="row"><button data-cmd="pen_up">Up</button><button data-cmd="pen_down">Down</button><button data-cmd="cycle">Cycle</button><button data-cmd="test_stroke">Test stroke 30 mm</button></div>
+      <h2>Move carriage</h2>${jogHtml()}`;
+  } else if (step === 3) {
+    h = `<h1>Speed</h1>
+      <div class="row"><label>Drawing</label><input class="mono" id="feed_draw" value="${pr.feed_draw}"><span class="u">mm/min</span></div>
+      <div class="row"><label>Travel</label><input class="mono" id="feed_travel" value="${pr.feed_travel}"><span class="u">mm/min</span></div>
+      <div class="row"><label>Line width</label><input class="mono" id="line_width" value="${pr.line_width}"><span class="u">mm, measured</span></div>
+      <div class="row"><button id="profSave2">Save profile "${S.profile_name}"</button></div>
+      <h2>Test patterns at the pen position</h2>
+      <div class="row">${S.tests.map(t => `<button data-cmd="test" data-args='{"name":"${t}"}'>${t}</button>`).join('')}</div>
+      <p>Line width: measure where the double lines separate, divide by 10. Speed: rows at 1000 to 8000 mm/min. Accuracy: square and circle twice in opposite directions, star, rulers. Pen height: rows at Z 3.0 to 6.5 mm.</p>
+      <h2>Move carriage</h2>${jogHtml()}`;
+  } else {
+    const rows = S.layers.map((l, i) => `<tr><td><input type="checkbox" data-layer="${i}" data-k="enabled" ${l.enabled ? 'checked' : ''}></td>
+      <td><input type="checkbox" data-layer="${i}" data-k="pause" ${l.pause ? 'checked' : ''}></td><td>${l.name} <span class="mono" style="color:var(--ink-muted)">${l.n}</span></td></tr>`).join('');
+    const p = S.progress, pct = p && p.total ? 100 * p.done / p.total : 0;
+    h = `<h1>Plot</h1><p>${S.svg_name} · page ${fmt(S.page[0])} × ${fmt(S.page[1])} · paper ${fmt(S.paper[0])} × ${fmt(S.paper[1])}</p>
+      <div class="row">${[['1:1', '1:1 at page position'], ['center', '1:1 centered'], ['fit', 'Fit to paper']].map(([v, t]) => `<button data-pl="${v}" class="${S.placement === v ? 'on' : ''}">${t}</button>`).join('')}</div>
+      ${st.origin_set ? '' : '<div class="msg">Origin not set. Go to step 2, or plot anyway from the current position.</div>'}
+      <table class="layers"><tr><th>Plot</th><th>Pause before</th><th>Layer · paths</th></tr>${rows || '<tr><td colspan="3">No layers. Open an SVG with paths.</td></tr>'}</table>
+      <div class="row"><button data-cmd="plot" class="primary">Start plot</button><button data-cmd="stop" class="danger">Stop</button><button data-cmd="frame" data-args='{"kind":"drawing"}'>Trace drawing frame</button></div>
+      <div class="progress"><i id="pbar" style="width:${pct}%"></i></div><div class="mono" id="ptxt">${progressText()}</div>`;
+  }
+  $('panel').innerHTML = h;
+  wirePanel();
+}
+function progressText() {
+  const p = S.progress; if (!p) return '';
+  const pct = p.total ? Math.round(100 * p.done / p.total) : 0;
+  const eta = (p.eta == null || p.i >= p.n) ? '' : '   remaining ~' + Math.floor(p.eta / 60) + ':' + String(Math.round(p.eta % 60)).padStart(2, '0') + ' min';
+  return `path ${p.i} / ${p.n}   ${pct} %${eta}`;
+}
+function renderProgress() { if (step !== 4) return; const p = S.progress; $('pbar').style.width = (p.total ? 100 * p.done / p.total : 0) + '%'; $('ptxt').textContent = progressText(); }
+function syncPenFields() { const pr = S.state.profile; ['pen_up', 'pen_down'].forEach(k => { const e = $(k); if (e && document.activeElement !== e) e.value = pr[k]; }); }
+
+function wirePanel() {
+  const P = $('panel');
+  P.querySelectorAll('[data-cmd]').forEach(b => b.onclick = () => {
+    const args = b.dataset.args ? JSON.parse(b.dataset.args) : {};
+    if (b.dataset.cmd === 'connect') args.port = $('port').value;
+    cmd(b.dataset.cmd, args);
+  });
+  P.querySelectorAll('[data-move]').forEach(b => b.onclick = () => { const [x, y] = b.dataset.move.split(',').map(Number); jog(x, y); });
+  P.querySelectorAll('[data-jog]').forEach(b => b.onclick = () => { jogIdx = +b.dataset.jog; renderPanel(); });
+  P.querySelectorAll('[data-nz]').forEach(b => b.onclick = () => { const [k, d] = b.dataset.nz.split(','); const v = Math.max(0, +(S.state.profile[k] + +d).toFixed(2)); cmd('set_profile', {[k]: v}); });
+  P.querySelectorAll('[data-pl]').forEach(b => b.onclick = () => cmd('set_placement', {mode: b.dataset.pl}));
+  P.querySelectorAll('[data-layer]').forEach(c => c.onchange = () => cmd('set_layer', {index: +c.dataset.layer, [c.dataset.k]: c.checked}));
+  const on = (id, ev, fn) => { const e = $(id); if (e) e.addEventListener(ev, fn); };
+  on('model', 'change', e => cmd('set_model', {name: e.target.value}));
+  on('fmt', 'change', applyPaper); on('orient', 'change', applyPaper); on('paperApply', 'click', () => applyPaper(true));
+  on('prof', 'change', e => cmd('load_profile', {name: e.target.value}));
+  on('profSave', 'click', () => { pushProfileFields(); cmd('save_profile', {name: $('profName').value}); });
+  on('profSave2', 'click', () => { pushProfileFields(); cmd('save_profile', {}); });
+  ['pen_up', 'pen_down', 'feed_draw', 'feed_travel', 'line_width'].forEach(k => on(k, 'change', e => cmd('set_profile', {[k]: e.target.value})));
+  P.querySelectorAll('input[name=pm]').forEach(r => r.onchange = () => { cmd('set_pos_mode', {mode: r.value}); S.pos_mode = r.value; renderPosBox(); });
+  renderPosBox();
+}
+function pushProfileFields() { const a = {}; ['pen_up', 'pen_down', 'feed_draw', 'feed_travel', 'line_width'].forEach(k => { if ($(k)) a[k] = $(k).value; }); return cmd('set_profile', a); }
+function renderPosBox() {
+  const box = $('posBox'); if (!box) return;
+  const m = S.pos_mode;
+  if (m === 'corner') box.innerHTML = `<div class="row"><button data-cmd="home">Origin = home</button></div>`;
+  else if (m === 'jog') box.innerHTML = jogHtml() + `<div class="row"><button data-cmd="set_origin" class="primary">Set origin here</button></div>`;
+  else box.innerHTML = `<div class="row"><button data-cmd="release_motors">Release motors</button><button data-cmd="lock_motors">Lock motors</button><button data-cmd="origin_by_hand" class="primary">Set origin here</button></div>
+    <p>Release, push the carriage with the pen tip onto the paper corner, then set the origin. The travel range is unknown afterwards; the machine frame is hidden.</p>`;
+  box.querySelectorAll('[data-cmd]').forEach(b => b.onclick = () => cmd(b.dataset.cmd, b.dataset.args ? JSON.parse(b.dataset.args) : {}));
+  box.querySelectorAll('[data-move]').forEach(b => b.onclick = () => { const [x, y] = b.dataset.move.split(',').map(Number); jog(x, y); });
+  box.querySelectorAll('[data-jog]').forEach(b => b.onclick = () => { jogIdx = +b.dataset.jog; renderPanel(); });
+}
+function applyPaper(custom) {
+  const name = $('fmt').value, orient = $('orient').value;
+  let w, h;
+  if (name === 'Custom' || custom === true) { w = fromU($('pw').value); h = fromU($('ph').value); }
+  else { [w, h] = S.formats[name]; if (orient === 'portrait') [w, h] = [h, w]; }
+  if (!(w > 0 && h > 0)) return;
+  cmd('set_paper', {w, h, name: custom === true ? 'Custom' : name, orient});
+}
+function jog(x, y) { const s = JOG[u()][jogIdx] * UNIT[u()]; cmd('jog', {dx: x * s, dy: y * s}); }
+
+// ---------------------------------------------------------------- preview (SVG, user units = mm)
+function renderPreview() {
+  const st = S.state, [pw, ph] = S.paper;
+  let xs = [0, pw], ys = [0, ph], mx = 0, my = 0, mw = 0, mh = 0;
+  const MODELS = {"iDraw A1":[864,594],"iDraw A0":[1189,841],"iDraw A2":[594,432],"iDraw A3":[430,297],"iDraw A4":[300,210]};
+  if (st.bounds_known) { [mx, my] = st.machine_origin; [mw, mh] = MODELS[st.model] || [0, 0]; xs.push(mx, mx + mw); ys.push(my, my + mh); }
+  const x0 = Math.min(...xs) - 18, y0 = Math.min(...ys) - 18, x1 = Math.max(...xs) + 12, y1 = Math.max(...ys) + 12;
+  const svg = $('preview');
+  svg.setAttribute('viewBox', `${x0} ${y0} ${x1 - x0} ${y1 - y0}`);
+  const lw = Math.max(0.25, st.profile.line_width || 0.3);
+  let g = `<defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M10 0H0V10" fill="none" stroke="var(--mat-line)" stroke-width=".3"/></pattern>
+    <pattern id="grid5" width="50" height="50" patternUnits="userSpaceOnUse"><path d="M50 0H0V50" fill="none" stroke="var(--mat-line-strong)" stroke-width=".4"/></pattern></defs>
+    <rect x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" fill="url(#grid)"/><rect x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" fill="url(#grid5)"/>`;
+  const fs = (x1 - x0) / 120;  // label size follows the view, so it reads the same on A4 and A1
+  if (st.bounds_known) g += `<rect x="${mx}" y="${my}" width="${mw}" height="${mh}" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="${fs / 7}" stroke-dasharray="4 3"/>
+    <text x="${mx + mw - 2}" y="${my + mh - 2}" font-size="${fs}" text-anchor="end" fill="rgba(255,255,255,.6)" font-family="var(--f-ui)">${st.model} · ${fmt(mw)} × ${fmt(mh)}</text>`;
+  g += `<rect x="0" y="0" width="${pw}" height="${ph}" fill="var(--paper)" stroke="rgba(0,0,0,.35)" stroke-width=".4"/>`;
+  g += rulers(pw, ph);
+  g += `<g id="strokes" stroke-width="${lw}">` + S.strokes.map((s, i) =>
+    `<path class="stroke ${i < done ? 'done' : ''}" d="M${s.pts.map(p => p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join('L')}"/>`).join('') + '</g>';
+  g += titleBlock(pw, ph);
+  g += `<circle cx="0" cy="0" r="2" fill="none" stroke="var(--amber)" stroke-width=".5"/>`;
+  g += `<g id="pen" class="pen ${st.z_up === null ? 'up' : (st.z_up ? 'up' : 'down')}" transform="translate(${st.x} ${st.y})"><circle r="3.2"/><line x1="-6" x2="6"/><line y1="-6" y2="6"/></g>`;
+  svg.innerHTML = g;
+}
+function rulers(pw, ph) {
+  const unit = u(), step = {mm:10, cm:10, in:25.4}[unit], minor = {mm:5, cm:5, in:12.7}[unit];
+  const lab = v => unit === 'in' ? (v / 25.4).toFixed(0) : (unit === 'cm' ? (v / 10).toFixed(0) : v.toFixed(0));
+  let h = '<g class="ruler">';
+  for (let v = 0; v <= pw + 1e-6; v += minor) {
+    const major = Math.abs(v / step - Math.round(v / step)) < 1e-6;
+    h += `<line x1="${v}" y1="-1" x2="${v}" y2="${major ? -4 : -2.5}"/>`;
+    if (major && (pw < 400 || Math.round(v / step) % 5 === 0)) h += `<text x="${v + .6}" y="-4.8">${lab(v)}</text>`;
+  }
+  for (let v = 0; v <= ph + 1e-6; v += minor) {
+    const major = Math.abs(v / step - Math.round(v / step)) < 1e-6;
+    h += `<line x1="-1" y1="${v}" x2="${major ? -4 : -2.5}" y2="${v}"/>`;
+    if (major && v > 0 && (ph < 400 || Math.round(v / step) % 5 === 0)) h += `<text x="-5" y="${v + .8}" text-anchor="end">${lab(v)}</text>`;
+  }
+  return h + `<text x="-5" y="-4.8" text-anchor="end">${unit}</text></g>`;
+}
+function titleBlock(pw, ph) {
+  // The signature: a drawing title block in the paper's lower right corner, as on a technical drawing.
+  const st = S.state, pr = st.profile;
+  const W = Math.min(72, pw * 0.42), H = 21, x = pw - W - 3, y = ph - H - 3, s = W / 72;
+  const scale = S.placement === 'fit' ? (Math.min((S.paper[0] - 20) / S.page[0], (S.paper[1] - 20) / S.page[1])).toFixed(2) : '1:1';
+  const rows = [['SHEET', `${S.paper_name} ${toU(S.paper[0])} × ${toU(S.paper[1])} ${u()}`], ['SCALE', scale === '1:1' ? '1:1' : `1:${(1 / scale).toFixed(2)} (${scale}×)`],
+    ['PEN', `${S.profile_name} · ${pr.line_width} mm`], ['FEED', `${pr.feed_draw} / ${pr.feed_travel} mm/min`], ['FILE', S.svg_name]];
+  let h = `<g class="tb" transform="translate(${x} ${y}) scale(${s})"><rect width="72" height="${H / s}" fill="var(--paper)"/>`;
+  rows.forEach((r, i) => { const yy = 3.4 + i * (H / s - 1) / rows.length; h += `<text class="k" x="1.5" y="${yy}">${r[0]}</text><text class="v" x="14" y="${yy}">${esc(r[1])}</text>`; });
+  h += `<line x1="12.5" y1="0" x2="12.5" y2="${H / s}"/></g>`;
+  return h;
+}
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+function renderPen() {
+  const st = S.state, pen = $('pen'); if (!pen) return renderPreview();
+  pen.setAttribute('transform', `translate(${st.x} ${st.y})`);
+  pen.setAttribute('class', 'pen ' + (st.z_up === false ? 'down' : 'up'));
+  if (st.bounds_known !== renderPen.lastBounds || st.model !== renderPen.lastModel) renderPreview();
+  renderPen.lastBounds = st.bounds_known; renderPen.lastModel = st.model;
+}
+function markDone() { const ps = document.querySelectorAll('#strokes path'); ps.forEach((p, i) => p.classList.toggle('done', i < done)); }
+
+// ---------------------------------------------------------------- global controls
+$('units').querySelectorAll('button').forEach(b => b.onclick = () => cmd('set_unit', {unit: b.dataset.unit}));
+$('back').onclick = () => showStep(step - 1); $('next').onclick = () => showStep(step + 1);
+$('stop').onclick = () => cmd('stop');
+$('pauseGo').onclick = () => { $('overlay').classList.remove('show'); cmd('resume'); };
+$('pauseStop').onclick = () => { $('overlay').classList.remove('show'); cmd('stop'); };
+document.addEventListener('keydown', e => {
+  const t = e.target.tagName; if (t === 'INPUT' || t === 'SELECT' || t === 'TEXTAREA') return;
+  const k = e.key;
+  if (k === 'Escape') { cmd('stop'); return; }
+  if (!S || !S.state.connected) return;
+  if (e.shiftKey && (k === 'ArrowUp' || k === 'ArrowDown')) { cmd('nudge_z', {delta: k === 'ArrowUp' ? -0.5 : 0.5}); e.preventDefault(); return; }
+  const mv = {ArrowUp:[0,-1], ArrowDown:[0,1], ArrowLeft:[-1,0], ArrowRight:[1,0]}[k];
+  if (mv) { jog(mv[0], mv[1]); e.preventDefault(); return; }
+  if (k === ' ') { cmd('pen_toggle'); e.preventDefault(); return; }
+  if ('123'.includes(k) && k) { jogIdx = +k - 1; renderPanel(); }
+});
+window.addEventListener('resize', () => S && renderPreview());
+connectEvents();
+</script>
+</body>
+</html>

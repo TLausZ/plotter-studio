@@ -1,114 +1,150 @@
 ---
 version: alpha
 name: iDraw Interactive
-description: Workshop UI for a pen plotter. Tk today, web UI later. Calm, high contrast, no decoration.
+description: A drafting workbench for a pen plotter. Cutting mat, white sheet, technical lettering, one title block.
 omitted:
   - elevation
 colors:
-  ground: "#e8e8e8"
-  paper: "#ffffff"
-  ink: "#000000"
-  ink-muted: "#444444"
-  frame: "#333333"
-  machine: "#999999"
-  path-pending: "#99aabb"
-  path-done: "#000000"
-  pen-down: "#cc0000"
-  pen-up: "#0066cc"
-  origin: "#008800"
-  status-error: "#cc0000"
+  mat: "#2E5C4C"
+  mat-line: "rgba(255,255,255,0.09)"
+  mat-line-strong: "rgba(255,255,255,0.16)"
+  paper: "#FFFFFF"
+  ink: "#1B1B1B"
+  ink-muted: "#5C5F58"
+  ink-faint: "#B8BDB5"
+  panel: "#ECEDE8"
+  panel-2: "#E2E4DD"
+  line: "#C9CCC3"
+  red: "#C8102E"
+  blue: "#1F5FBF"
+  amber: "#C98A00"
 typography:
-  h1:
-    fontFamily: System
-    fontSize: 15pt
-    fontWeight: bold
-  h2:
-    fontFamily: System
-    fontSize: 12pt
-    fontWeight: bold
-  body:
-    fontFamily: System
-    fontSize: 13pt
-  note:
-    fontFamily: System
-    fontSize: 13pt
+  display:
+    fontFamily: Barlow, system-ui, sans-serif
+    fontSize: 22px
+    fontWeight: 600
+    letterSpacing: -0.01em
+  section:
+    fontFamily: Barlow, system-ui, sans-serif
+    fontSize: 13px
+    fontWeight: 600
+    letterSpacing: 0.08em
+    textTransform: uppercase
     color: "{colors.ink-muted}"
-  mono:
-    fontFamily: Menlo
-    fontSize: 10pt
+  body:
+    fontFamily: Barlow, system-ui, sans-serif
+    fontSize: 15px
+    lineHeight: 1.4
+  data:
+    fontFamily: IBM Plex Mono, Menlo, monospace
+    fontSize: 14px
+  log:
+    fontFamily: IBM Plex Mono, Menlo, monospace
+    fontSize: 12px
+    lineHeight: 1.5
+  title-block-key:
+    fontFamily: Barlow, system-ui, sans-serif
+    fontSize: 2.1mm
+    letterSpacing: 0.1mm
+    color: "{colors.ink-muted}"
+  title-block-value:
+    fontFamily: IBM Plex Mono, Menlo, monospace
+    fontSize: 2.6mm
 rounded:
   none: 0px
 spacing:
-  xs: 2px
-  sm: 4px
-  md: 8px
-  lg: 12px
+  xs: 4px
+  sm: 8px
+  md: 12px
+  lg: 16px
   xl: 20px
 components:
-  step-bar:
-    padding: "{spacing.md}"
-    height: 40px
-  content-column:
-    width: 420px
-    padding: "{spacing.md}"
-  preview:
-    backgroundColor: "{colors.ground}"
-    padding: "{spacing.xl}"
-  log:
-    typography: "{typography.mono}"
-    height: 6 lines
-  jog-button:
-    width: 4 chars
-  primary-button:
+  top-bar:
+    height: 48px
+    backgroundColor: "{colors.panel}"
+    padding: "0 {spacing.lg}"
+  side-column:
+    width: 360px
+    backgroundColor: "{colors.panel}"
+    padding: "{spacing.lg}"
+  step-tab:
+    typography: "{typography.data}"
+    height: 52px
+  board:
+    backgroundColor: "{colors.mat}"
+    grid: 10mm minor, 50mm major
+  button:
+    backgroundColor: "{colors.paper}"
     textColor: "{colors.ink}"
+    height: 38px
+    rounded: "{rounded.none}"
+  button-primary:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.paper}"
+  button-danger:
+    backgroundColor: "{colors.red}"
+    textColor: "{colors.paper}"
+  jog-button:
+    size: 44px
+  title-block:
+    width: 72mm
+    height: 21mm
+    backgroundColor: "{colors.paper}"
+    borderColor: "{colors.ink}"
+  log:
+    typography: "{typography.log}"
+    height: 96px
+    backgroundColor: "{colors.paper}"
 ---
 
 ## Overview
 
-The interface is a tool on the workbench, not a brand. It is operated next to a running plotter, often with one hand, sometimes from a tablet. Everything visible has a function: show state, trigger a command, show the result. There are no icons except the arrows for jogging, no illustrations, no animations.
+The subject is a pen plotter, which is a drawing instrument, so the interface borrows its language from the drafting table rather than from software dashboards: a green self-healing cutting mat as the ground, one white sheet on it, rulers along the sheet's edges, DIN-style lettering, and a title block in the corner of the sheet as on a technical drawing. The audience is one person at the workbench, sometimes operating from a tablet propped next to the machine. The page has one job: get a drawing from Inkscape onto paper correctly, then watch it plot.
 
-The screen is split in two. On the left the active wizard step with text, fields and buttons in a fixed width. On the right the preview, filling the rest of the window and always visible, because it is the only feedback about what the machine is doing. Below, the log as plain text of what was sent.
+Two areas. The side column carries the five steps and the active step's controls; it is the only place with forms. The board carries the mat, the sheet, the drawing and the pen, and is the only feedback about what the machine does. The log below the board shows the exact lines sent to the firmware.
 
 ## Colors
 
-Grey as the ground (`ground`), the paper as the only white, strokes in black. Only three signal colors, each with exactly one meaning: red is pen down (ink flowing) and error; blue is pen up; green is the origin. Pending strokes in muted blue-grey (`path-pending`), plotted strokes in black, so progress is readable in the preview without a bar. The machine frame is dashed and light grey because it is context, not an object.
+The mat green `mat` is the ground and the only saturated surface; it is context, so the machine frame and rulers on it are drawn in translucent white, never in ink. The sheet is the only pure white. Ink `ink` is for everything that has been drawn or is text. Pending strokes are `ink-faint` on the sheet so progress reads directly from the drawing without a bar.
 
-No gradients, no transparency, no hover colors. The active step in the bar is the pressed button, nothing more.
+Three signal colors with exactly one meaning each: `red` is pen down (ink flowing) and Stop; `blue` is pen up; `amber` is a pause or an origin that needs attention. Green is never a status, because the mat is green. No gradients, no shadows, no hover tints beyond the panel grey. Buttons are white on the panel; the primary action of a step is inverted (ink on white becomes white on ink).
 
 ## Typography
 
-System font in three sizes: step heading (`h1`), section within a step (`h2`), text and controls (`body`). Hints below fields in `note`, same size but muted. The log and everything that is G-code in `mono`. No small caps, no italics, no uppercase for emphasis. Labels are short nouns ("Up", "Down", "Home"), buttons are verbs or the target.
+Barlow, a DIN-derived grotesk, is the lettering of technical drawings and carries all labels, headings and prose. IBM Plex Mono carries every number that means something to the machine: coordinates, feed rates, Z heights, the step numbers, the log, and the values in the title block. The rule: if the value could be typed into the firmware, it is monospaced.
 
-Measurements always carry the unit in the label, never in the value: "Drawing (mm/min)" and then `2000`.
+Display size is used once per step for its name. Section labels are small uppercase with wide tracking, the only place tracking is used. No italics, no bold for emphasis in prose. Units always sit in the label or after the field, never inside the value.
 
 ## Layout
 
-Window 1180 × 760 by default, the preview grows with it. Left column fixed at 420 px so text does not reflow when the window grows. Elements stack with `sm` to `md` spacing; related fields share one row. The jog cross is a 3×3 grid, step size beside it, not below. Spacing between sections `lg`, above an `h2` `lg`, below it `xs`.
+Desktop: a 360 px side column and a board that takes the rest, with the log under the board. The five steps are tabs across the top of the column, numbered because they are a sequence; a tick marks a step whose physical outcome is verified (connected and homed, origin set). Controls stack in rows with `sm` gaps; a row is a label, a field, a unit. The jog cross is a 3×3 grid of 44 px buttons with step sizes beside it.
 
-Navigation always in the same place: Back and Next bottom left, Stop bottom right, reachable in every step. The step bar at the top is both progress indicator and jump target.
+Tablet and phone: one column with the board first at 56 vw height, then the step, then the log. All buttons grow to 44 px for touch.
 
 ## Elevation & Depth
 
-None. Everything sits on one plane. Dialogs (pause before a layer, errors) are the only elements above the window and come from the system.
+None. Everything is on one plane, as on a table. The pause dialog is the only element above the page, with an amber top rule.
 
 ## Shapes
 
-Rectangles without rounding, as the platform provides them. The paper has a 1 px frame in `frame`, the machine frame is dashed (4 on, 3 off). The pen cross is 16 px, 2 px thick. The origin is a circle of 3 mm at preview scale.
+Right angles everywhere; the platform's rounded corners are removed. Lines are 1 px in `line`. On the board, geometry is drawn in millimetres: the sheet has a 0.4 mm frame, the machine frame is dashed 4 on 3 off, the pen is a 3.2 mm circle with a cross, the origin a 2 mm amber circle. Strokes are drawn at the measured line width of the pen profile, so the preview looks like the plot will.
 
 ## Components
 
-Step bar: five numbered buttons, the active one pressed. To the right, position and pen state as text; far right, the status in bold.
+Top bar: brand, then status as a small uppercase chip whose fill changes with state (inverted while moving or plotting, amber when paused, red on error), the position in monospace, the pen state in its signal color, and the unit switch mm / cm / in as a segmented control.
 
-Jog cross: four arrow buttons around a home button, radio buttons for the step beside it. Below, a `note` with the keyboard shortcuts.
+Step tabs: five equal cells, the active one white. Content panel: heading, one line of guidance, then rows.
 
-Field with steppers: label, entry, buttons "−0.5" and "+0.5". Enter applies the value and executes it.
+Jog cross: arrows around a home glyph, step sizes in the current unit as small monospace buttons, one line of keyboard hints in `kbd` styling.
 
-Layer list: one row per layer, two checkboxes (Plot, Pause before), then name and path count. No icons, no colors.
+Layer table: three columns, Plot, Pause before, Layer with its path count in monospace.
 
-Progress: bar across the column width, below it "Path 143 / 812   42 %   remaining approx. 12:00 min".
+Board: mat with 10 mm grid and stronger 50 mm grid, machine frame when known, sheet with rulers along top and left in the current unit, strokes, pen, origin, title block.
 
-Log: six lines of `mono`, read-only, scrolls along. Sent lines prefixed with "> ", replies after them, `ok` omitted.
+Title block: the signature. A 72 × 21 mm box in the sheet's lower right corner, split by a vertical rule into keys (SHEET, SCALE, PEN, FEED, FILE) and monospace values. It is the live summary of every setting the plot depends on, drawn where a draughtsman would write it.
+
+Log: 96 px of monospace, sent lines prefixed with "> ", replies after them, "ok" omitted, errors prefixed with "! ".
 
 ## Do's and Don'ts
 
-Every color has a meaning, so no color for decoration. Never red for a normal button. No text in the preview except the paper and machine labels in `machine` grey. No tooltips as a substitute for a clear label. No confirmation dialogs for reversible actions; only Stop and Pause may interrupt. Values that move the machine always carry a unit in the label. If a web variant is built: same colors, same five steps, same shortcuts, and buttons at least 44 px tall for a finger.
+Keep the mat free of text except the machine label and ruler numbers. Never put a status in green. Never round a corner. Every number the machine will receive is monospaced; every number the person reads casually is not. A button says what happens ("Set origin here", "Trace paper frame, pen up"), not what the system does. Errors say what went wrong and what to do, in the interface's voice. Motion is limited to the strokes appearing on the sheet as they are plotted and the progress bar filling; nothing else moves. If a control needs a tooltip to be understood, rewrite its label instead.

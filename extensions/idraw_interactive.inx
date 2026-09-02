@@ -3,8 +3,9 @@
 <name>iDraw Interactive</name>
 <id>command.idraw.interactive</id>
 <dependency type="executable" location="extensions">idraw_interactive.py</dependency>
-<param name="info" type="description">Opens the control window with the current document.</param>
+<param name="info" type="description">Opens the control page in your browser with the current document. Inkscape stays usable.</param>
 <param name="sim" type="bool" gui-text="Simulation (no device needed)">false</param>
+<param name="lan" type="bool" gui-text="Allow other devices on the network (iPad)">false</param>
 <effect needs-live-preview="false">
 <object-type>all</object-type>
 <effects-menu>
