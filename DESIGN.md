@@ -154,7 +154,7 @@ components:
 
 ## Overview
 
-Two worlds meet on one screen and are kept deliberately distinct. The tool chrome (app bar, step tabs, forms, dialog, log) follows Material Design 3 so it behaves like every other app the operator uses on a Mac or an iPad: familiar buttons, text fields with floating labels, a pause dialog with the expected corner radius. The work surface (the board) stays a drafting table: a green cutting mat with a millimetre grid, a white sheet, rulers, and a title block drawn where a draughtsman writes it. The M3 colour scheme is seeded from that mat green, which is what ties the two together.
+Two worlds meet on one screen and are kept deliberately distinct. The tool chrome (app bar, step tabs, forms, dialog, log) follows Material Design 3 so it behaves like every other app the operator uses on a Mac or an iPad: familiar buttons, text fields with floating labels, a pause dialog with the expected corner radius. The work surface (the board) stays a drafting table: a green cutting mat with a millimetre grid, a white sheet, rulers, and a title block drawn where a draughtsman writes it. The chrome uses the drafting palette (light neutral panel, ink black, white controls), so both halves read as one workbench.
 
 The page has one job: get a drawing from Inkscape onto paper correctly, then watch it plot. The five steps are a real sequence, so they are numbered primary tabs.
 
@@ -168,7 +168,7 @@ Board colours stay outside the roles: pending strokes in `ink-faint`, plotted st
 
 ## Typography
 
-Roboto in the M3 type scale for the chrome: headline-medium for the step title, title-large for the app name, title-small for section labels (in primary colour), body-medium for guidance, label-large in every button. Roboto Mono for every number the machine will receive: coordinates in the app bar, tab numbers, jog step sizes, numeric text fields, the log. On the board the drafting faces remain (Barlow and IBM Plex Mono in millimetre sizes) because the board is a drawing, not a UI.
+Roboto in the M3 type scale for the chrome: headline-medium for the step title, title-large for the app name, label-medium uppercase for section labels (muted), body-medium for guidance, label-large in every button. Roboto Mono for every number the machine will receive: coordinates in the app bar, tab numbers, jog step sizes, numeric text fields, the log. On the board the drafting faces remain (Barlow and IBM Plex Mono in millimetre sizes) because the board is a drawing, not a UI.
 
 ## Layout
 
