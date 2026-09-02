@@ -60,7 +60,7 @@ button,input,select{font:inherit;color:inherit}
 .outlined{color:var(--md-primary);border:1px solid var(--md-outline)}
 .text{color:var(--md-primary);padding:0 12px}
 .danger{background:var(--md-error);color:var(--md-on-error)}
-.icon-btn{width:42px;height:42px;padding:0;border-radius:21px;font-size:20px}
+.icon-btn{width:40px;height:40px;padding:0;border-radius:20px;font-size:19px}
 .icon-btn.tonal{background:var(--md-surface-container-lowest);color:var(--md-on-surface);border:1px solid var(--md-outline)}
 
 /* segmented buttons */
@@ -75,13 +75,13 @@ button,input,select{font:inherit;color:inherit}
 .tf{display:flex;flex-direction:column;min-width:0}
 .tf label{position:relative;z-index:1;align-self:flex-start;margin:0 0 -8px 12px;padding:0 4px;background:var(--md-surface-container-low);
   font:400 12px/16px var(--f);letter-spacing:.4px;color:var(--md-on-surface-variant);pointer-events:none;white-space:nowrap}
-.tf input,.tf select{height:48px;padding:14px 14px 0;border:1px solid var(--md-outline);border-radius:4px;background:var(--md-surface-container-lowest);
+.tf input,.tf select{height:44px;padding:12px 14px 0;border:1px solid var(--md-outline);border-radius:4px;background:var(--md-surface-container-lowest);
   color:var(--md-on-surface);width:100%;outline:0;appearance:none;-webkit-appearance:none}
 .tf input.mono{font-family:var(--f-mono)}
 .tf:focus-within input,.tf:focus-within select{border:2px solid var(--md-primary);padding-left:15px}
 .tf:focus-within label{color:var(--md-primary)}
 .tf select{padding-top:12px;background-image:linear-gradient(45deg,transparent 50%,var(--md-on-surface-variant) 50%),linear-gradient(135deg,var(--md-on-surface-variant) 50%,transparent 50%);
-  background-position:calc(100% - 20px) 22px,calc(100% - 15px) 22px;background-size:5px 5px;background-repeat:no-repeat;padding-right:36px}
+  background-position:calc(100% - 20px) 20px,calc(100% - 15px) 20px;background-size:5px 5px;background-repeat:no-repeat;padding-right:36px}
 .tf.w{width:150px} .tf.grow{flex:1}
 
 /* checkbox, radio */
@@ -116,18 +116,18 @@ header{flex:0 0 64px}
 .split{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(440px,520px)}
 .boardwrap{display:flex;flex-direction:column;min-height:0;min-width:0}
 .board{flex:1 1 auto;min-height:0}
-.panel{overflow:auto;padding:12px 20px 16px;background:var(--md-surface-container-low);border-left:1px solid var(--md-outline-variant)}
-.grp{margin-bottom:6px}
+.panel{overflow:auto;padding:10px 20px 12px;background:var(--md-surface-container-low);border-left:1px solid var(--md-outline-variant)}
+.grp{margin-bottom:2px}
 .panel h1{font:400 20px/28px var(--f);letter-spacing:0;margin:0 0 2px}
 .hdr p{margin:0 0 4px}
-.panel h2{font:500 12px/16px var(--f);letter-spacing:.5px;text-transform:uppercase;color:var(--md-on-surface-variant);margin:6px 0 8px}
+.panel h2{font:500 12px/16px var(--f);letter-spacing:.5px;text-transform:uppercase;color:var(--md-on-surface-variant);margin:6px 0 6px}
 .panel p{margin:0 0 10px;color:var(--md-on-surface-variant)}
-.row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap}
 .card{background:var(--md-surface-container-lowest);border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:var(--e1)}
-.jog{display:grid;grid-template-columns:42px 42px 42px auto;grid-template-rows:42px 42px 42px;gap:4px;align-items:center;margin:2px 0 4px}
+.jog{display:grid;grid-template-columns:40px 40px 40px auto;grid-template-rows:40px 40px 40px;gap:4px;align-items:center;margin:2px 0 2px}
 .jog .sizes{grid-row:1/4;grid-column:4;padding-left:16px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 .jog .sizes .seg{flex-direction:column}
-.jog .sizes .seg .btn{border-radius:0;margin:-1px 0 0;height:36px;padding:0 14px;font-family:var(--f-mono);width:100px;justify-content:flex-start}
+.jog .sizes .seg .btn{border-radius:0;margin:-1px 0 0;height:34px;padding:0 14px;font-family:var(--f-mono);width:100px;justify-content:flex-start}
 .jog .sizes .seg .btn:first-child{border-radius:18px 18px 0 0;margin:0} .jog .sizes .seg .btn:last-child{border-radius:0 0 18px 18px}
 .hint{font:400 12px/18px var(--f);letter-spacing:.4px;color:var(--md-on-surface-variant);margin:2px 0 8px}
 .hint kbd{font-family:var(--f-mono);border:1px solid var(--md-outline-variant);border-radius:4px;padding:0 5px;background:var(--md-surface)}
@@ -318,8 +318,7 @@ function renderPanel() {
       + `<div class="grp wide" id="posBox"></div>`;
   } else if (step === 2) {
     h = hdr('Pen', 'Insert the pen. Lower it and adjust in 0.5 mm steps until it sits cleanly on the paper. Raise it and check that it clears the sheet.')
-      + grp('Profile', `<div class="row">${sel('prof', 'Profile', Object.keys(S.profiles), S.profile_name)}</div>
-        <div class="row">${tf('profName', 'Save as', S.profile_name, {cls: 'grow', mono: false})}<button class="btn outlined" id="profSave">Save</button></div>`)
+      + grp('Profile', `<div class="row">${sel('prof', 'Profile', Object.keys(S.profiles), S.profile_name)}${tf('profName', 'Save as', S.profile_name, {cls: 'grow', mono: false})}<button class="btn outlined" id="profSave">Save</button></div>`)
       + grp('Heights', `<div class="row">${tf('pen_up', 'Up', pr.pen_up, {suffix: 'mm'})}<button class="btn outlined" data-nz="pen_up,-0.5">−0.5</button><button class="btn outlined" data-nz="pen_up,0.5">+0.5</button></div>
         <div class="row">${tf('pen_down', 'Down', pr.pen_down, {suffix: 'mm'})}<button class="btn outlined" data-nz="pen_down,-0.5">−0.5</button><button class="btn outlined" data-nz="pen_down,0.5">+0.5</button></div>
         <div class="row"><button class="btn tonal" data-cmd="pen_up">Up</button><button class="btn tonal" data-cmd="pen_down">Down</button><button class="btn outlined" data-cmd="cycle">Cycle</button><button class="btn outlined" data-cmd="test_stroke">Test stroke</button></div>`)
