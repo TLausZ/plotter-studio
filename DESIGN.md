@@ -178,8 +178,8 @@ Used in code, comments and conversation.
 
 - App bar: the top bar with the name, status chip, position readout, pen state and unit switch.
 - Board: the green area on the left with the sheet, rulers, trace and title block. On it: the board tools (dark strip top-left: title block corner button, zoom slider) and the Sheet/Machine toggle top-right.
-- Splitter: the 6 px handle between board and console; drag resizes, double-click resets to the default (board 70 %), the height is remembered in the browser. Console minimum: two log lines plus the input line.
-- Console: below the board, made of the log and the input line with the ? button that opens the command reference dialog.
+- Splitter: the console's top edge, styled as an M3 bottom sheet drag handle (32 × 4 px pill, on-surface-variant at 40 %, full on hover, in a 20 px zone); drag resizes, double-click resets to the default (board 70 %), the height is remembered in the browser. Console minimum: two log lines plus the input line.
+- Console: below the board, a bottom sheet made of the log and, under a divider, the input line with the ? button that opens the command reference dialog.
 - Side column: the right column, made of the step tabs (1 Connect to 5 Plot), the step panel with the current step's groups, and the nav at the bottom with Back, Next, Stop.
 - Pause dialog: shown before a `!` layer.
 
