@@ -157,7 +157,7 @@ header{flex:0 0 56px}
 .stroke{fill:none;stroke:var(--ink-faint);stroke-linecap:round;stroke-linejoin:round}
 .stroke.done{stroke:var(--ink)}
 .stroke.out{stroke:var(--md-amber)}     /* leaves the sheet or the machine travel */
-.penmark.up,#trace .up{stroke:var(--pen-up)} .penmark.down,#trace .down{stroke:var(--pen-down)}
+.penmark.up,#trace .up,#trace .travel{stroke:var(--pen-up)} .penmark.down,#trace .down{stroke:var(--pen-down)}
 .ruler text{font-family:var(--f-draft-mono);fill:rgba(255,255,255,.75)}
 .ruler line{stroke:rgba(255,255,255,.55)}
 
@@ -575,13 +575,17 @@ function rulers(pw, ph) {
 // trace of manual moves (jog, console): blue pen up, red pen down; plot runs show their strokes instead
 const trace = [];
 function addTrace(a, b) {
-  if (!a || b.status === 'plotting' || (a.x === b.x && a.y === b.y)) return;
-  if (a.homed !== b.homed) { trace.length = 0; }
-  trace.push([a.x, a.y, b.x, b.y, a.z_up === false]);
+  if (!a) return;
+  if (a.homed !== b.homed || (a.status !== 'plotting' && b.status === 'plotting')) { trace.length = 0; }   // home or plot start
+  if (a.x === b.x && a.y === b.y) return;
+  if (b.status === 'plotting') {
+    if (a.z_up !== true) return;                 // pen down: the stroke itself shows it
+    trace.push([a.x, a.y, b.x, b.y, 'travel']);  // pen-up travel during a plot: dotted
+  } else trace.push([a.x, a.y, b.x, b.y, a.z_up === false ? 'down' : 'up']);
   if (trace.length > 2000) trace.shift();   // ponytail: ring of 2000 segments
   const g = $('trace'); if (g) g.innerHTML = traceHtml();
 }
-const traceHtml = () => trace.map(t => `<line x1="${t[0]}" y1="${t[1]}" x2="${t[2]}" y2="${t[3]}" class="${t[4] ? 'down' : 'up'}"/>`).join('');
+const traceHtml = () => trace.map(t => `<line x1="${t[0]}" y1="${t[1]}" x2="${t[2]}" y2="${t[3]}" class="${t[4]}"${t[4] === 'travel' ? ` stroke-dasharray="${px(1)} ${px(2.5)}"` : ''}/>`).join('');
 function renderPen() {
   const st = S.state, pen = $('pen'); if (!pen) return renderPreview();
   pen.setAttribute('transform', `translate(${st.x} ${st.y})`);
