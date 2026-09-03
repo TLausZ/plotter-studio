@@ -91,6 +91,102 @@ def check_paper_and_title_block(page):
     expect(page.locator("#preview .tb")).to_contain_text("A4 297.0 × 210.0 mm")
 
 
+def drag_splitter(page, dy):
+    box = page.locator("#splitter").bounding_box()
+    x, y = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+    page.mouse.move(x, y)
+    page.mouse.down()
+    page.mouse.move(x, y + dy, steps=5)
+    page.mouse.up()
+
+
+def check_splitter(page):
+    board, console = page.locator(".board"), page.locator(".console")
+    height = lambda loc: loc.evaluate("e => e.offsetHeight")
+    h0 = height(board)
+    drag_splitter(page, -150)
+    assert abs(height(board) - (h0 - 150)) <= 2
+    assert page.evaluate("() => +localStorage.boardH") == height(board)
+    drag_splitter(page, 2000)                     # console keeps two log lines plus the input line
+    assert height(console) >= 74
+    drag_splitter(page, -2000)                    # board keeps 120 px
+    assert height(board) >= 120
+    page.locator("#splitter").dblclick()          # reset to the default and forget the stored height
+    assert height(board) == h0
+    assert page.evaluate("() => localStorage.boardH") is None
+
+
+def check_zoom_and_pan(page):
+    svg = page.locator("#preview")
+    vb0 = [float(v) for v in svg.get_attribute("viewBox").split()]
+    zoom = page.locator("#zoom")
+    zoom.fill("6")                     # index 6 = 4x
+    expect(page.locator("#zoomlbl")).to_have_text("4×")
+    vb = [float(v) for v in svg.get_attribute("viewBox").split()]
+    assert abs(vb[2] - vb0[2] / 4) < 1e-6 and abs(vb[3] - vb0[3] / 4) < 1e-6
+    assert abs((vb[0] + vb[2] / 2) - (vb0[0] + vb0[2] / 2)) < 1e-6   # zoom keeps the centre
+    assert svg.evaluate("s => s.classList.contains('pan')")
+    box = svg.bounding_box()
+    cx, cy = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+    page.mouse.move(cx, cy)
+    page.mouse.down()
+    page.mouse.move(cx + 100, cy + 50, steps=5)
+    page.mouse.up()
+    vb2 = [float(v) for v in svg.get_attribute("viewBox").split()]
+    assert vb2[0] < vb[0] and vb2[1] < vb[1]   # dragging right and down shows what was left and above
+    zoom.fill("0")                     # 0.5x
+    expect(page.locator("#zoomlbl")).to_have_text("0.5×")
+    vb3 = [float(v) for v in svg.get_attribute("viewBox").split()]
+    assert abs(vb3[2] - vb0[2] * 2) < 1e-6
+    assert not svg.evaluate("s => s.classList.contains('pan')")
+    svg.dblclick()
+    expect(page.locator("#zoomlbl")).to_have_text("1×")
+    assert [float(v) for v in svg.get_attribute("viewBox").split()] == vb0
+
+
+def check_title_block_corner(page):
+    rect = page.locator("#preview .tb rect")
+    pw, ph = page.evaluate("() => S.paper")
+    def corner():
+        x, y, w, h = [float(rect.get_attribute(a)) for a in ("x", "y", "width", "height")]
+        return ("t" if y < ph / 2 else "b") + ("l" if x < pw / 2 else "r")
+    assert corner() == "br"            # default
+    btn = page.locator("#tbpos")
+    for icon, want in [("◰", "tl"), ("◳", "tr"), ("◲", "br"), ("◱", "bl"), ("◰", "tl")]:
+        btn.click()
+        expect(btn).to_have_text(icon)
+        assert corner() == want, (want, corner())
+    assert page.evaluate("() => localStorage.tbCorner") == "tl"
+    page.reload()
+    expect(page.locator("#status")).to_have_text("ready")
+    assert corner() == "tl"            # remembered
+    for _ in range(2):
+        btn.click()                    # back to br so the other checks see the default
+    expect(btn).to_have_text("◲")
+
+
+def check_paper_fields_and_orientation(page):
+    tab(page, 1)
+    page.select_option("#fmt", "A5")
+    expect(page.locator("#pw")).to_have_value("210.0")
+    expect(page.locator("#ph")).to_have_value("148.0")
+    expect(page.locator("#preview rect[fill='var(--paper)']").first).to_have_attribute("width", "210")
+    page.select_option("#orient", "portrait")
+    expect(page.locator("#pw")).to_have_value("148.0")
+    expect(page.locator("#ph")).to_have_value("210.0")
+    expect(page.locator("#preview rect[fill='var(--paper)']").first).to_have_attribute("height", "210")
+    page.select_option("#fmt", "Custom")
+    page.fill("#pw", "300")
+    page.fill("#ph", "200")
+    page.click("#paperApply")
+    expect(page.locator("#preview .tb")).to_contain_text("Custom 300.0 × 200.0 mm")
+    page.select_option("#orient", "portrait")     # Custom: the fields rule, orientation does not swap them
+    expect(page.locator("#preview .tb")).to_contain_text("Custom 300.0 × 200.0 mm")
+    page.select_option("#fmt", "A4")
+    page.select_option("#orient", "landscape")
+    expect(page.locator("#preview .tb")).to_contain_text("A4 297.0 × 210.0 mm")
+
+
 def check_units(page):
     page.click("#units button[data-unit=cm]")
     expect(page.locator("#pos")).to_contain_text("cm")
@@ -124,7 +220,8 @@ def check_stop_with_escape(page):
 
 
 CHECKS = [check_connect_and_home, check_steps_fit_without_scrolling, check_keyboard_jog_and_pen,
-          check_console, check_paper_and_title_block, check_units, check_plot_with_pause, check_stop_with_escape]
+          check_console, check_paper_and_title_block, check_paper_fields_and_orientation, check_units,
+          check_splitter, check_zoom_and_pan, check_title_block_corner, check_plot_with_pause, check_stop_with_escape]
 
 
 def main():
