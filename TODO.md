@@ -10,6 +10,10 @@ Tasks and ideas for iDraw Interactive. Move a line to Done when it is finished.
 
 ## Ideas
 
+- Log as a console: type GRBL/G-code commands by hand and send them.
+- Built-in GRBL command reference (list of commands with short explanations).
+- Watercolor and brush setup wizard: guides through placing paint wells and brushes, dipping and rinsing positions.
+
 - Resume a plot after abort (progress index is already reported).
 - Free positioning of the drawing with the mouse on the board.
 - Path sorting / hidden-line removal via `plot_optimizations.reorder` before load_svg.
