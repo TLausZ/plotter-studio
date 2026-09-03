@@ -1,8 +1,10 @@
-"""End-to-end test of the web UI: python3 test_idraw_e2e.py [--headed]
+"""End-to-end test of the web UI: python3 test_idraw_e2e.py [--headed] [name ...]
 
 Starts idraw_server with the simulator on a free port, drives the page with Playwright
 (Chromium, headless) and prints "ok". Needs: pip install playwright; playwright install chromium.
 Each check is one function; add a new check by writing check_<name>(page) and listing it in CHECKS.
+reset(page) runs before every check, so checks are independent of their order and a single one
+can be run by name: python3 test_idraw_e2e.py splitter zoom_and_pan
 """
 import os
 import re
@@ -23,10 +25,37 @@ def tab(page, i):
     page.locator("#steps li").nth(i).click()
 
 
+def reset(page):
+    """Ground state before every check: fresh page, no browser storage, mm, A4 landscape,
+    1:1, connected to the simulator, homed, pen up, standing at the origin."""
+    page.evaluate("() => localStorage.clear()")
+    page.reload()
+    expect(page.locator("#steps li")).to_have_count(5)
+    page.click("#units button[data-unit=mm]")
+    tab(page, 0)
+    if page.locator("#connBtn").text_content() != "Disconnect":
+        page.select_option("#port", "Simulation")
+        page.click("#connBtn")
+    expect(page.locator("#status")).to_have_text("ready")
+    page.click("button[data-cmd=home]")
+    expect(page.locator("#status")).to_have_text("ready", timeout=15000)
+    tab(page, 2)
+    page.click("button[data-cmd=pen_up]")
+    expect(page.locator("#penlbl")).to_have_text("pen up", timeout=10000)
+    tab(page, 1)
+    page.select_option("#fmt", "A4")
+    page.select_option("#orient", "landscape")
+    expect(page.locator("#preview .tb")).to_contain_text("A4 297.0 × 210.0 mm")
+    tab(page, 4)
+    page.click("button[data-pl='1:1']")
+    tab(page, 0)
+
+
 def check_connect_and_home(page):
     expect(page).to_have_title("iDraw Interactive")
+    page.click("#connBtn")                        # Disconnect
     expect(page.locator("#status")).to_have_text("disconnected")
-    page.click("#units button[data-unit=mm]")     # independent of the stored settings
+    expect(page.locator("#penlbl")).to_have_text("pen ?")
     page.select_option("#port", "Simulation")
     page.click("#connBtn")
     expect(page.locator("#status")).to_have_text("ready")
@@ -67,7 +96,7 @@ def check_console(page):
     cli.press("Enter")
     expect(page.locator("#pos")).to_have_text("X 10.0  Y 20.0 mm", timeout=10000)
     expect(page.locator("#log")).to_contain_text("> G1 X-20 Y-10 F3000")
-    expect(page.locator("#trace line")).to_have_count(4)   # three jog segments plus this one
+    expect(page.locator("#trace line")).to_have_count(1)
     cli.press("ArrowUp")
     expect(cli).to_have_value("G1 X-20 Y-10 F3000")
     cli.fill("")
@@ -160,9 +189,6 @@ def check_title_block_corner(page):
     page.reload()
     expect(page.locator("#status")).to_have_text("ready")
     assert corner() == "tl"            # remembered
-    for _ in range(2):
-        btn.click()                    # back to br so the other checks see the default
-    expect(btn).to_have_text("◲")
 
 
 def check_paper_fields_and_orientation(page):
@@ -182,17 +208,12 @@ def check_paper_fields_and_orientation(page):
     expect(page.locator("#preview .tb")).to_contain_text("Custom 300.0 × 200.0 mm")
     page.select_option("#orient", "portrait")     # Custom: the fields rule, orientation does not swap them
     expect(page.locator("#preview .tb")).to_contain_text("Custom 300.0 × 200.0 mm")
-    page.select_option("#fmt", "A4")
-    page.select_option("#orient", "landscape")
-    expect(page.locator("#preview .tb")).to_contain_text("A4 297.0 × 210.0 mm")
 
 
 def check_units(page):
     page.click("#units button[data-unit=cm]")
     expect(page.locator("#pos")).to_contain_text("cm")
     expect(page.locator("#preview .tb")).to_contain_text("29.70 × 21.00 cm")
-    page.click("#units button[data-unit=mm]")
-    expect(page.locator("#pos")).to_contain_text("mm")
 
 
 def check_plot_with_pause(page):
@@ -226,6 +247,9 @@ CHECKS = [check_connect_and_home, check_steps_fit_without_scrolling, check_keybo
 
 def main():
     headed = "--headed" in sys.argv
+    names = [a for a in sys.argv[1:] if not a.startswith("--")]
+    checks = [c for c in CHECKS if not names or c.__name__[6:] in names]
+    assert len(checks) == (len(names) or len(CHECKS)), "unknown check name in %s" % names
     settings = os.path.join(HERE, "idraw_interactive_settings.json")
     keep = open(settings, "rb").read() if os.path.exists(settings) else None
     httpd = idraw_server.serve(os.path.join(HERE, "idraw_demo.svg"), sim=True, port=0, open_browser=False)
@@ -236,7 +260,8 @@ def main():
             browser = pw.chromium.launch(headless=not headed)
             page = browser.new_page(viewport={"width": 1280, "height": 690})
             page.goto(base)
-            for check in CHECKS:
+            for check in checks:
+                reset(page)
                 check(page)
                 print("  " + check.__name__)
             browser.close()

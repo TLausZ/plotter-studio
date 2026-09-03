@@ -6,11 +6,11 @@ Logic, `python3 test_idraw_core.py`: axis mapping and G-code of a plot run, orig
 
 Server, `python3 test_idraw_server.py`: starts the server with the simulator on a free port and talks HTTP: snapshot with layers and strokes, connect, home, unit, placement, layer flags, jog, plot to the end, error on an unknown command.
 
-Browser, `python3 test_idraw_e2e.py`: starts the server with the simulator (40× faster) and drives the page in headless Chromium with Playwright (once: `pip install playwright`, `playwright install chromium`; `--headed` shows the browser). One function per check, in this order:
+Browser, `python3 test_idraw_e2e.py`: starts the server with the simulator (40× faster) and drives the page in headless Chromium with Playwright (once: `pip install playwright`, `playwright install chromium`; `--headed` shows the browser). `reset(page)` runs before every check: fresh page without browser storage, mm, A4 landscape, 1:1, connected to the simulator, homed, pen up. Checks are therefore independent of their order, and one or more can be run by name: `python3 test_idraw_e2e.py splitter zoom_and_pan`. One function per check:
 
 | Check | What it verifies |
 |---|---|
-| connect_and_home | status chip, unit switch, connect to Simulation, home, position 0/0 |
+| connect_and_home | disconnect, status chip, connect to Simulation, home, position 0/0, pen unknown |
 | steps_fit_without_scrolling | each of the five steps fits the panel at 1280 × 690 |
 | keyboard_jog_and_pen | keys 2 and arrows move 10 mm, Space toggles the pen, home symbol returns to origin |
 | console | hand-typed line updates position and trace, history with arrow up, reference dialog fills the input |
