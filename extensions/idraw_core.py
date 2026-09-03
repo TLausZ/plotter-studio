@@ -51,8 +51,8 @@ PAPER_FORMATS = {  # mm, landscape (width, height)
     "A4": (297, 210), "A5": (210, 148), "Letter": (279.4, 215.9),
 }
 MODELS = {  # travel in mm (x, y), values from the original idraw2_0_conf.py
-    "iDraw A1": (864, 594), "iDraw A0": (1189, 841), "iDraw A2": (594, 432),
-    "iDraw A3": (430, 297), "iDraw A4": (300, 210),
+    "iDraw A4": (300, 210), "iDraw A3": (430, 297), "iDraw A2": (594, 432),
+    "iDraw A1": (864, 594), "iDraw A0": (1189, 841),
 }
 Z_RATE = 5000  # feed rate for Z moves (mm/min), as in the original
 
