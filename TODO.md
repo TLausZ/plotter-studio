@@ -10,6 +10,7 @@ Tasks and ideas for iDraw Interactive. Move a line to Done when it is finished.
 
 ## Ideas
 
+- Tablet: test on the iPad and optimise touch handling (splitter hit area ~24 px, `touch-action: none` on splitter, board and zoom slider, maybe pinch zoom).
 - Watercolor and brush setup wizard: guides through placing paint wells and brushes, dipping and rinsing positions.
 
 - Resume a plot after abort (progress index is already reported).
