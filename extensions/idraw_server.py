@@ -330,6 +330,7 @@ class Session:
             if name and name not in self.test_files():
                 return {"error": "Unknown test drawing."}
             self.test_file = name
+            self.progress = None                 # the old plot's progress belongs to the old drawing
             if name:
                 self.load_svg(os.path.join(self.TESTS_DIR, name))
             elif self.svg_path:

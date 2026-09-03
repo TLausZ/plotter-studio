@@ -278,7 +278,11 @@ async function cmd(name, args) {
 }
 function connectEvents() {
   const es = new EventSource('/api/events');
-  es.addEventListener('snapshot', e => { S = JSON.parse(e.data); done = S.progress ? S.progress.i : 0; renderAll(); });
+  es.addEventListener('snapshot', e => {
+    const prev = S; S = JSON.parse(e.data); done = S.progress ? S.progress.i : 0;
+    if (prev && (prev.svg_name !== S.svg_name || prev.test_file !== S.test_file)) trace.length = 0;   // another drawing: old journey is meaningless
+    renderAll();
+  });
   es.addEventListener('state', e => { if (!S) return; const prev = S.state; S.state = JSON.parse(e.data); addTrace(prev, S.state); renderReadout(); renderPen(); if (step === 2) syncPenFields(); });
   es.addEventListener('log', e => logLine(JSON.parse(e.data)));
   es.addEventListener('progress', e => { const p = JSON.parse(e.data); done = p.i; S.progress = p; renderProgress(); markDone(); });
