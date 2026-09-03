@@ -24,10 +24,14 @@ def svg(name, strokes):
             '%s  </g>\n</svg>\n' % (PAGE[0], PAGE[1], PAGE[0], PAGE[1], name, paths))
 
 
+FILES = {"Line width": "A4-landscape-line-width.svg", "Speed": "A4-landscape-speed-rows.svg",
+         "Accuracy": "A4-landscape-accuracy.svg", "Pen height": "A4-landscape-pen-height.svg"}
+
+
 def main():
     for name, fn in core.TESTS.items():
         strokes = fn(30, 30)                       # 30 mm from the sheet corner, like a plot from the origin
-        path = os.path.join(HERE, "test-%s.svg" % name.lower().replace(" ", "-"))
+        path = os.path.join(HERE, FILES[name])
         open(path, "w").write(svg(name, strokes))
         print(path, len(strokes), "strokes")
 
