@@ -281,6 +281,67 @@ def bbox(paths):
     return min(xs), min(ys), max(xs), max(ys)
 
 
+# --- single-stroke text (Hershey Sans 1-stroke, SVG font in this folder; see HersheySans1-LICENSE.txt)
+_FONT = None
+FONT_CAP = 662.0    # cap height in font units (top of "A")
+
+
+def _font():
+    """{char: (advance, [[(x, y), ...], ...])} in font units, y up. Parsed once."""
+    global _FONT
+    if _FONT is None:
+        import html
+        text = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "HersheySans1.svg"), encoding="utf-8").read()
+        _FONT = {}
+        for m in re.finditer(r'<glyph unicode="([^"]+)"[^>]*horiz-adv-x="([\d.]+)"(?:[^>]*d="([^"]*)")?', text):
+            paths, cur = [], None
+            for c, x, y in re.findall(r"([ML])\s*([-\d.]+)\s+([-\d.]+)", m.group(3) or ""):
+                if c == "M":
+                    cur = [(float(x), float(y))]
+                    paths.append(cur)
+                else:
+                    cur.append((float(x), float(y)))
+            _FONT[html.unescape(m.group(1))] = (float(m.group(2)), paths)
+    return _FONT
+
+
+def text_width(text, height):
+    f = _font()
+    return sum(f.get(ch, f["?"])[0] for ch in text) * height / FONT_CAP
+
+
+def text_strokes(text, x, y, height):
+    """Text as polylines in mm. (x, y) is the left end of the baseline, height the cap height."""
+    f, k, out = _font(), height / FONT_CAP, []
+    for ch in text:
+        adv, paths = f.get(ch, f["?"])
+        for p in paths:
+            out.append([(x + px * k, y - py * k) for px, py in p])
+        x += adv * k
+    return out
+
+
+TB_W, TB_H, TB_MARGIN = 72.0, 21.0, 6.0
+
+
+def title_block_strokes(paper, corner, rows):
+    """The drawing's title block as polylines in document mm: frame, divider, one (label, value)
+    row per entry. corner: tl, tr, br, bl. Values longer than the cell are cut."""
+    pw, ph = paper
+    x = pw - TB_W - TB_MARGIN if corner[1] == "r" else TB_MARGIN
+    y = ph - TB_H - TB_MARGIN if corner[0] == "b" else TB_MARGIN
+    col, rh = 13.0, TB_H / len(rows)
+    out = [[(x, y), (x + TB_W, y), (x + TB_W, y + TB_H), (x, y + TB_H), (x, y)],
+           [(x + col, y), (x + col, y + TB_H)]]
+    for i, (label, value) in enumerate(rows):
+        base = y + (i + 0.78) * rh
+        out += text_strokes(label, x + 1.5, base, 1.6)
+        while value and text_width(value, 2.2) > TB_W - col - 3:
+            value = value[:-1]
+        out += text_strokes(value, x + col + 1.5, base, 2.2)
+    return out
+
+
 def place(layers, page, paper, mode, margin=10.0):
     """Put the drawing (page size `page`) onto the paper. Returns new layers with moved paths.
 

@@ -19,7 +19,7 @@ pen_down, pen_toggle, nudge_z(delta), set_origin, release_motors, lock_motors,
 motors_off, frame(kind=paper|drawing), test(name), test_stroke, cycle, plot, stop,
 resume, set_profile(fields), load_profile(name), save_profile(name), set_paper(w,h,
 name,orient), set_pos_mode(mode), set_placement(mode), set_layer(index,enabled,pause),
-set_model(name), set_unit(unit), reset.
+set_model(name), set_unit(unit), set_title_block(corner: tl|tr|br|bl|off), reset.
 
 Session keeps what the UI needs beyond the Plotter: the loaded SVG (page, layers),
 paper, placement, unit, profiles. Everything moving the machine goes through
@@ -57,6 +57,8 @@ class Session:
         self.paper_name = self.settings.get("paper_name", "A4")
         self.orient = self.settings.get("orient", "landscape")
         self.pos_mode = self.settings.get("pos_mode", "jog")
+        self.tb_corner = self.settings.get("tb_corner", "br")   # title block: tl, tr, br, bl or off
+        self.tb_layer = core.Layer("Title block", [])          # virtual last layer; enabled = plot it
         self.placement = "1:1"
         self.page = (297.0, 210.0)
         self.layers = []
@@ -107,7 +109,29 @@ class Session:
             self.svg_error = str(err)
 
     def placed(self):
-        return core.place(self.layers, self.page, self.paper, self.placement)
+        """Placed SVG layers plus the title block as a virtual last layer (when shown)."""
+        layers = core.place(self.layers, self.page, self.paper, self.placement)
+        if self.tb_corner == "off":
+            return layers
+        self.tb_layer.paths = core.title_block_strokes(self.paper, self.tb_corner, self.tb_rows())
+        return layers + [self.tb_layer]
+
+    def all_layers(self):
+        return self.layers + ([] if self.tb_corner == "off" else [self.tb_layer])
+
+    def tb_rows(self):
+        """Label/value rows of the title block, ASCII only (single-stroke font)."""
+        k, d = {"mm": 1, "cm": 10, "in": 25.4}[self.unit], {"mm": 1, "cm": 2, "in": 2}[self.unit]
+        f = lambda mm: "%.*f" % (d, mm / k)
+        pr = self.plotter.profile
+        if self.placement == "fit":
+            sc = min((self.paper[0] - 20) / self.page[0], (self.paper[1] - 20) / self.page[1])
+            scale = "1:%.2f (%.2fx)" % (1 / sc, sc)
+        else:
+            scale = "1:1"
+        return [("SHEET", "%s %s x %s %s" % (self.paper_name, f(self.paper[0]), f(self.paper[1]), self.unit)),
+                ("SCALE", scale), ("PEN", "%s - %s mm" % (self.profile_name, pr["line_width"])),
+                ("FEED", "%s / %s mm/min" % (pr["feed_draw"], pr["feed_travel"])), ("FILE", self.svg_name)]
 
     def state_dict(self):
         p = self.plotter
@@ -127,7 +151,8 @@ class Session:
             "orient": self.orient, "pos_mode": self.pos_mode, "placement": self.placement,
             "page": self.page, "svg_name": self.svg_name, "svg_error": self.svg_error,
             "layers": [{"name": l.name, "enabled": l.enabled, "pause": l.pause, "n": len(l.paths)}
-                       for l in self.layers],
+                       for l in self.all_layers()],
+            "tb_corner": self.tb_corner,
             "strokes": [{"pts": s[0], "layer": s[3]} for s in strokes],
             "ports": ["Simulation"] + core.SerialTransport.list_ports(),
             "models": list(core.MODELS), "formats": core.PAPER_FORMATS,
@@ -138,6 +163,7 @@ class Session:
     def save(self):
         self.settings.update(unit=self.unit, paper=self.paper, paper_name=self.paper_name,
                              orient=self.orient, pos_mode=self.pos_mode, model=self.plotter.model,
+                             tb_corner=self.tb_corner,
                              last_profile=self.profile_name)
         core.save_settings(self.settings)
 
@@ -265,13 +291,19 @@ class Session:
             self.placement = a.get("mode", "1:1")
             return {"ok": True}
         if cmd == "set_layer":
-            i = int(a.get("index", -1))
-            if not 0 <= i < len(self.layers):
+            i, layers = int(a.get("index", -1)), self.all_layers()
+            if not 0 <= i < len(layers):
                 return {"error": "Unknown layer."}
             if "enabled" in a:
-                self.layers[i].enabled = bool(a["enabled"])
+                layers[i].enabled = bool(a["enabled"])
             if "pause" in a:
-                self.layers[i].pause = bool(a["pause"])
+                layers[i].pause = bool(a["pause"])
+            return {"ok": True}
+        if cmd == "set_title_block":
+            if a.get("corner") not in ("tl", "tr", "br", "bl", "off"):
+                return {"error": "Unknown corner."}
+            self.tb_corner = a["corner"]
+            self.save()
             return {"ok": True}
         if cmd == "set_model":
             if a.get("name") not in core.MODELS:
@@ -286,6 +318,7 @@ class Session:
             self.pos_mode, self.placement = "jog", "1:1"
             for lyr in self.layers:
                 lyr.enabled, lyr.pause = not lyr.skip, lyr.name.startswith("!")
+            self.tb_corner, self.tb_layer.enabled = "br", True
             p.origin_set = False
             self.save()
             p.emit("state", None)
@@ -365,7 +398,8 @@ class Handler(BaseHTTPRequestHandler):
         result = self.session.command(args)
         # settings commands change what the preview shows; push a fresh snapshot
         if args.get("cmd") in ("set_paper", "set_placement", "set_layer", "load_profile",
-                               "set_unit", "set_pos_mode", "connect", "disconnect", "set_model"):
+                               "set_unit", "set_pos_mode", "connect", "disconnect", "set_model",
+                               "set_title_block", "save_profile", "reset"):
             self.session.broadcast("snapshot", self.session.snapshot())
         self._json(result)
 

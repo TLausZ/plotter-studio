@@ -20,6 +20,7 @@ inkscape-extension/
     idraw_interactive.py             Inkscape entry point: copies the document, starts the server detached, returns
     idraw_interactive.inx            menu entry Extensions > iDraw > iDraw Interactive
     idraw_demo.svg                   example with three layers (normal, !-pause, %-notes)
+    HersheySans1.svg                 single-stroke font for the plotted title block (Hershey Fonts, see HersheySans1-LICENSE.txt)
     test_idraw_core.py               self-test for idraw_core
     test_idraw_server.py             self-test for the server (simulator, no browser)
     test_idraw_e2e.py                end-to-end test of the web UI with Playwright (simulator, headless Chromium)
@@ -58,7 +59,7 @@ cp extensions/idraw_core.py extensions/idraw_server.py extensions/idraw_web.html
 
 Restart Inkscape, open a document, Extensions > iDraw > iDraw Interactive. The model defaults to iDraw A4; pick yours in step 1 (Connect), it is remembered. Tick "Simulation" for a dry run, "Allow other devices" for the iPad. The extension returns at once; Inkscape stays usable and the SVG is not modified. Run the extension again to load a changed drawing (it starts a second server on the next free port only if the first was closed; close the old browser tab first).
 
-Keyboard on the page: arrow keys move the carriage, 1/2/3 set the step, Space toggles the pen, Shift+Up/Down shifts the current pen height by 0.5 mm and writes it into the profile, Esc stops. Keys are ignored while a field has focus. The input line under the log sends a hand-typed G-code or `$` command as is; the reply appears in the log (position is not tracked after hand-typed moves, run Home to resync). The unit switch (mm, cm, in) changes the readout, the paper fields, the jog steps and the rulers; everything is stored in mm. Reset in the app bar puts view, paper, placement, layers and origin back to the defaults after a confirmation; saved pen profiles and the connection stay.
+Keyboard on the page: arrow keys move the carriage, 1/2/3 set the step, Space toggles the pen, Shift+Up/Down shifts the current pen height by 0.5 mm and writes it into the profile, Esc stops. Keys are ignored while a field has focus. The input line under the log sends a hand-typed G-code or `$` command as is; the reply appears in the log (position is not tracked after hand-typed moves, run Home to resync). The unit switch (mm, cm, in) changes the readout, the paper fields, the jog steps and the rulers; everything is stored in mm. The title block (sheet, scale, pen, feed, file) is plotted as a last layer "Title block" in single-stroke text; untick it in the Plot step or switch it off with the corner button on the board. Reset in the app bar puts view, paper, placement, layers and origin back to the defaults after a confirmation; saved pen profiles and the connection stay.
 
 ## Architecture
 

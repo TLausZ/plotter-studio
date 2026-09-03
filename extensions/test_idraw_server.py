@@ -33,8 +33,10 @@ def main():
     base = "http://127.0.0.1:%d" % httpd.server_address[1]
 
     snap = call(base + "/api/snapshot")
-    assert [l["name"] for l in snap["layers"]] == ["1 Frame", "!2 Detail red"], snap["layers"]
-    assert len(snap["strokes"]) == 8
+    assert [l["name"] for l in snap["layers"]] == ["1 Frame", "!2 Detail red", "Title block"], snap["layers"]
+    assert len([s for s in snap["strokes"] if s["layer"] < 2]) == 8
+    assert call(base + "/api/cmd", {"cmd": "set_title_block", "corner": "off"}) == {"ok": True}
+    assert len(call(base + "/api/snapshot")["strokes"]) == 8
     assert call(base + "/api/cmd", {"cmd": "connect", "port": "Simulation"}) == {"ok": True}
     assert call(base + "/api/cmd", {"cmd": "home"}) == {"ok": True}
     st = wait_idle(base)
@@ -47,7 +49,7 @@ def main():
     assert call(base + "/api/cmd", {"cmd": "plot"}) == {"ok": True}
     st = wait_idle(base, 120)
     snap = call(base + "/api/snapshot")
-    assert snap["progress"]["i"] == 8 and snap["unit"] == "cm", snap["progress"]
+    assert snap["progress"]["i"] == 8 and snap["unit"] == "cm", snap["progress"]   # title block off
     assert st["status"] == "ready" and abs(st["x"]) < 1e-6
     assert "error" in call(base + "/api/cmd", {"cmd": "nonsense"})
     httpd.shutdown()

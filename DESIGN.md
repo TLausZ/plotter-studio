@@ -146,6 +146,7 @@ components:
   title-block:
     width: 72mm
     height: 21mm
+    font: Hershey Sans 1-stroke, labels 1.6mm, values 2.2mm cap height
   log:
     typography: "{typography.log}"
     height: remaining column below the board (board takes 70 %)
@@ -186,7 +187,7 @@ Used in code, comments and conversation.
 ### Arrangement
 
 
-Top app bar 56 px with the name on the left and, on the right, the status chip, the position readout, the pen state and a segmented unit switch (mm, cm, in). Below it the height is split: the board on the left takes all remaining width (70 % of the column, the log below it takes the rest), the side column on the right is 440 to 520 px wide. The side column is one unit: the five step tabs at its top, the step panel with the step's groups stacked, and Back, Next, Stop as its footer. The Sheet/Machine view toggle floats in the board's top-right corner; a translucent dark strip in the top-left holds the board tools: a corner button (◰ ◳ ◲ ◱) cycles the title block through the four sheet corners and remembers the choice in the browser. Below it a vertical zoom slider snaps to 0.5× to 8× of the fitted view; above 1× the board can be dragged to pan, a double-click resets zoom and pan. With a 1280 px window the board is about 760 px wide, close to the aspect of a landscape sheet, so the sheet fills it. Every step fits the panel without scrolling at 1280 × 690 CSS px.
+Top app bar 56 px with the name on the left and, on the right, the status chip, the position readout, the pen state and a segmented unit switch (mm, cm, in). Below it the height is split: the board on the left takes all remaining width (70 % of the column, the log below it takes the rest), the side column on the right is 440 to 520 px wide. The side column is one unit: the five step tabs at its top, the step panel with the step's groups stacked, and Back, Next, Stop as its footer. The Sheet/Machine view toggle floats in the board's top-right corner; a translucent dark strip in the top-left holds the board tools: a corner button (◲ ◱ ◰ ◳ ▢) cycles the title block through the four sheet corners and off; the choice is a server setting. The title block is plotted: it is a virtual last layer "Title block" in the Plot step, drawn in the single-stroke Hershey Sans font at a fixed 72 × 21 mm, so board and paper show the same thing. Below it a vertical zoom slider snaps to 0.5× to 8× of the fitted view; above 1× the board can be dragged to pan, a double-click resets zoom and pan. With a 1280 px window the board is about 760 px wide, close to the aspect of a landscape sheet, so the sheet fills it. Every step fits the panel without scrolling at 1280 × 690 CSS px.
 
 The board's view fits the sheet by default (rulers and a thin mat margin around it); the Machine toggle zooms out to the whole travel range. All board labels (rulers, title block, machine label, pen cross) are sized in screen pixels and converted to millimetres at render time, so they stay legible at every zoom.
 
@@ -214,7 +215,7 @@ Dialog: pause before a layer, headline, body, text Stop and filled Continue.
 
 Linear progress: 4 px track in surface-container-highest, primary indicator, with a monospace readout below.
 
-Board: unchanged from the drafting design: mat, machine frame, sheet, rulers in the current unit, strokes at the measured line width, pen cross, origin, title block.
+Board: unchanged from the drafting design: mat, machine frame, sheet, rulers in the current unit, strokes at the measured line width, pen cross, origin, title block (as strokes, since it is plotted).
 
 ## Do's and Don'ts
 

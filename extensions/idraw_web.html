@@ -161,8 +161,6 @@ header{flex:0 0 56px}
 .penmark.up,#trace .up{stroke:var(--pen-up)} .penmark.down,#trace .down{stroke:var(--pen-down)}
 .ruler text{font-family:var(--f-draft-mono);fill:rgba(255,255,255,.75)}
 .ruler line{stroke:rgba(255,255,255,.55)}
-.tb text{font-family:var(--f-draft);fill:var(--ink)} .tb .k{fill:var(--ink-muted)}
-.tb .v{font-family:var(--f-draft-mono)} .tb rect,.tb line{stroke:var(--ink);fill:none}
 
 /* log */
 .console{flex:1 1 auto;min-height:74px;display:flex;flex-direction:column;position:relative;background:var(--md-surface-container-low)}
@@ -500,8 +498,8 @@ $('resetBtn').onclick = () => $('resetDlg').showModal();
 $('resetCancel').onclick = () => $('resetDlg').close();
 $('resetGo').onclick = async () => { await cmd('reset'); try { localStorage.clear(); } catch (e) {} location.reload(); };
 // title block corner cycles tl > tr > br > bl; the icon shows the current corner
-const TB_CORNERS = ['tl', 'tr', 'br', 'bl'], TB_ICONS = {tl: '◰', tr: '◳', br: '◲', bl: '◱'};
-let tbCorner = 'br'; try { tbCorner = localStorage.tbCorner || tbCorner; } catch (e) {}
+// title block corner: server setting, cycles br > bl > tl > tr > off; the icon shows the current state
+const TB_CORNERS = ['br', 'bl', 'tl', 'tr', 'off'], TB_ICONS = {tl: '◰', tr: '◳', br: '◲', bl: '◱', off: '▢'};
 let pxPerMm = 3;
 const ZOOM = [0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8];   // slider snaps to these factors relative to the fitted view
 let zoomIdx = 2, panX = 0, panY = 0;                // pan in mm
@@ -536,12 +534,12 @@ function renderPreview() {
   g += rulers(pw, ph);
   g += `<g id="strokes" stroke-width="${lw}">` + S.strokes.map((s, i) =>
     `<path class="stroke ${i < done ? 'done' : ''}" d="M${s.pts.map(p => p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join('L')}"/>`).join('') + '</g>';
-  g += titleBlock(pw, ph);
   g += `<circle cx="0" cy="0" r="${px(5)}" fill="none" stroke="var(--origin)" stroke-width="${px(1.5)}"/>`;
   g += `<g id="trace" class="penmark" stroke-width="${px(1)}" stroke-dasharray="${px(3)} ${px(3)}">${traceHtml()}</g>`;
   g += `<g id="pen" class="penmark ${st.z_up === false ? 'down' : 'up'}" transform="translate(${st.x} ${st.y})" stroke-width="${px(1.5)}"><circle r="${px(8)}" fill="none"/><line x1="${-px(14)}" x2="${px(14)}"/><line y1="${-px(14)}" y2="${px(14)}"/></g>`;
   svg.innerHTML = g;
   $('fitseg').hidden = !st.bounds_known;
+  $('tbpos').textContent = TB_ICONS[S.tb_corner] || '▢';
   $('fitseg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.fit === 'machine') === fitMachine));
 }
 function rulers(pw, ph) {
@@ -561,20 +559,6 @@ function rulers(pw, ph) {
     if (major && v > 0 && k % every === 0) h += `<text x="${-gap - t2 - px(2)}" y="${v + px(3)}" text-anchor="end">${lab(v)}</text>`;
   }
   return h + `<text x="${-gap - t2 - px(2)}" y="${-gap - t2 - px(2)}" text-anchor="end">${unit}</text></g>`;
-}
-function titleBlock(pw, ph) {
-  // The drawing's title block in the sheet's lower right corner, as on a technical drawing. Sized in screen pixels.
-  const st = S.state, pr = st.profile;
-  const W = Math.min(px(230), pw * 0.45), H = W * 0.3, m = px(6);
-  const x = tbCorner[1] === 'r' ? pw - W - m : m, y = tbCorner[0] === 'b' ? ph - H - m : m;
-  const scale = S.placement === 'fit' ? (Math.min((S.paper[0] - 20) / S.page[0], (S.paper[1] - 20) / S.page[1])).toFixed(2) : '1:1';
-  const rows = [['SHEET', `${S.paper_name} ${toU(S.paper[0])} × ${toU(S.paper[1])} ${u()}`], ['SCALE', scale === '1:1' ? '1:1' : `1:${(1 / scale).toFixed(2)} (${scale}×)`],
-    ['PEN', `${S.profile_name} · ${pr.line_width} mm`], ['FEED', `${pr.feed_draw} / ${pr.feed_travel} mm/min`], ['FILE', S.svg_name]];
-  const fk = H / rows.length * 0.42, fv = H / rows.length * 0.55, col = W * 0.18;
-  let h = `<g class="tb" stroke-width="${px(1)}"><rect x="${x}" y="${y}" width="${W}" height="${H}" fill="var(--paper)"/>`;
-  rows.forEach((r, i) => { const yy = y + (i + 0.72) * H / rows.length; h += `<text class="k" font-size="${fk}" x="${x + W * 0.02}" y="${yy}">${r[0]}</text><text class="v" font-size="${fv}" x="${x + col}" y="${yy}">${esc(r[1])}</text>`; });
-  h += `<line x1="${x + col - W * 0.02}" y1="${y}" x2="${x + col - W * 0.02}" y2="${y + H}"/></g>`;
-  return h;
 }
 // trace of manual moves (jog, console): blue pen up, red pen down; plot runs show their strokes instead
 const trace = [];
@@ -623,8 +607,7 @@ window.addEventListener('resize', () => S && renderPreview());
   sp.ondblclick = () => { set(0); try { delete localStorage.boardH; } catch (e) {} };
 }
 $('fitseg').querySelectorAll('button').forEach(b => b.onclick = () => { fitMachine = b.dataset.fit === 'machine'; renderPreview(); });
-$('tbpos').textContent = TB_ICONS[tbCorner];
-$('tbpos').onclick = () => { tbCorner = TB_CORNERS[(TB_CORNERS.indexOf(tbCorner) + 1) % 4]; $('tbpos').textContent = TB_ICONS[tbCorner]; try { localStorage.tbCorner = tbCorner; } catch (e) {} renderPreview(); };
+$('tbpos').onclick = () => cmd('set_title_block', {corner: TB_CORNERS[(TB_CORNERS.indexOf(S.tb_corner) + 1) % TB_CORNERS.length]});
 connectEvents();
 </script>
 </body>

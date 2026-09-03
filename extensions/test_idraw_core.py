@@ -61,6 +61,21 @@ def test_raw_tracking():
     p.raw("$H"); assert p.homed and p.motors_free is False
 
 
+def test_text_and_title_block():
+    assert core.text_width("AB", 2.0) > core.text_width("A", 2.0) > 0
+    a = core.text_strokes("A", 10, 20, 2.0)
+    ys = [y for p in a for _, y in p]
+    assert abs(max(ys) - 20) < 1e-6 and abs(min(ys) - 18) < 1e-6      # baseline at y, cap height 2 mm
+    assert core.text_strokes("\u2603", 0, 0, 1) == core.text_strokes("?", 0, 0, 1)   # unknown glyph -> ?
+    rows = [("SHEET", "A4 297.0 x 210.0 mm"), ("FILE", "x" * 80)]
+    tb = core.title_block_strokes((297, 210), "br", rows)
+    xs = [x for p in tb for x, _ in p]; ys = [y for p in tb for _, y in p]
+    assert 297 - 78 - 1e-6 <= min(xs) and max(xs) <= 297 - 6 + 1e-6    # inside the block, right corner
+    assert 210 - 27 - 1e-6 <= min(ys) and max(ys) <= 210 - 6 + 1e-6
+    tl = core.title_block_strokes((297, 210), "tl", rows)
+    assert min(x for p in tl for x, _ in p) >= 6 - 1e-6 and min(y for p in tl for _, y in p) >= 6 - 1e-6
+
+
 def test_place_and_tests():
     lyr = core.Layer("a", [[(0, 0), (297, 210)]])
     fit = core.place([lyr], (297, 210), (420, 297), "fit")[0].paths[0]
@@ -77,5 +92,6 @@ if __name__ == "__main__":
     test_mapping_and_plot()
     test_origin_and_stop()
     test_raw_tracking()
+    test_text_and_title_block()
     test_place_and_tests()
     print("ok")

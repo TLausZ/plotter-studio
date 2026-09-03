@@ -32,6 +32,12 @@ def click_cmd(page, selector):
         page.click(selector)
 
 
+def wait_paper(page, name, w, h):
+    """Wait until the page's snapshot shows this paper (name and size in mm)."""
+    page.wait_for_function("([n, w, h]) => S && S.paper_name === n && Math.abs(S.paper[0] - w) < 1e-6 && Math.abs(S.paper[1] - h) < 1e-6",
+                           arg=[name, w, h])
+
+
 def wait_idle(page, timeout=15.0):
     """Wait until the plotter's worker has finished (the status chip alone can lag or still say ready)."""
     t0 = time.time()
@@ -60,7 +66,7 @@ def reset(page):
     tab(page, 1)
     page.select_option("#fmt", "A4")
     page.select_option("#orient", "landscape")
-    expect(page.locator("#preview .tb")).to_contain_text("A4 297.0 × 210.0 mm")
+    wait_paper(page, "A4", 297, 210)
     tab(page, 4)
     page.click("button[data-pl='1:1']")
     tab(page, 0)
@@ -127,12 +133,12 @@ def check_console(page):
 def check_paper_and_title_block(page):
     tab(page, 1)
     page.select_option("#fmt", "A3")
-    expect(page.locator("#preview .tb")).to_contain_text("A3 420.0 × 297.0 mm")
+    wait_paper(page, "A3", 420, 297)
     page.select_option("#orient", "portrait")
-    expect(page.locator("#preview .tb")).to_contain_text("A3 297.0 × 420.0 mm")
+    wait_paper(page, "A3", 297, 420)
     page.select_option("#fmt", "A4")
     page.select_option("#orient", "landscape")
-    expect(page.locator("#preview .tb")).to_contain_text("A4 297.0 × 210.0 mm")
+    wait_paper(page, "A4", 297, 210)
 
 
 def drag_splitter(page, dy):
@@ -189,21 +195,34 @@ def check_zoom_and_pan(page):
 
 
 def check_title_block_corner(page):
-    rect = page.locator("#preview .tb rect")
-    pw, ph = page.evaluate("() => S.paper")
-    def corner():
-        x, y, w, h = [float(rect.get_attribute(a)) for a in ("x", "y", "width", "height")]
-        return ("t" if y < ph / 2 else "b") + ("l" if x < pw / 2 else "r")
-    assert corner() == "br"            # default
+    """The title block is a server setting and a virtual last layer; the board shows it as strokes."""
     btn = page.locator("#tbpos")
-    for icon, want in [("◱", "bl"), ("◰", "tl"), ("◳", "tr"), ("◲", "br"), ("◱", "bl")]:   # cycle tl > tr > br > bl
+    tb_layer = page.locator("#panel tr", has_text="Title block")
+    def corner():
+        pw, ph = page.evaluate("() => S.paper")
+        pts = page.evaluate("() => S.strokes.filter(s => s.layer === S.layers.length - 1).flatMap(s => s.pts)")
+        xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+        assert min(xs) >= 0 and max(xs) <= pw and min(ys) >= 0 and max(ys) <= ph
+        return ("t" if max(ys) < ph / 2 else "b") + ("l" if max(xs) < pw / 2 else "r")
+    expect(btn).to_have_text("◲")
+    assert corner() == "br"
+    tab(page, 4)
+    expect(tb_layer).to_have_count(1)
+    for icon, want in [("◱", "bl"), ("◰", "tl"), ("◳", "tr")]:
         btn.click()
         expect(btn).to_have_text(icon)
         assert corner() == want, (want, corner())
-    assert page.evaluate("() => localStorage.tbCorner") == "bl"
+    btn.click()                                            # off: no layer, no strokes
+    expect(btn).to_have_text("▢")
+    expect(tb_layer).to_have_count(0)
+    assert page.evaluate("() => S.tb_corner") == "off"
     page.reload()
-    expect(page.locator("#status")).to_have_text("ready")
-    assert corner() == "bl"            # remembered
+    expect(page.locator("#tbpos")).to_have_text("▢")     # remembered on the server
+    page.locator("#tbpos").click()
+    expect(page.locator("#tbpos")).to_have_text("◲")
+    tab(page, 4)
+    page.locator("#panel tr", has_text="Title block").locator("input[data-k=enabled]").uncheck()
+    page.wait_for_function("() => !S.strokes.some(s => s.layer === S.layers.length - 1)")   # unticked: not in the strokes, so neither plotted nor drawn
 
 
 def check_paper_fields_and_orientation(page):
@@ -217,19 +236,19 @@ def check_paper_fields_and_orientation(page):
     expect(page.locator("#ph")).to_have_value("210.0")
     expect(page.locator("#preview rect[fill='var(--paper)']").first).to_have_attribute("height", "210")
     page.select_option("#fmt", "Custom")
-    expect(page.locator("#preview .tb")).to_contain_text("Custom 148.0 × 210.0 mm")   # panel re-rendered
+    wait_paper(page, "Custom", 148, 210)   # panel re-rendered
     page.fill("#pw", "300")
     page.fill("#ph", "200")
     page.click("#paperApply")
-    expect(page.locator("#preview .tb")).to_contain_text("Custom 300.0 × 200.0 mm")
+    wait_paper(page, "Custom", 300, 200)
     page.select_option("#orient", "portrait")     # Custom: the fields rule, orientation does not swap them
-    expect(page.locator("#preview .tb")).to_contain_text("Custom 300.0 × 200.0 mm")
+    wait_paper(page, "Custom", 300, 200)
 
 
 def check_units(page):
     page.click("#units button[data-unit=cm]")
     expect(page.locator("#pos")).to_contain_text("cm")
-    expect(page.locator("#preview .tb")).to_contain_text("29.70 × 21.00 cm")
+    assert page.evaluate("() => S.unit") == "cm"
 
 
 def check_plot_with_pause(page):
@@ -243,7 +262,8 @@ def check_plot_with_pause(page):
     expect(page.locator("#overlay")).not_to_have_class(re.compile("show"))
     expect(page.locator("#log")).to_contain_text("Plot finished.", timeout=120000)
     expect(page.locator("#status")).to_have_text("ready", timeout=15000)
-    expect(page.locator("#strokes path.done")).to_have_count(8)
+    n = page.evaluate("() => S.strokes.length")
+    expect(page.locator("#strokes path.done")).to_have_count(n)   # drawing plus title block
 
 
 def check_reset_button(page):
@@ -260,13 +280,13 @@ def check_reset_button(page):
     page.click("#resetCancel")                     # cancel changes nothing
     expect(page.locator("#resetDlg")).to_be_hidden()
     expect(page.locator("#pos")).to_contain_text("cm")
-    expect(page.locator("#preview .tb")).to_contain_text("A3")
+    assert page.evaluate("() => S.paper_name") == "A3"
     page.click("#resetBtn")
     page.click("#resetGo")
     expect(page.locator("#steps li")).to_have_count(5)   # page reloaded
     expect(page.locator("#pos")).to_contain_text("mm")
-    expect(page.locator("#preview .tb")).to_contain_text("A4 297.0 × 210.0 mm")
-    expect(page.locator("#preview .tb")).to_contain_text("1:1")
+    wait_paper(page, "A4", 297, 210)
+    assert page.evaluate("() => S.placement") == "1:1"
     expect(page.locator("#zoomlbl")).to_have_text("1×")
     expect(page.locator("#tbpos")).to_have_text("◲")
     expect(page.locator("#status")).to_have_text("ready")   # connection stays
