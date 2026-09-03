@@ -20,7 +20,7 @@ inkscape-extension/
     idraw_interactive.py             Inkscape entry point: copies the document, starts the server detached, returns
     idraw_interactive.inx            menu entry Extensions > iDraw > iDraw Interactive
     idraw_demo.svg                   example with three layers (normal, !-pause, %-notes)
-    tests/                           test drawings: the four built-in patterns as SVG (make_test_svgs.py writes them) , "iDraw A3 - Test.svg" (the manufacturer's A3 test sheet) and "A3_Pen_CalibrationTest.svg" (DrawingBotV3 calibration sheet)
+    tests/                           test drawings, offered in the Speed step as a dropdown: the four built-in patterns as SVG (make_test_svgs.py writes them), Piter Pasma's line test , "iDraw A3 - Test.svg" (the manufacturer's A3 test sheet) and "A3_Pen_CalibrationTest.svg" (DrawingBotV3 calibration sheet)
     HersheySans1.svg                 single-stroke font for the plotted title block (Hershey Fonts, see HersheySans1-LICENSE.txt)
     test_idraw_core.py               self-test for idraw_core
     test_idraw_server.py             self-test for the server (simulator, no browser)
@@ -86,7 +86,7 @@ Same G-code understanding (GRBL with Z as the pen): a new transport is enough, p
 
 ### New features
 
-Test patterns: add a function following the pattern in `idraw_core.TESTS`; the page builds the button. Placement modes: extend `place()` and the button row in step 5. Resume after abort: `plot_strokes` reports the index in every `progress` event; a resume is a start with `strokes[i:]`. Hidden-line removal, path sorting: apply `plot_optimizations.reorder` from `idraw_deps/idraw2_0internal` to the digest before `load_svg` builds the layers.
+Test drawings: drop an SVG into `extensions/tests/`, it appears in the Speed step dropdown. The generated patterns in `idraw_core.TESTS` are only used by `tests/make_test_svgs.py` (and `Plotter.run_test`, which no button calls any more). Placement modes: extend `place()` and the button row in step 5. Resume after abort: `plot_strokes` reports the index in every `progress` event; a resume is a start with `strokes[i:]`. Hidden-line removal, path sorting: apply `plot_optimizations.reorder` from `idraw_deps/idraw2_0internal` to the digest before `load_svg` builds the layers.
 
 ## Firmware, short version
 
@@ -94,7 +94,7 @@ DrawCore enumerates as CH340 (USB VID:PID 1A86:7523), 115200 baud, `rts`/`dtr` o
 
 ## Status
 
-As of 2 September 2026. Built and exercised in the simulator: all five steps, jog, pen, profiles, unit switch, four test patterns, plot with layer pause, stop, progress, preview with rulers and title block, LAN access.
+As of 2 September 2026. Built and exercised in the simulator: all five steps, jog, pen, profiles, unit switch, test drawings, plot with layer pause, stop, progress, preview with rulers and title block, LAN access.
 
 Not verified on the device yet:
 

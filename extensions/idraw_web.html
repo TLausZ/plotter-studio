@@ -137,7 +137,7 @@ header{flex:0 0 56px}
 .panel p{margin:0 0 10px;color:var(--md-on-surface-variant)}
 .row{display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap}
 .card{background:var(--md-surface-container-lowest);border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:var(--e1)}
-.jog{display:grid;grid-template-columns:40px 40px 40px auto auto;grid-template-rows:40px 40px 40px;gap:4px;align-items:center;margin:2px 0 2px}
+.jog{display:grid;grid-template-columns:40px 40px 40px auto;grid-auto-columns:auto;grid-template-rows:40px 40px 40px;gap:4px;align-items:center;margin:2px 0 2px}
 .jog .extra{grid-row:1/4;grid-column:5;display:flex;flex-direction:column;gap:8px;align-items:flex-start;justify-content:center;padding-left:16px}
 .jog .sizes{grid-row:1/4;grid-column:4;padding-left:16px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 .jog .sizes .seg{flex-direction:column}
@@ -320,7 +320,7 @@ function showStep(i) { step = Math.max(0, Math.min(4, i)); renderSteps(); render
 const tf = (id, label, value, opts = {}) =>
   `<div class="tf ${opts.cls || 'w'}"><label for="${id}">${label}${opts.suffix ? ' (' + opts.suffix + ')' : ''}</label><input id="${id}" class="${opts.mono === false ? '' : 'mono'}" value="${value}" ${opts.attrs || ''}></div>`;
 const sel = (id, label, options, current, cls = 'grow', attrs = '') =>
-  `<div class="tf ${cls}"><label for="${id}">${label}</label><select id="${id}" ${attrs}>${options.map(o => `<option ${o === current ? 'selected' : ''}>${o}</option>`).join('')}</select></div>`;
+  `<div class="tf ${cls}"><label for="${id}">${label}</label><select id="${id}" ${attrs}>${options.map(o => { const [v, t] = Array.isArray(o) ? o : [o, o]; return `<option value="${v}" ${v === current ? 'selected' : ''}>${t}</option>`; }).join('')}</select></div>`;
 function jogHtml(extra = '') {
   const sizes = JOG[u()].map((v, i) => `<button class="btn ${i === jogIdx ? 'on' : ''}" data-jog="${i}">${v} ${u()}</button>`).join('');
   return `<div class="jog">
@@ -364,8 +364,8 @@ function renderPanel() {
     h = hdr('Speed', '')
       + grp('Feed rates', `<div class="row">${tf('feed_draw', 'Drawing', pr.feed_draw, {cls: 'grow', suffix: 'mm/min'})}${tf('feed_travel', 'Travel', pr.feed_travel, {cls: 'grow', suffix: 'mm/min'})}</div>
         <div class="row">${tf('line_width', 'Line width, measured', pr.line_width, {cls: 'grow', suffix: 'mm'})}<button class="btn outlined" id="profSave2">Save profile</button></div>`)
-      + grp('Test patterns at the pen position', `<div class="row">${S.tests.map(t => `<button class="btn tonal" data-cmd="test" data-args='{"name":"${t}"}'>${t}</button>`).join('')}</div>
-        <p>Line width: measure where the double lines separate, divide by 10. Speed: rows at 1000 to 8000 mm/min. Accuracy: square and circle twice in opposite directions, star, rulers. Pen height: rows at Z 3.0 to 6.5 mm.</p>`)
+      + grp('Test drawing', `<div class="row">${sel('testFile', 'Drawing', [['', S.doc_name ? 'Document: ' + S.doc_name : '(no document)']].concat(S.test_files.map(f => [f, f])), S.test_file)}</div>
+        <p>Pick a calibration sheet from the tests folder to plot it instead of your document; the first entry brings the document back. Plot it from step 5.</p>`)
       + grp('Move carriage', jogHtml(), 'wide');
   } else {
     const rows = S.layers.map((l, i) => `<tr><td><input type="checkbox" data-layer="${i}" data-k="enabled" ${l.enabled ? 'checked' : ''} aria-label="Plot layer ${l.name}"></td>
@@ -407,6 +407,7 @@ function wirePanel() {
   P.querySelectorAll('[data-layer]').forEach(c => c.onchange = () => cmd('set_layer', {index: +c.dataset.layer, [c.dataset.k]: c.checked}));
   const on = (id, ev, fn) => { const e = $(id); if (e) e.addEventListener(ev, fn); };
   on('model', 'change', e => cmd('set_model', {name: e.target.value}));
+  on('testFile', 'change', () => cmd('load_test', {name: $('testFile').value}));
   on('fmt', 'change', applyPaper); on('orient', 'change', applyPaper); on('paperApply', 'click', () => applyPaper(true));
   on('prof', 'change', e => cmd('load_profile', {name: e.target.value}));
   on('profSave', 'click', () => { pushProfileFields(); cmd('save_profile', {name: $('profName').value}); });

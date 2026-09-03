@@ -10,6 +10,7 @@ Tasks and ideas for iDraw Interactive. Move a line to Done when it is finished.
 
 ## Ideas
 
+- E2E check for the test drawing dropdown (Speed step): pick a file, layers change, first entry restores the document.
 - Tablet: test on the iPad and optimise touch handling (splitter hit area ~24 px, `touch-action: none` on splitter, board and zoom slider, maybe pinch zoom).
 - Watercolor and brush setup wizard: guides through placing paint wells and brushes, dipping and rinsing positions.
 
@@ -19,6 +20,7 @@ Tasks and ideas for iDraw Interactive. Move a line to Done when it is finished.
 
 ## Done
 
+- 3 Sep 2026: test drawings folder with dropdown in the Speed step (replaces the test pattern buttons); Piter Pasma line test and DrawingBotV3 calibration sheet added.
 - 3 Sep 2026: title block is plotted (Hershey single-stroke text, virtual last layer, corner button with off state as server setting).
 - 3 Sep 2026: Playwright e2e suite (13 checks, reset before each, run by name), Reset button with dialog, TESTING.md.
 - 3 Sep 2026: console input under the log sends hand-typed G-code and $ commands; the state tracks every line (G0/G1, G90/G91, G92, $H, $1, $SLP, $RST); manual moves leave a dashed trace on the board. A ? button opens the command reference; a click fills the input line.
