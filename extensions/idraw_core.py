@@ -37,6 +37,7 @@ Open points on the hardware (not tested yet, see README "Status"):
 
 import json
 import math
+import re
 import os
 import queue
 import threading
@@ -424,6 +425,7 @@ class Plotter:
         self.bounds_known = False   # False after aligning by hand
         self.machine_origin = (0.0, 0.0)  # home corner in current document mm
         self.motors_free = False
+        self._rel = False           # True after a hand-typed G91 (see _track)
         self.status = "disconnected"  # disconnected, ready, moving, plotting, paused, error
         self.profile = dict(DEFAULT_PROFILE)
         self._stop = threading.Event()
@@ -477,6 +479,9 @@ class Plotter:
         dist = math.hypot(x - self.x, y - self.y)
         if dist < 0.005:
             return
+        if self._rel:               # a hand-typed G91 is still modal in the firmware
+            self._send("G90")
+            self._rel = False
         # document -> machine mapping as in the original: X = -y, Y = -x
         self._send("G1 X%.3f Y%.3f F%d" % (-y, -x, feed), seconds=dist / feed * 60)
         self.x, self.y = x, y
@@ -540,11 +545,64 @@ class Plotter:
         self._set_status("ready")
 
     def raw(self, line):
-        """Send one line typed by hand (console). The reply is logged.
-        ponytail: position is not tracked after hand-typed moves; run Home to resync."""
+        """Send one line typed by hand (console) and mirror its effect on the tracked state,
+        so position, pen and flags stay right after hand-typed commands."""
+        line = line.strip()
+        if not line:
+            return
         self._set_status("moving")
-        self._send(line.strip())
+        self._send(line)
+        self._track(line)
         self._set_status("ready")
+
+    def _track(self, line):
+        """Update x, y, z_up, origin and flags from one G-code / $ line (GRBL subset).
+        Handles G0/G1 (also bare axis words), G90/G91, G92, $H, $1=254/255, $SLP, $RST."""
+        u = line.upper().replace(" ", "")
+        if u.startswith("$"):
+            if u == "$H":
+                # after homing the head is at the home corner: the origin corner shifted by
+                # the y travel (see home()); the origin itself is unchanged
+                mx, my = self.machine_origin
+                self.x, self.y = mx, my + MODELS[self.model][1]
+                self.homed = self.bounds_known = True
+                self.motors_free = False
+            elif u == "$1=254" or u == "$SLP":
+                self.motors_free = True
+                self.bounds_known = False
+                if u == "$SLP":
+                    self.homed = False
+            elif u == "$1=255":
+                self.motors_free = False
+            elif u.startswith("$RST"):
+                self.homed = self.origin_set = self.bounds_known = False
+            self.emit("state", None)
+            return
+        words = dict((w[0], float(w[1:])) for w in re.findall(r"[A-Z]-?\d*\.?\d+", u))
+        g = words.get("G")
+        if g == 90:
+            self._rel = False
+        elif g == 91:
+            self._rel = True
+        elif g == 92:
+            # machine X = -y, Y = -x; the new value is declared at the current spot
+            nx, ny = -words.get("Y", -self.x), -words.get("X", -self.y)
+            mx, my = self.machine_origin
+            self.machine_origin = (mx + (nx - self.x), my + (ny - self.y))
+            self.x, self.y = nx, ny
+            self.origin_set = True
+        elif g in (0, 1) or (g is None and ("X" in words or "Y" in words or "Z" in words)):
+            if self._rel:
+                self.x -= words.get("Y", 0.0)
+                self.y -= words.get("X", 0.0)
+            else:
+                if "Y" in words:
+                    self.x = -words["Y"]
+                if "X" in words:
+                    self.y = -words["X"]
+            if "Z" in words:
+                self.z_up = words["Z"] < (self.profile["pen_up"] + self.profile["pen_down"]) / 2
+        self.emit("state", None)
 
     def goto(self, x, y):
         self._set_status("moving")

@@ -42,6 +42,25 @@ def test_origin_and_stop():
     assert not any(l.startswith("G1 X-0.000 Y-100") for l in t.lines)
 
 
+def test_raw_tracking():
+    t = Capture()
+    p = core.Plotter()
+    p.connect(t)
+    p.home()
+    p.raw("G1 X-20 Y-10 F3000")          # machine (-20,-10) -> document (10, 20)
+    assert (p.x, p.y) == (10, 20)
+    p.raw("G91"); p.raw("G1 X-5")       # relative: document y += 5
+    assert (p.x, p.y) == (10, 25)
+    p.jog(1, 0)                         # software move restores G90 first
+    assert t.lines[-2:] == ["G90", "G1 X-25.000 Y-11.000 F8000"], t.lines[-2:]
+    p.raw("G1 Z5"); assert p.z_up is False
+    p.raw("Z0.5"); assert p.z_up is True
+    p.raw("G92 X0 Y0")
+    assert (p.x, p.y) == (0, 0) and p.machine_origin == (-11, -25)
+    p.raw("$1=254"); assert p.motors_free and not p.bounds_known
+    p.raw("$H"); assert p.homed and p.motors_free is False
+
+
 def test_place_and_tests():
     lyr = core.Layer("a", [[(0, 0), (297, 210)]])
     fit = core.place([lyr], (297, 210), (420, 297), "fit")[0].paths[0]
@@ -57,5 +76,6 @@ def test_place_and_tests():
 if __name__ == "__main__":
     test_mapping_and_plot()
     test_origin_and_stop()
+    test_raw_tracking()
     test_place_and_tests()
     print("ok")
