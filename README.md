@@ -20,6 +20,7 @@ inkscape-extension/
     idraw_interactive.py             Inkscape entry point: copies the document, starts the server detached, returns
     idraw_interactive.inx            menu entry Extensions > iDraw > iDraw Interactive
     idraw_demo.svg                   example with three layers (normal, !-pause, %-notes)
+    tests/                           test drawings: the four built-in patterns as SVG (make_test_svgs.py writes them) and "iDraw A3 - Test.svg", the manufacturer's A3 test sheet
     HersheySans1.svg                 single-stroke font for the plotted title block (Hershey Fonts, see HersheySans1-LICENSE.txt)
     test_idraw_core.py               self-test for idraw_core
     test_idraw_server.py             self-test for the server (simulator, no browser)
