@@ -124,8 +124,8 @@ header{flex:0 0 56px}
 .boardwrap{display:flex;flex-direction:column;min-height:0;min-width:0}
 .board{flex:0 0 70%;min-height:120px}
 /* console as an M3 bottom sheet: drag handle (32×4, on-surface-variant 40 %) in a 20 px zone, divider above the input */
-.splitter{flex:0 0 20px;cursor:row-resize;position:relative;background:var(--md-surface-container-low);border-radius:16px 16px 0 0;touch-action:none}
-.splitter::after{content:"";position:absolute;left:50%;top:8px;width:32px;height:4px;margin-left:-16px;border-radius:2px;background:var(--md-on-surface-variant);opacity:.4}
+.splitter{position:absolute;left:0;right:0;top:0;height:20px;cursor:row-resize;touch-action:none;z-index:1}
+.splitter::after{content:"";position:absolute;left:50%;top:4px;width:32px;height:4px;margin-left:-16px;border-radius:2px;background:var(--md-on-surface-variant);opacity:.4}
 .splitter:hover::after,.splitter:active::after{opacity:1}
 .panel{flex:1 1 auto;min-height:0;overflow:auto;padding:6px 20px 8px}
 .grp{margin-bottom:2px}
@@ -163,14 +163,14 @@ header{flex:0 0 56px}
 .tb .v{font-family:var(--f-draft-mono)} .tb rect,.tb line{stroke:var(--ink);fill:none}
 
 /* log */
-.console{flex:1 1 auto;min-height:74px;display:flex;flex-direction:column;background:var(--md-surface-container-low)}
+.console{flex:1 1 auto;min-height:74px;display:flex;flex-direction:column;position:relative;background:var(--md-surface-container-low)}
 .cliRow{display:flex;gap:8px;align-items:center;padding:6px 16px;border-top:1px solid var(--md-outline-variant)} .cliRow .icon-btn{width:32px;height:32px;font-size:15px;flex:0 0 32px}
 dialog.dialog{border:0;border-top:4px solid var(--md-primary);max-height:80vh;overflow:auto;width:640px} dialog::backdrop{background:rgba(0,0,0,.32)}
 .ref{border-collapse:collapse;width:100%;font:400 13px/18px var(--f);margin-bottom:8px} .ref td{padding:5px 8px;border-bottom:1px solid var(--md-outline-variant);vertical-align:top;cursor:pointer}
 .ref tr:hover td{background:var(--md-surface-container)} .ref td:first-child{font:500 13px/18px var(--f-mono);white-space:nowrap} .ref th{text-align:left;font:500 12px/16px var(--f);letter-spacing:.5px;text-transform:uppercase;color:var(--md-on-surface-variant);padding:8px 8px 4px}
 #cli{flex:1 1 auto;height:32px;margin:0;padding:0 10px;border:1px solid var(--md-outline);border-radius:4px;background:var(--md-surface-container-lowest);font:400 12px/30px var(--f-mono);color:var(--md-on-surface);outline:none}
 #cli:focus{border-color:var(--md-primary);box-shadow:inset 0 0 0 1px var(--md-primary)}
-.log{flex:1 1 auto;min-height:0;margin:0;padding:4px 16px;overflow:auto;font:400 12px/18px var(--f-mono);color:var(--md-on-surface-variant);white-space:pre-wrap;
+.log{flex:1 1 auto;min-height:0;margin:0;padding:12px 16px 4px;overflow:auto;font:400 12px/18px var(--f-mono);color:var(--md-on-surface-variant);white-space:pre-wrap;
   background:var(--md-surface-container-lowest);border-top:1px solid var(--md-outline-variant)}
 
 /* dialog */
@@ -213,8 +213,8 @@ dialog.dialog{border:0;border-top:4px solid var(--md-primary);max-height:80vh;ov
       <div class="seg small" id="fitseg"><button class="btn on" data-fit="sheet">Sheet</button><button class="btn" data-fit="machine">Machine</button></div>
       <svg id="preview" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
-    <div class="splitter" id="splitter" title="Drag to resize the console, double-click to reset"></div>
     <div class="console">
+      <div class="splitter" id="splitter" title="Drag to resize the console, double-click to reset"></div>
       <pre class="log" id="log"></pre>
       <div class="cliRow"><input id="cli" class="mono" placeholder="G-code or $ command, Enter sends (↑↓ history)" autocomplete="off" spellcheck="false"><button class="btn icon-btn outlined" id="refBtn" title="Command reference">?</button></div>
     </div>
@@ -605,7 +605,7 @@ window.addEventListener('resize', () => S && renderPreview());
   const sp = $('splitter'), board = document.querySelector('.board'), wrap = document.querySelector('.boardwrap');
   const set = h => { board.style.flexBasis = h ? h + 'px' : ''; renderPreview(); };
   try { if (localStorage.boardH) set(+localStorage.boardH); } catch (e) {}
-  sp.onpointerdown = e => { sp.setPointerCapture(e.pointerId); const y0 = e.clientY, h0 = board.offsetHeight, max = wrap.clientHeight - 20 - 74;
+  sp.onpointerdown = e => { sp.setPointerCapture(e.pointerId); const y0 = e.clientY, h0 = board.offsetHeight, max = wrap.clientHeight - 74;
     sp.onpointermove = ev => set(Math.max(120, Math.min(max, h0 + ev.clientY - y0))); };
   sp.onpointerup = () => { sp.onpointermove = null; try { localStorage.boardH = board.offsetHeight; } catch (e) {} };
   sp.ondblclick = () => { set(0); try { delete localStorage.boardH; } catch (e) {} };
