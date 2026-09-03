@@ -176,7 +176,7 @@ Roboto in the M3 type scale for the chrome: headline-medium for the step title, 
 
 Used in code, comments and conversation.
 
-- App bar: the top bar with the name, status chip, position readout, pen state and unit switch.
+- App bar: the top bar with the name, status chip, position readout, pen state, unit switch and the Reset text button (opens the reset dialog: everything but the connection and the saved pen profiles back to the defaults).
 - Board: the green area on the left with the sheet, rulers, trace and title block. On it: the board tools (dark strip top-left: title block corner button, zoom slider) and the Sheet/Machine toggle top-right on the same kind of dark strip.
 - Splitter: the console's top edge, styled as an M3 bottom sheet drag handle (32 × 4 px pill, on-surface-variant at 40 %, full on hover, in a 20 px zone laid over the console's top edge, no extra band); drag resizes, double-click resets to the default (board 70 %), the height is remembered in the browser. Console minimum: two log lines plus the input line.
 - Console: below the board, a bottom sheet made of the log and, under a divider, the input line with the ? button that opens the command reference dialog.

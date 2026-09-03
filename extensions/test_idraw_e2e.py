@@ -230,6 +230,38 @@ def check_plot_with_pause(page):
     expect(page.locator("#strokes path.done")).to_have_count(8)
 
 
+def check_reset_button(page):
+    page.click("#units button[data-unit=cm]")
+    page.locator("#zoom").fill("6")
+    page.locator("#tbpos").click()
+    tab(page, 1)
+    page.select_option("#fmt", "A3")
+    tab(page, 4)
+    page.click("button[data-pl=fit]")
+    page.locator("#panel input[data-k=enabled]").first.uncheck()
+    page.click("#resetBtn")
+    expect(page.locator("#resetDlg")).to_be_visible()
+    page.click("#resetCancel")                     # cancel changes nothing
+    expect(page.locator("#resetDlg")).to_be_hidden()
+    expect(page.locator("#pos")).to_contain_text("cm")
+    expect(page.locator("#preview .tb")).to_contain_text("A3")
+    page.click("#resetBtn")
+    page.click("#resetGo")
+    expect(page.locator("#steps li")).to_have_count(5)   # page reloaded
+    expect(page.locator("#pos")).to_contain_text("mm")
+    expect(page.locator("#preview .tb")).to_contain_text("A4 297.0 × 210.0 mm")
+    expect(page.locator("#preview .tb")).to_contain_text("1:1")
+    expect(page.locator("#zoomlbl")).to_have_text("1×")
+    expect(page.locator("#tbpos")).to_have_text("◲")
+    expect(page.locator("#status")).to_have_text("ready")   # connection stays
+    tab(page, 4)
+    for box in page.locator("#panel input[data-k=enabled]").all():
+        expect(box).to_be_checked()
+    expect(page.locator("#panel input[data-k=pause]").nth(0)).not_to_be_checked()   # "1 Frame"
+    expect(page.locator("#panel input[data-k=pause]").nth(1)).to_be_checked()       # "!2 Detail red"
+    assert page.evaluate("() => localStorage.length") == 0
+
+
 def check_stop_with_escape(page):
     tab(page, 4)
     page.click("button[data-cmd=plot]")
@@ -242,7 +274,8 @@ def check_stop_with_escape(page):
 
 CHECKS = [check_connect_and_home, check_steps_fit_without_scrolling, check_keyboard_jog_and_pen,
           check_console, check_paper_and_title_block, check_paper_fields_and_orientation, check_units,
-          check_splitter, check_zoom_and_pan, check_title_block_corner, check_plot_with_pause, check_stop_with_escape]
+          check_splitter, check_zoom_and_pan, check_title_block_corner, check_reset_button,
+          check_plot_with_pause, check_stop_with_escape]
 
 
 def main():

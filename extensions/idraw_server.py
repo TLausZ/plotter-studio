@@ -19,7 +19,7 @@ pen_down, pen_toggle, nudge_z(delta), set_origin, release_motors, lock_motors,
 motors_off, frame(kind=paper|drawing), test(name), test_stroke, cycle, plot, stop,
 resume, set_profile(fields), load_profile(name), save_profile(name), set_paper(w,h,
 name,orient), set_pos_mode(mode), set_placement(mode), set_layer(index,enabled,pause),
-set_model(name), set_unit(unit).
+set_model(name), set_unit(unit), reset.
 
 Session keeps what the UI needs beyond the Plotter: the loaded SVG (page, layers),
 paper, placement, unit, profiles. Everything moving the machine goes through
@@ -277,6 +277,16 @@ class Session:
             if a.get("name") not in core.MODELS:
                 return {"error": "Unknown model."}
             p.model = a["name"]
+            self.save()
+            p.emit("state", None)
+            return {"ok": True}
+        if cmd == "reset":
+            # everything but the connection and the saved pen profiles goes back to the defaults
+            self.unit, self.paper, self.paper_name, self.orient = "mm", core.PAPER_FORMATS["A4"], "A4", "landscape"
+            self.pos_mode, self.placement = "jog", "1:1"
+            for lyr in self.layers:
+                lyr.enabled, lyr.pause = not lyr.skip, lyr.name.startswith("!")
+            p.origin_set = False
             self.save()
             p.emit("state", None)
             return {"ok": True}

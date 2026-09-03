@@ -205,7 +205,13 @@ dialog.dialog{border:0;border-top:4px solid var(--md-primary);max-height:80vh;ov
   <div class="seg small" id="units">
     <button class="btn" data-unit="mm">mm</button><button class="btn" data-unit="cm">cm</button><button class="btn" data-unit="in">in</button>
   </div>
+  <button class="btn text" id="resetBtn" title="Back to the defaults">Reset</button>
 </header>
+<dialog id="resetDlg" class="dialog">
+  <h3>Reset everything?</h3>
+  <p>View, paper, placement, layers and origin go back to the defaults. Saved pen profiles and the connection stay.</p>
+  <div class="actions"><button class="btn text" id="resetCancel">Cancel</button><button class="btn filled" id="resetGo">Reset</button></div>
+</dialog>
 <main class="split">
   <section class="boardwrap">
     <div class="board">
@@ -488,6 +494,10 @@ const REF = [
     e.stopPropagation();
   };
 }
+// reset: server settings back to the defaults, browser storage cleared, page reloaded
+$('resetBtn').onclick = () => $('resetDlg').showModal();
+$('resetCancel').onclick = () => $('resetDlg').close();
+$('resetGo').onclick = async () => { await cmd('reset'); try { localStorage.clear(); } catch (e) {} location.reload(); };
 // title block corner cycles tl > tr > br > bl; the icon shows the current corner
 const TB_CORNERS = ['tl', 'tr', 'br', 'bl'], TB_ICONS = {tl: '◰', tr: '◳', br: '◲', bl: '◱'};
 let tbCorner = 'br'; try { tbCorner = localStorage.tbCorner || tbCorner; } catch (e) {}
