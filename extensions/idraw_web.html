@@ -115,6 +115,9 @@ header{flex:0 0 56px}
 .nav #stop{margin-left:auto}
 .side{display:flex;flex-direction:column;min-height:0;background:var(--md-surface-container-low);border-left:1px solid var(--md-outline-variant)}
 #fitseg{position:absolute;top:8px;right:8px;z-index:1}
+#zoom{position:absolute;top:56px;left:19px;z-index:1;writing-mode:vertical-lr;direction:rtl;height:140px;width:18px;accent-color:var(--md-surface-container-lowest);cursor:pointer}
+#zoomlbl{position:absolute;top:202px;left:8px;z-index:1;width:40px;text-align:center;font:500 12px/18px var(--f-mono);color:#fff;background:rgba(0,0,0,.45);border-radius:9px;pointer-events:none}
+.board svg.pan{cursor:grab} .board svg.pan:active{cursor:grabbing}
 #tbpos{position:absolute;top:8px;left:8px;z-index:1;font-size:20px;background:var(--md-surface-container-lowest);border-color:var(--md-outline)}
 .split{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(440px,520px)}
 .boardwrap{display:flex;flex-direction:column;min-height:0;min-width:0}
@@ -194,6 +197,7 @@ header{flex:0 0 56px}
   <section class="boardwrap">
     <div class="board">
       <button class="btn icon-btn outlined" id="tbpos" title="Title block corner">◲</button>
+      <input type="range" id="zoom" min="0" max="8" value="2" title="Zoom; drag the board to pan, double-click to reset"><span id="zoomlbl">1×</span>
       <div class="seg small" id="fitseg"><button class="btn on" data-fit="sheet">Sheet</button><button class="btn" data-fit="machine">Machine</button></div>
       <svg id="preview" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
@@ -406,10 +410,20 @@ function jog(x, y) { const s = JOG[u()][jogIdx] * UNIT[u()]; cmd('jog', {dx: x *
 
 // ---------------------------------------------------------------- preview (SVG, user units = mm)
 let fitMachine = false;   // false: view fits the paper; true: view fits the machine travel
+$('zoom').oninput = e => { zoomIdx = +e.target.value; $('zoomlbl').textContent = ZOOM[zoomIdx] + '×'; if (zoomIdx <= 2) panX = panY = 0; renderPreview(); };
+{ // drag to pan; double-click resets zoom and pan
+  const svg = $('preview'); let drag = null;
+  svg.onpointerdown = e => { if (ZOOM[zoomIdx] > 1) { drag = [e.clientX, e.clientY, panX, panY]; svg.setPointerCapture(e.pointerId); } };
+  svg.onpointermove = e => { if (drag) { panX = drag[2] - (e.clientX - drag[0]) / pxPerMm; panY = drag[3] - (e.clientY - drag[1]) / pxPerMm; renderPreview(); } };
+  svg.onpointerup = svg.onpointercancel = () => { drag = null; };
+  svg.ondblclick = () => { zoomIdx = 2; panX = panY = 0; $('zoom').value = 2; $('zoomlbl').textContent = '1×'; renderPreview(); };
+}
 // title block corner cycles tl > tr > br > bl; the icon shows the current corner
 const TB_CORNERS = ['tl', 'tr', 'br', 'bl'], TB_ICONS = {tl: '◰', tr: '◳', br: '◲', bl: '◱'};
 let tbCorner = 'br'; try { tbCorner = localStorage.tbCorner || tbCorner; } catch (e) {}
 let pxPerMm = 3;
+const ZOOM = [0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8];   // slider snaps to these factors relative to the fitted view
+let zoomIdx = 2, panX = 0, panY = 0;                // pan in mm
 const px = n => n / pxPerMm;   // size in mm that renders as n screen pixels
 function renderPreview() {
   const st = S.state, [pw, ph] = S.paper;
@@ -426,6 +440,9 @@ function renderPreview() {
   const aspect = bw / bh;
   let vw = x1 - x0, vh = y1 - y0;
   if (vw / vh < aspect) { const nw = vh * aspect; x0 -= (nw - vw) / 2; vw = nw; } else { const nh = vw / aspect; y0 -= (nh - vh) / 2; vh = nh; }
+  // zoom about the centre of the fitted view, then pan
+  const zf = ZOOM[zoomIdx]; x0 += vw * (1 - 1 / zf) / 2 + panX; y0 += vh * (1 - 1 / zf) / 2 + panY; vw /= zf; vh /= zf;
+  svg.classList.toggle('pan', zf > 1);
   pxPerMm = bw / vw;
   svg.setAttribute('viewBox', `${x0} ${y0} ${vw} ${vh}`);
   const lw = Math.max(px(1), st.profile.line_width || 0.3);
