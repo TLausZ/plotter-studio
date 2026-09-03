@@ -10,7 +10,6 @@ Tasks and ideas for iDraw Interactive. Move a line to Done when it is finished.
 
 ## Ideas
 
-- Log as a console: type GRBL/G-code commands by hand and send them.
 - Built-in GRBL command reference (list of commands with short explanations).
 - Watercolor and brush setup wizard: guides through placing paint wells and brushes, dipping and rinsing positions.
 
@@ -20,4 +19,5 @@ Tasks and ideas for iDraw Interactive. Move a line to Done when it is finished.
 
 ## Done
 
+- 3 Sep 2026: console input under the log sends hand-typed G-code and $ commands.
 - 3 Sep 2026: step tabs and Back/Next/Stop in the side column, board tools strip (title block corner, zoom, pan).

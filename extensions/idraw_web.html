@@ -159,7 +159,10 @@ header{flex:0 0 56px}
 .tb .v{font-family:var(--f-draft-mono)} .tb rect,.tb line{stroke:var(--ink);fill:none}
 
 /* log */
-.log{flex:1 1 auto;min-height:44px;margin:0;padding:4px 16px;overflow:auto;font:400 12px/18px var(--f-mono);color:var(--md-on-surface-variant);white-space:pre-wrap;
+.console{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;background:var(--md-surface-container-low)}
+#cli{flex:0 0 32px;margin:0 16px 6px;padding:0 10px;border:1px solid var(--md-outline);border-radius:4px;background:var(--md-surface-container-lowest);font:400 12px/30px var(--f-mono);color:var(--md-on-surface);outline:none}
+#cli:focus{border-color:var(--md-primary);box-shadow:inset 0 0 0 1px var(--md-primary)}
+.log{flex:1 1 auto;min-height:0;margin:0;padding:4px 16px;overflow:auto;font:400 12px/18px var(--f-mono);color:var(--md-on-surface-variant);white-space:pre-wrap;
   background:var(--md-surface-container-lowest);border-top:1px solid var(--md-outline-variant)}
 
 /* dialog */
@@ -202,7 +205,10 @@ header{flex:0 0 56px}
       <div class="seg small" id="fitseg"><button class="btn on" data-fit="sheet">Sheet</button><button class="btn" data-fit="machine">Machine</button></div>
       <svg id="preview" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
-    <pre class="log" id="log"></pre>
+    <div class="console">
+      <pre class="log" id="log"></pre>
+      <input id="cli" class="mono" placeholder="G-code or $ command, Enter sends (↑↓ history)" autocomplete="off" spellcheck="false">
+    </div>
   </section>
   <section class="side">
     <ol class="tabs" id="steps"></ol>
@@ -418,6 +424,15 @@ $('zoom').oninput = e => { zoomIdx = +e.target.value; $('zoomlbl').textContent =
   svg.onpointermove = e => { if (drag) { panX = drag[2] - (e.clientX - drag[0]) / pxPerMm; panY = drag[3] - (e.clientY - drag[1]) / pxPerMm; renderPreview(); } };
   svg.onpointerup = svg.onpointercancel = () => { drag = null; };
   svg.ondblclick = () => { zoomIdx = 2; panX = panY = 0; $('zoom').value = 2; $('zoomlbl').textContent = '1×'; renderPreview(); };
+}
+// console: Enter sends the line as typed, up/down walk the history
+{ const cli = $('cli'), hist = []; let hi = 0;
+  cli.onkeydown = e => {
+    if (e.key === 'Enter' && cli.value.trim()) { hist.push(cli.value.trim()); hi = hist.length; cmd('raw', {line: cli.value.trim()}); cli.value = ''; }
+    else if (e.key === 'ArrowUp' && hi > 0) { cli.value = hist[--hi]; e.preventDefault(); }
+    else if (e.key === 'ArrowDown') { hi = Math.min(hi + 1, hist.length); cli.value = hist[hi] || ''; e.preventDefault(); }
+    e.stopPropagation();
+  };
 }
 // title block corner cycles tl > tr > br > bl; the icon shows the current corner
 const TB_CORNERS = ['tl', 'tr', 'br', 'bl'], TB_ICONS = {tl: '◰', tr: '◳', br: '◲', bl: '◱'};

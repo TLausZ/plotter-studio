@@ -14,7 +14,7 @@ HTTP interface (all JSON, used by idraw_web.html; usable by other clients too):
                          pause, done, error (see Plotter docstring in idraw_core)
     POST /api/cmd        {"cmd": name, ...args}; reply {"ok": true} or {"error": text}
 
-Commands: connect(port), disconnect, home, jog(dx,dy in mm), goto(x,y), pen_up,
+Commands: connect(port), disconnect, home, jog(dx,dy in mm), goto(x,y), raw(line), pen_up,
 pen_down, pen_toggle, nudge_z(delta), set_origin, release_motors, lock_motors,
 motors_off, frame(kind=paper|drawing), test(name), test_stroke, cycle, plot, stop,
 resume, set_profile(fields), load_profile(name), save_profile(name), set_paper(w,h,
@@ -190,6 +190,8 @@ class Session:
             return self.run(p.jog, f("dx"), f("dy"))
         if cmd == "goto":
             return self.run(p.goto, f("x"), f("y"))
+        if cmd == "raw":
+            return self.run(p.raw, str(a.get("line", ""))[:200])
         if cmd == "nudge_z":
             return self.run(p.nudge_z, f("delta"))
         if cmd == "frame":

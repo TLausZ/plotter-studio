@@ -539,6 +539,13 @@ class Plotter:
         self._move_abs(self.x + dx, self.y + dy, self.profile["feed_travel"])
         self._set_status("ready")
 
+    def raw(self, line):
+        """Send one line typed by hand (console). The reply is logged.
+        ponytail: position is not tracked after hand-typed moves; run Home to resync."""
+        self._set_status("moving")
+        self._send(line.strip())
+        self._set_status("ready")
+
     def goto(self, x, y):
         self._set_status("moving")
         self.pen_up()
