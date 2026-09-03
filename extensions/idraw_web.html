@@ -115,7 +115,8 @@ header{flex:0 0 56px}
 .nav #stop{margin-left:auto}
 .side{display:flex;flex-direction:column;min-height:0;background:var(--md-surface-container-low);border-left:1px solid var(--md-outline-variant)}
 #fitseg{position:absolute;top:8px;right:8px;z-index:1;padding:4px;background:rgba(0,0,0,.5);border-radius:28px}
-#fitseg .btn:not(.on){background:var(--md-surface-container-lowest)}
+#fitseg .btn:not(.on){background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
+#fitseg .btn.on{background:var(--md-surface-container-lowest);color:var(--md-primary);border-color:var(--md-surface-container-lowest)}
 #zoom{display:block;margin:8px auto 4px;writing-mode:vertical-lr;direction:rtl;height:140px;width:18px;accent-color:var(--md-surface-container-lowest);cursor:pointer}
 #zoomlbl{display:block;text-align:center;font:500 12px/18px var(--f-mono);color:#fff;pointer-events:none}
 .tools{position:absolute;top:8px;left:8px;z-index:1;width:48px;padding:4px;background:rgba(0,0,0,.5);border-radius:28px;text-align:center}
