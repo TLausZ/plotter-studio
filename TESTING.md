@@ -23,6 +23,10 @@ Browser, `python3 test_idraw_e2e.py`: starts the server with the simulator (40×
 | reset_button | Reset in the app bar opens a dialog; Cancel changes nothing; Reset restores mm, A4, 1:1, view, layers, clears browser storage, keeps the connection |
 | plot_with_pause | plot runs, pause dialog before the `!` layer, continue, finished with all strokes done (drawing plus title block) |
 | stop_with_escape | Esc stops a running plot, pen up, status ready |
+| stop_button | the red Stop in the app bar stops a running plot like Esc |
+| test_drawing_dropdown | Speed step: a file from tests/ replaces the document and clears trace, done marks and progress; the first entry brings the document back |
+| outside_sheet_warning | A4 drawing at 1:1 on a 148 × 105 sheet: amber paths, notice in the Plot step, Start plot opens the confirm dialog, Cancel starts nothing, Plot anyway starts |
+| travel_trace_during_plot | a plot clears the manual trace, leaves dotted travel segments only, the next plot starts with an empty trace |
 
 The e2e run changes paper and unit and restores the settings file afterwards. Add a check by writing `check_<name>(page)`, listing it in `CHECKS`, and adding its line to the table above.
 

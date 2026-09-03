@@ -10,8 +10,6 @@ Tasks and ideas for iDraw Interactive. Move a line to Done when it is finished.
 
 ## Ideas
 
-- E2E check for the outside-sheet warning (A6 paper at 1:1: amber paths, notice, confirm dialog on Start plot).
-- E2E check for the test drawing dropdown (Speed step): pick a file, layers change, first entry restores the document.
 - Tablet: test on the iPad and optimise touch handling (splitter hit area ~24 px, `touch-action: none` on splitter, board and zoom slider, maybe pinch zoom).
 - Watercolor and brush setup wizard: guides through placing paint wells and brushes, dipping and rinsing positions.
 
