@@ -101,7 +101,7 @@ header{display:flex;align-items:center;gap:16px;padding:0 16px 0 24px;background
 .chip.error{background:var(--md-error-container);color:var(--md-on-error-container);border-color:transparent}
 .pen{font:500 14px/20px var(--f)} .pen.down{color:var(--md-error)} .pen.up{color:var(--md-tertiary)}
 
-/* layout: app bar, then board (left) beside the side column (right): step tabs, step panel, Back/Next/Stop */
+/* layout: app bar, then board (left) beside the side column (right): step tabs, step panel */
 header{flex:0 0 56px}
 .tabs{display:flex;margin:0;padding:0 4px;flex:0 0 44px;border-bottom:1px solid var(--md-outline-variant)}
 .tabs li{list-style:none;position:relative;flex:1;min-width:0;padding:0 4px;display:flex;align-items:center;justify-content:center;gap:6px;
@@ -111,8 +111,6 @@ header{flex:0 0 56px}
 .tabs li.active{color:var(--md-primary)}
 .tabs li.active::after{content:"";position:absolute;left:8px;right:8px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:var(--md-primary)}
 .tabs li.done b::after{content:" ✓";font-size:11px}
-.nav{flex:0 0 auto;display:flex;gap:8px;padding:6px 16px;align-items:center;border-top:1px solid var(--md-outline-variant)}
-.nav #stop{margin-left:auto}
 .side{display:flex;flex-direction:column;min-height:0;background:var(--md-surface-container-low);border-left:1px solid var(--md-outline-variant)}
 #fitseg{position:absolute;top:8px;right:8px;z-index:1;padding:4px;background:rgba(0,0,0,.5);border-radius:28px}
 #fitseg .btn:not(.on){background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
@@ -205,6 +203,7 @@ dialog.dialog{border:0;border-top:4px solid var(--md-primary);max-height:80vh;ov
     <button class="btn" data-unit="mm">mm</button><button class="btn" data-unit="cm">cm</button><button class="btn" data-unit="in">in</button>
   </div>
   <button class="btn text" id="resetBtn" title="Back to the defaults">Reset</button>
+  <button class="btn danger" id="stop" title="Stop after the current line (Esc)">Stop</button>
 </header>
 <dialog id="resetDlg" class="dialog">
   <h3>Reset everything?</h3>
@@ -234,10 +233,6 @@ dialog.dialog{border:0;border-top:4px solid var(--md-primary);max-height:80vh;ov
   <section class="side">
     <ol class="tabs" id="steps"></ol>
     <div class="panel" id="panel"></div>
-    <div class="nav">
-      <button class="btn outlined" id="back">Back</button><button class="btn tonal" id="next">Next</button>
-      <button class="btn danger" id="stop">Stop</button>
-    </div>
   </section>
 </main>
 <div class="scrim" id="overlay">
@@ -582,7 +577,6 @@ function markDone() { const ps = document.querySelectorAll('#strokes path'); ps.
 
 // ---------------------------------------------------------------- global controls
 $('units').querySelectorAll('button').forEach(b => b.onclick = () => cmd('set_unit', {unit: b.dataset.unit}));
-$('back').onclick = () => showStep(step - 1); $('next').onclick = () => showStep(step + 1);
 $('stop').onclick = () => cmd('stop');
 $('pauseGo').onclick = () => { $('overlay').classList.remove('show'); cmd('resume'); };
 $('pauseStop').onclick = () => { $('overlay').classList.remove('show'); cmd('stop'); };
