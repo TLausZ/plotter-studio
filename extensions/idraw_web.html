@@ -86,7 +86,7 @@ button,input,select{font:inherit;color:inherit}
 
 /* checkbox, radio */
 input[type=checkbox],input[type=radio]{accent-color:var(--md-primary);width:18px;height:18px;margin:0}
-.radio{display:flex;align-items:center;gap:12px;min-height:40px;cursor:pointer;padding:0 4px;border-radius:8px}
+.radio{display:flex;align-items:center;gap:12px;min-height:32px;cursor:pointer;padding:0 4px;border-radius:8px}
 .radio:hover{background:var(--md-surface-container)}
 
 /* top app bar */
@@ -101,22 +101,24 @@ header{display:flex;align-items:center;gap:16px;padding:0 16px 0 24px;background
 .chip.error{background:var(--md-error-container);color:var(--md-on-error-container);border-color:transparent}
 .pen{font:500 14px/20px var(--f)} .pen.down{color:var(--md-error)} .pen.up{color:var(--md-tertiary)}
 
-/* layout: app bar, tabs with navigation, then board (left) beside the step panel (right) */
-header{flex:0 0 64px}
-.bar{flex:0 0 56px;display:flex;align-items:stretch;background:var(--md-surface);border-bottom:1px solid var(--md-outline-variant)}
-.tabs{display:flex;margin:0;padding:0 8px;flex:1}
-.tabs li{list-style:none;position:relative;min-width:104px;padding:0 12px;display:flex;align-items:center;justify-content:center;gap:8px;
+/* layout: app bar, then board (left) beside the side column (right): step tabs, step panel, Back/Next/Stop */
+header{flex:0 0 56px}
+.tabs{display:flex;margin:0;padding:0 4px;flex:0 0 44px;border-bottom:1px solid var(--md-outline-variant)}
+.tabs li{list-style:none;position:relative;flex:1;min-width:0;padding:0 4px;display:flex;align-items:center;justify-content:center;gap:6px;
   cursor:pointer;color:var(--md-on-surface-variant);font:500 14px/20px var(--f);letter-spacing:.1px;user-select:none}
 .tabs li:hover{background:var(--md-surface-container)}
 .tabs li b{font:500 15px/20px var(--f-mono)}
 .tabs li.active{color:var(--md-primary)}
-.tabs li.active::after{content:"";position:absolute;left:12px;right:12px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:var(--md-primary)}
+.tabs li.active::after{content:"";position:absolute;left:8px;right:8px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:var(--md-primary)}
 .tabs li.done b::after{content:" ✓";font-size:11px}
-.nav{display:flex;gap:8px;padding:8px 16px;align-items:center}
+.nav{flex:0 0 auto;display:flex;gap:8px;padding:6px 16px;align-items:center;border-top:1px solid var(--md-outline-variant)}
+.nav #stop{margin-left:auto}
+.side{display:flex;flex-direction:column;min-height:0;background:var(--md-surface-container-low);border-left:1px solid var(--md-outline-variant)}
+#fitseg{position:absolute;top:8px;right:8px;z-index:1}
 .split{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(440px,520px)}
 .boardwrap{display:flex;flex-direction:column;min-height:0;min-width:0}
 .board{flex:0 0 70%;min-height:0}
-.panel{overflow:auto;padding:10px 20px 12px;background:var(--md-surface-container-low);border-left:1px solid var(--md-outline-variant)}
+.panel{flex:1 1 auto;min-height:0;overflow:auto;padding:6px 20px 8px}
 .grp{margin-bottom:2px}
 .panel h1{font:400 20px/28px var(--f);letter-spacing:0;margin:0 0 2px}
 .hdr p{margin:0 0 4px}
@@ -124,7 +126,8 @@ header{flex:0 0 64px}
 .panel p{margin:0 0 10px;color:var(--md-on-surface-variant)}
 .row{display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap}
 .card{background:var(--md-surface-container-lowest);border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:var(--e1)}
-.jog{display:grid;grid-template-columns:40px 40px 40px auto;grid-template-rows:40px 40px 40px;gap:4px;align-items:center;margin:2px 0 2px}
+.jog{display:grid;grid-template-columns:40px 40px 40px auto auto;grid-template-rows:40px 40px 40px;gap:4px;align-items:center;margin:2px 0 2px}
+.jog .extra{grid-row:1/4;grid-column:5;display:flex;flex-direction:column;gap:8px;align-items:flex-start;justify-content:center;padding-left:16px}
 .jog .sizes{grid-row:1/4;grid-column:4;padding-left:16px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 .jog .sizes .seg{flex-direction:column}
 .jog .sizes .seg .btn{border-radius:0;margin:-1px 0 0;height:34px;padding:0 14px;font-family:var(--f-mono);width:100px;justify-content:flex-start}
@@ -166,7 +169,7 @@ header{flex:0 0 64px}
   body{overflow:auto;height:auto}
   .split{display:flex;flex-direction:column}
   .board{flex:0 0 60vw}
-  .panel{border-left:0;overflow:visible}
+  .side{border-left:0} .panel{overflow:visible}
   header{padding:0 16px} .brand span{display:none}
   .btn{height:44px}
   .tabs li{min-width:0;padding:0 8px}
@@ -186,21 +189,22 @@ header{flex:0 0 64px}
     <button class="btn" data-unit="mm">mm</button><button class="btn" data-unit="cm">cm</button><button class="btn" data-unit="in">in</button>
   </div>
 </header>
-<nav class="bar">
-  <ol class="tabs" id="steps"></ol>
-  <div class="nav">
-    <div class="seg small" id="fitseg"><button class="btn on" data-fit="sheet">Sheet</button><button class="btn" data-fit="machine">Machine</button></div>
-    <span style="width:16px"></span>
-    <button class="btn outlined" id="back">Back</button><button class="btn tonal" id="next">Next</button>
-    <button class="btn danger" id="stop">Stop</button>
-  </div>
-</nav>
 <main class="split">
   <section class="boardwrap">
-    <div class="board"><svg id="preview" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="board">
+      <div class="seg small" id="fitseg"><button class="btn on" data-fit="sheet">Sheet</button><button class="btn" data-fit="machine">Machine</button></div>
+      <svg id="preview" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
     <pre class="log" id="log"></pre>
   </section>
-  <section class="panel" id="panel"></section>
+  <section class="side">
+    <ol class="tabs" id="steps"></ol>
+    <div class="panel" id="panel"></div>
+    <div class="nav">
+      <button class="btn outlined" id="back">Back</button><button class="btn tonal" id="next">Next</button>
+      <button class="btn danger" id="stop">Stop</button>
+    </div>
+  </section>
 </main>
 <div class="scrim" id="overlay">
   <div class="dialog" role="dialog" aria-modal="true">
@@ -283,14 +287,14 @@ const tf = (id, label, value, opts = {}) =>
   `<div class="tf ${opts.cls || 'w'}"><label for="${id}">${label}${opts.suffix ? ' (' + opts.suffix + ')' : ''}</label><input id="${id}" class="${opts.mono === false ? '' : 'mono'}" value="${value}" ${opts.attrs || ''}></div>`;
 const sel = (id, label, options, current, cls = 'grow', attrs = '') =>
   `<div class="tf ${cls}"><label for="${id}">${label}</label><select id="${id}" ${attrs}>${options.map(o => `<option ${o === current ? 'selected' : ''}>${o}</option>`).join('')}</select></div>`;
-function jogHtml() {
+function jogHtml(extra = '') {
   const sizes = JOG[u()].map((v, i) => `<button class="btn ${i === jogIdx ? 'on' : ''}" data-jog="${i}">${v} ${u()}</button>`).join('');
   return `<div class="jog">
     <span></span><button class="btn icon-btn tonal" data-move="0,-1" aria-label="Move up">↑</button><span></span>
     <button class="btn icon-btn tonal" data-move="-1,0" aria-label="Move left">←</button><button class="btn icon-btn outlined" data-cmd="goto" data-args='{"x":0,"y":0}' title="Go to origin">⌂</button><button class="btn icon-btn tonal" data-move="1,0" aria-label="Move right">→</button>
     <span></span><button class="btn icon-btn tonal" data-move="0,1" aria-label="Move down">↓</button><span></span>
-    <div class="sizes"><span class="label-medium" style="color:var(--md-on-surface-variant)">Step</span><div class="seg">${sizes}</div></div></div>
-    <div class="hint"><kbd>←↑↓→</kbd> move · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> step · <kbd>space</kbd> pen · <kbd>⇧↑</kbd><kbd>⇧↓</kbd> pen height ±0.5 mm · <kbd>esc</kbd> stop</div>`;
+    <div class="sizes"><span class="label-medium" style="color:var(--md-on-surface-variant)">Step</span><div class="seg">${sizes}</div></div>${extra}</div>
+    <div class="hint"><kbd>←↑↓→</kbd> move · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> step · <kbd>space</kbd> pen · <kbd>⇧↑</kbd><kbd>⇧↓</kbd> height · <kbd>esc</kbd> stop</div>`;
 }
 // Each step is a header plus groups; groups sit side by side and wrap, so everything stays above the fold.
 const grp = (title, body, cls = '') => `<div class="grp ${cls}">${title ? `<h2>${title}</h2>` : ''}${body}</div>`;
@@ -310,8 +314,7 @@ function renderPanel() {
     const fmts = Object.keys(S.formats).concat(['Custom']);
     h = hdr('Paper', 'Tape the sheet to the table. Choose its size and tell the software where its top-left corner is.')
       + grp('Sheet', `<div class="row">${sel('fmt', 'Format', fmts, S.paper_name)}${sel('orient', 'Orientation', ['landscape', 'portrait'], S.orient, 'w', '')}</div>
-        <div class="row">${tf('pw', 'Width', toU(S.paper[0]), {suffix: u()})}${tf('ph', 'Height', toU(S.paper[1]), {suffix: u()})}<button class="btn outlined" id="paperApply">Apply</button></div>
-        <div class="row"><button class="btn tonal" data-cmd="frame" data-args='{"kind":"paper"}'>Trace paper frame, pen up</button></div>`)
+        <div class="row">${tf('pw', 'Width', toU(S.paper[0]), {suffix: u()})}${tf('ph', 'Height', toU(S.paper[1]), {suffix: u()})}<button class="btn outlined" id="paperApply">Apply</button></div>`)
       + grp('Paper position', `<label class="radio"><input type="radio" name="pm" value="corner" ${S.pos_mode === 'corner' ? 'checked' : ''}>Against the stop corner (origin = home)</label>
         <label class="radio"><input type="radio" name="pm" value="jog" ${S.pos_mode === 'jog' ? 'checked' : ''}>Jog the pen to the paper corner</label>
         <label class="radio"><input type="radio" name="pm" value="hand" ${S.pos_mode === 'hand' ? 'checked' : ''}>Push the carriage to the corner by hand</label>`)
@@ -383,9 +386,9 @@ function pushProfileFields() { const a = {}; ['pen_up', 'pen_down', 'feed_draw',
 function renderPosBox() {
   const box = $('posBox'); if (!box) return;
   const m = S.pos_mode;
-  if (m === 'corner') box.innerHTML = `<h2>Origin</h2><div class="row"><button class="btn filled" data-cmd="home">Origin = home</button></div>`;
-  else if (m === 'jog') box.innerHTML = `<h2>Move to the corner</h2><div class="row"><button class="btn filled" data-cmd="set_origin">Set origin here</button></div>` + jogHtml();
-  else box.innerHTML = `<h2>By hand</h2><div class="row"><button class="btn tonal" data-cmd="release_motors">Release motors</button><button class="btn tonal" data-cmd="lock_motors">Lock motors</button><button class="btn filled" data-cmd="origin_by_hand">Set origin here</button></div>
+  if (m === 'corner') box.innerHTML = `<h2>Origin</h2><div class="row"><button class="btn filled" data-cmd="home">Origin = home</button><button class="btn tonal" data-cmd="frame" data-args='{"kind":"paper"}'>Trace frame</button></div>`;
+  else if (m === 'jog') box.innerHTML = `<h2>Move to the corner</h2>` + jogHtml(`<div class="extra"><button class="btn filled" data-cmd="set_origin">Set origin here</button><button class="btn tonal" data-cmd="frame" data-args='{"kind":"paper"}'>Trace frame</button></div>`);
+  else box.innerHTML = `<h2>By hand</h2><div class="row"><button class="btn tonal" data-cmd="release_motors">Release motors</button><button class="btn tonal" data-cmd="lock_motors">Lock motors</button><button class="btn filled" data-cmd="origin_by_hand">Set origin here</button><button class="btn tonal" data-cmd="frame" data-args='{"kind":"paper"}'>Trace frame</button></div>
     <p>Release, push the carriage with the pen tip onto the paper corner, then set the origin. The travel range is unknown afterwards; the machine frame is hidden.</p>`;
   wirePanel.wireCmds(box);
 }

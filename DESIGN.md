@@ -94,7 +94,7 @@ spacing:
   xl: 24px
 components:
   top-app-bar:
-    height: 64px
+    height: 56px
     backgroundColor: "{colors.surface}"
     typography: "{typography.title-large}"
   side-sheet:
@@ -102,7 +102,7 @@ components:
     backgroundColor: "{colors.surface-container-low}"
     padding: "{spacing.xl} {spacing.lg}"
   primary-tabs:
-    height: 64px
+    height: 44px, top of the side column
     indicator: 3px "{colors.primary}", rounded top
   button-filled:
     backgroundColor: "{colors.primary}"
@@ -172,7 +172,7 @@ Roboto in the M3 type scale for the chrome: headline-medium for the step title, 
 
 ## Layout
 
-Top app bar 64 px with the name on the left and, on the right, the status chip, the position readout, the pen state and a segmented unit switch (mm, cm, in). Below it a 56 px bar with the five step tabs on the left and, on the right, a Sheet/Machine view toggle and Back, Next, Stop. The rest of the height is split: the board on the left takes all remaining width, the step panel on the right is a 440 to 520 px column with the step's groups stacked. With a 1280 px window the board is about 760 px wide, close to the aspect of a landscape sheet, so the sheet fills it.
+Top app bar 56 px with the name on the left and, on the right, the status chip, the position readout, the pen state and a segmented unit switch (mm, cm, in). Below it the height is split: the board on the left takes all remaining width (70 % of the column, the log below it takes the rest), the side column on the right is 440 to 520 px wide. The side column is one unit: the five step tabs at its top, the step panel with the step's groups stacked, and Back, Next, Stop as its footer. The Sheet/Machine view toggle floats in the board's top-right corner. With a 1280 px window the board is about 760 px wide, close to the aspect of a landscape sheet, so the sheet fills it. Every step fits the panel without scrolling at 1280 × 690 CSS px.
 
 The board's view fits the sheet by default (rulers and a thin mat margin around it); the Machine toggle zooms out to the whole travel range. All board labels (rulers, title block, machine label, pen cross) are sized in screen pixels and converted to millimetres at render time, so they stay legible at every zoom.
 
