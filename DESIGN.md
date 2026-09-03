@@ -172,6 +172,19 @@ Roboto in the M3 type scale for the chrome: headline-medium for the step title, 
 
 ## Layout
 
+### Names of the parts
+
+Used in code, comments and conversation.
+
+- App bar: the top bar with the name, status chip, position readout, pen state and unit switch.
+- Board: the green area on the left with the sheet, rulers, trace and title block. On it: the board tools (dark strip top-left: title block corner button, zoom slider) and the Sheet/Machine toggle top-right.
+- Console: below the board, made of the log and the input line with the ? button that opens the command reference dialog.
+- Side column: the right column, made of the step tabs (1 Connect to 5 Plot), the step panel with the current step's groups, and the nav at the bottom with Back, Next, Stop.
+- Pause dialog: shown before a `!` layer.
+
+### Arrangement
+
+
 Top app bar 56 px with the name on the left and, on the right, the status chip, the position readout, the pen state and a segmented unit switch (mm, cm, in). Below it the height is split: the board on the left takes all remaining width (70 % of the column, the log below it takes the rest), the side column on the right is 440 to 520 px wide. The side column is one unit: the five step tabs at its top, the step panel with the step's groups stacked, and Back, Next, Stop as its footer. The Sheet/Machine view toggle floats in the board's top-right corner; a translucent dark strip in the top-left holds the board tools: a corner button (◰ ◳ ◲ ◱) cycles the title block through the four sheet corners and remembers the choice in the browser. Below it a vertical zoom slider snaps to 0.5× to 8× of the fitted view; above 1× the board can be dragged to pan, a double-click resets zoom and pan. With a 1280 px window the board is about 760 px wide, close to the aspect of a landscape sheet, so the sheet fills it. Every step fits the panel without scrolling at 1280 × 690 CSS px.
 
 The board's view fits the sheet by default (rulers and a thin mat margin around it); the Machine toggle zooms out to the whole travel range. All board labels (rulers, title block, machine label, pen cross) are sized in screen pixels and converted to millimetres at render time, so they stay legible at every zoom.
