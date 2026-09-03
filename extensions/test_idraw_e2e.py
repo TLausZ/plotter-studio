@@ -298,6 +298,101 @@ def check_reset_button(page):
     assert page.evaluate("() => localStorage.length") == 0
 
 
+def check_test_drawing_dropdown(page):
+    """Speed step: a file from tests/ replaces the document, the first entry brings it back;
+    switching clears trace, done marks and progress."""
+    tab(page, 2)
+    page.keyboard.press("2")
+    page.keyboard.press("ArrowRight")                      # leaves one trace segment
+    expect(page.locator("#trace line")).to_have_count(1)
+    tab(page, 3)
+    files = page.locator("#testFile option").all_text_contents()
+    assert files[0].startswith("Document: idraw_demo.svg") and "A4-landscape-accuracy.svg" in files, files
+    page.select_option("#testFile", "A4-landscape-accuracy.svg")
+    page.wait_for_function("() => S.svg_name === 'A4-landscape-accuracy.svg' && S.test_file === 'A4-landscape-accuracy.svg'")
+    expect(page.locator("#trace line")).to_have_count(0)
+    expect(page.locator("#strokes path.done")).to_have_count(0)
+    assert page.evaluate("() => S.progress") is None
+    tab(page, 4)
+    expect(page.locator("#panel tr", has_text="Accuracy")).to_have_count(1)
+    tab(page, 3)
+    page.select_option("#testFile", "")
+    page.wait_for_function("() => S.svg_name === 'idraw_demo.svg' && S.test_file === ''")
+    tab(page, 4)
+    expect(page.locator("#panel tr", has_text="1 Frame")).to_have_count(1)
+
+
+def check_outside_sheet_warning(page):
+    """A4 drawing at 1:1 on A6: amber paths, a notice in the Plot step, Start plot asks first."""
+    tab(page, 1)
+    page.select_option("#fmt", "Custom")
+    wait_paper(page, "Custom", 297, 210)
+    page.fill("#pw", "148")
+    page.fill("#ph", "105")
+    page.click("#paperApply")
+    wait_paper(page, "Custom", 148, 105)
+    assert page.evaluate("() => S.outside") > 0 and page.evaluate("() => S.beyond") == 0
+    expect(page.locator("#strokes path.out").first).to_be_visible()
+    tab(page, 4)
+    expect(page.locator("#panel .msg", has_text="leave the sheet")).to_have_count(1)
+    page.click("button[data-cmd=plot]")
+    expect(page.locator("#outDlg")).to_be_visible()
+    expect(page.locator("#outText")).to_contain_text("leave the sheet")
+    page.click("#outCancel")
+    expect(page.locator("#outDlg")).to_be_hidden()
+    expect(page.locator("#status")).to_have_text("ready")           # nothing started
+    page.click("button[data-cmd=plot]")
+    page.click("#outGo")
+    expect(page.locator("#status")).to_have_text("plotting", timeout=10000)
+    page.keyboard.press("Escape")
+    expect(page.locator("#log")).to_contain_text("Plot stopped.", timeout=30000)
+    wait_idle(page)
+    tab(page, 1)
+    page.select_option("#fmt", "A4")
+    wait_paper(page, "A4", 297, 210)
+    page.wait_for_function("() => S.outside === 0")
+    expect(page.locator("#strokes path.out")).to_have_count(0)
+    tab(page, 4)
+    expect(page.locator("#panel .msg", has_text="leave the sheet")).to_have_count(0)
+
+
+def check_travel_trace_during_plot(page):
+    """A plot leaves a dotted trace for pen-up travel only; it starts empty and clears at the next plot."""
+    tab(page, 2)
+    page.keyboard.press("2")
+    page.keyboard.press("ArrowRight")
+    expect(page.locator("#trace line.up")).to_have_count(1)
+    tab(page, 4)
+    page.locator("#panel tr", has_text="!2 Detail red").locator("input[data-k=pause]").uncheck()
+    click_cmd(page, "button[data-cmd=plot]")
+    expect(page.locator("#log")).to_contain_text("Plot finished.", timeout=120000)
+    wait_idle(page)
+    expect(page.locator("#trace line.up")).to_have_count(0)          # cleared at plot start
+    assert page.locator("#trace line.travel").count() > 0
+    assert page.locator("#trace line.down").count() == 0            # pen-down parts are the strokes
+    n_travel = page.locator("#trace line.travel").count()
+    dash = page.locator("#trace line.travel").first.get_attribute("stroke-dasharray")
+    assert dash and float(dash.split()[0]) < float(dash.split()[1])  # dotted, not dashed
+    click_cmd(page, "button[data-cmd=plot]")
+    page.wait_for_function("(n) => document.querySelectorAll('#trace line.travel').length < n", arg=n_travel)
+    page.keyboard.press("Escape")
+    expect(page.locator("#log")).to_contain_text("Plot stopped.", timeout=30000)
+    wait_idle(page)
+
+
+def check_stop_button(page):
+    """The red Stop in the app bar ends a plot like Esc."""
+    tab(page, 4)
+    page.locator("#panel tr", has_text="!2 Detail red").locator("input[data-k=pause]").uncheck()
+    click_cmd(page, "button[data-cmd=plot]")
+    expect(page.locator("#status")).to_have_text("plotting", timeout=10000)
+    page.click("#stop")
+    expect(page.locator("#log")).to_contain_text("Plot stopped.", timeout=30000)
+    wait_idle(page)
+    expect(page.locator("#status")).to_have_text("ready")
+    expect(page.locator("#penlbl")).to_have_text("pen up")
+
+
 def check_stop_with_escape(page):
     tab(page, 4)
     page.click("button[data-cmd=plot]")
@@ -311,7 +406,8 @@ def check_stop_with_escape(page):
 CHECKS = [check_connect_and_home, check_steps_fit_without_scrolling, check_keyboard_jog_and_pen,
           check_console, check_paper_and_title_block, check_paper_fields_and_orientation, check_units,
           check_splitter, check_zoom_and_pan, check_title_block_corner, check_reset_button,
-          check_plot_with_pause, check_stop_with_escape]
+          check_plot_with_pause, check_stop_with_escape, check_stop_button, check_test_drawing_dropdown,
+          check_outside_sheet_warning, check_travel_trace_during_plot]
 
 
 def main():
