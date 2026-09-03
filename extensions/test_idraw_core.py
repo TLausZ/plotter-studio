@@ -76,6 +76,17 @@ def test_text_and_title_block():
     assert min(x for p in tl for x, _ in p) >= 6 - 1e-6 and min(y for p in tl for _, y in p) >= 6 - 1e-6
 
 
+def test_load_svg_without_viewbox(tmp=None):
+    import os, tempfile
+    path = os.path.join(tempfile.gettempdir(), "idraw_noviewbox.svg")
+    open(path, "w").write('<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="50mm">'
+                          '<path d="M0 0 L50 25"/></svg>')
+    w, h, layers = core.load_svg(path)
+    pts = layers[0].paths[0]
+    mm = 25.4 / 96                                     # user units are px
+    assert (w, h) == (100, 50) and abs(pts[-1][0] - 50 * mm) < 1e-3 and abs(pts[-1][1] - 25 * mm) < 1e-3, pts
+
+
 def test_place_and_tests():
     lyr = core.Layer("a", [[(0, 0), (297, 210)]])
     fit = core.place([lyr], (297, 210), (420, 297), "fit")[0].paths[0]
@@ -93,5 +104,6 @@ if __name__ == "__main__":
     test_origin_and_stop()
     test_raw_tracking()
     test_text_and_title_block()
+    test_load_svg_without_viewbox()
     test_place_and_tests()
     print("ok")

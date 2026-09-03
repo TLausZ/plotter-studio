@@ -252,6 +252,10 @@ def load_svg(path):
     h_in = plot_utils.getLengthInches(ref, "height")
     if w_in is None or h_in is None:
         raise ValueError("SVG has no page size in mm or in.")
+    if svg.get("viewBox") is None:
+        # no viewBox: user units are px (1/96 in) per the SVG spec, whatever unit the size has
+        # (DrawingBot writes such files); the digest alone would take them as inches
+        svg.set("viewBox", "0 0 %.6f %.6f" % (w_in * 96, h_in * 96))
     sx, sy, ox, oy = plot_utils.vb_scale(svg.get("viewBox"), svg.get("preserveAspectRatio"), w_in, h_in)
     mat = simpletransform.parseTransform("scale(%.6E,%.6E) translate(%.6E,%.6E)" % (sx, sy, ox, oy))
     # digest_params: [width, height (inch), scale x, y, layer selection (-2 = all), curve tolerance inch]
