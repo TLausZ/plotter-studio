@@ -56,7 +56,7 @@ cp extensions/idraw_core.py extensions/idraw_server.py extensions/idraw_web.html
    ~/Library/Application\ Support/org.inkscape.Inkscape/config/inkscape/extensions/
 ```
 
-Restart Inkscape, open a document, Extensions > iDraw > iDraw Interactive. Tick "Simulation" for a dry run, "Allow other devices" for the iPad. The extension returns at once; Inkscape stays usable and the SVG is not modified. Run the extension again to load a changed drawing (it starts a second server on the next free port only if the first was closed; close the old browser tab first).
+Restart Inkscape, open a document, Extensions > iDraw > iDraw Interactive. The model defaults to iDraw A4; pick yours in step 1 (Connect), it is remembered. Tick "Simulation" for a dry run, "Allow other devices" for the iPad. The extension returns at once; Inkscape stays usable and the SVG is not modified. Run the extension again to load a changed drawing (it starts a second server on the next free port only if the first was closed; close the old browser tab first).
 
 Keyboard on the page: arrow keys move the carriage, 1/2/3 set the step, Space toggles the pen, Shift+Up/Down shifts the current pen height by 0.5 mm and writes it into the profile, Esc stops. Keys are ignored while a field has focus. The input line under the log sends a hand-typed G-code or `$` command as is; the reply appears in the log (position is not tracked after hand-typed moves, run Home to resync). The unit switch (mm, cm, in) changes the readout, the paper fields, the jog steps and the rulers; everything is stored in mm. Reset in the app bar puts view, paper, placement, layers and origin back to the defaults after a confirmation; saved pen profiles and the connection stay.
 

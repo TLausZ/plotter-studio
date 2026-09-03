@@ -180,7 +180,7 @@ class SerialTransport:
 
 # ---------------------------------------------------------------- Settings
 # One JSON file next to this module. Structure (everything optional):
-#   {"model": "iDraw A1", "paper": [297, 210], "paper_name": "A4", "orient": "landscape",
+#   {"model": "iDraw A4", "paper": [297, 210], "paper_name": "A4", "orient": "landscape",
 #    "pos_mode": "jog", "last_port": "...", "last_profile": "Default",
 #    "profiles": {"Default": {pen_up, pen_down, feed_draw, feed_travel, line_width}}}
 
@@ -416,7 +416,7 @@ class Plotter:
     def __init__(self):
         self.events = queue.Queue()
         self.transport = None
-        self.model = "iDraw A1"
+        self.model = "iDraw A4"     # default for new users; most owners have the small model
         self.x = 0.0
         self.y = 0.0
         self.z_up = None            # None = unknown (after connecting)

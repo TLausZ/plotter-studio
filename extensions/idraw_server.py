@@ -50,7 +50,7 @@ class Session:
         self.profiles = self.settings.setdefault("profiles", {"Default": dict(core.DEFAULT_PROFILE)})
         self.profile_name = self.settings.get("last_profile", "Default")
         self.plotter.profile = dict(self.profiles.get(self.profile_name, core.DEFAULT_PROFILE))
-        self.plotter.model = self.settings.get("model", "iDraw A1")
+        self.plotter.model = self.settings.get("model", "iDraw A4")
         self.sim = sim
         self.unit = self.settings.get("unit", "mm")
         self.paper = tuple(self.settings.get("paper", core.PAPER_FORMATS["A4"]))
