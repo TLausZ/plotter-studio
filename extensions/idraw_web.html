@@ -122,7 +122,8 @@ header{flex:0 0 56px}
 #tbpos{font-size:20px;background:var(--md-surface-container-lowest);border-color:var(--md-outline)}
 .split{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(440px,520px)}
 .boardwrap{display:flex;flex-direction:column;min-height:0;min-width:0}
-.board{flex:0 0 70%;min-height:0}
+.board{flex:0 0 70%;min-height:120px}
+.splitter{flex:0 0 6px;background:var(--md-surface-container-highest);cursor:row-resize;position:relative} .splitter::after{content:"";position:absolute;left:50%;top:2px;width:40px;height:2px;margin-left:-20px;border-radius:1px;background:var(--md-outline)}
 .panel{flex:1 1 auto;min-height:0;overflow:auto;padding:6px 20px 8px}
 .grp{margin-bottom:2px}
 .panel h1{font:400 20px/28px var(--f);letter-spacing:0;margin:0 0 2px}
@@ -159,7 +160,7 @@ header{flex:0 0 56px}
 .tb .v{font-family:var(--f-draft-mono)} .tb rect,.tb line{stroke:var(--ink);fill:none}
 
 /* log */
-.console{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;background:var(--md-surface-container-low)}
+.console{flex:1 1 auto;min-height:88px;display:flex;flex-direction:column;background:var(--md-surface-container-low)}
 .cliRow{display:flex;gap:8px;align-items:center;margin:0 16px 6px} .cliRow .icon-btn{width:32px;height:32px;font-size:15px;flex:0 0 32px}
 dialog.dialog{border:0;border-top:4px solid var(--md-primary);max-height:80vh;overflow:auto;width:640px} dialog::backdrop{background:rgba(0,0,0,.32)}
 .ref{border-collapse:collapse;width:100%;font:400 13px/18px var(--f);margin-bottom:8px} .ref td{padding:5px 8px;border-bottom:1px solid var(--md-outline-variant);vertical-align:top;cursor:pointer}
@@ -209,6 +210,7 @@ dialog.dialog{border:0;border-top:4px solid var(--md-primary);max-height:80vh;ov
       <div class="seg small" id="fitseg"><button class="btn on" data-fit="sheet">Sheet</button><button class="btn" data-fit="machine">Machine</button></div>
       <svg id="preview" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
+    <div class="splitter" id="splitter" title="Drag to resize the console, double-click to reset"></div>
     <div class="console">
       <pre class="log" id="log"></pre>
       <div class="cliRow"><input id="cli" class="mono" placeholder="G-code or $ command, Enter sends (↑↓ history)" autocomplete="off" spellcheck="false"><button class="btn icon-btn outlined" id="refBtn" title="Command reference">?</button></div>
@@ -596,6 +598,15 @@ document.addEventListener('keydown', e => {
   if ('123'.includes(k) && k) { jogIdx = +k - 1; renderPanel(); }
 });
 window.addEventListener('resize', () => S && renderPreview());
+{ // splitter between board and console: drag sets the board height, double-click resets, stored in the browser
+  const sp = $('splitter'), board = document.querySelector('.board'), wrap = document.querySelector('.boardwrap');
+  const set = h => { board.style.flexBasis = h ? h + 'px' : ''; renderPreview(); };
+  try { if (localStorage.boardH) set(+localStorage.boardH); } catch (e) {}
+  sp.onpointerdown = e => { sp.setPointerCapture(e.pointerId); const y0 = e.clientY, h0 = board.offsetHeight, max = wrap.clientHeight - 6 - 88;
+    sp.onpointermove = ev => set(Math.max(120, Math.min(max, h0 + ev.clientY - y0))); };
+  sp.onpointerup = () => { sp.onpointermove = null; try { localStorage.boardH = board.offsetHeight; } catch (e) {} };
+  sp.ondblclick = () => { set(0); try { delete localStorage.boardH; } catch (e) {} };
+}
 $('fitseg').querySelectorAll('button').forEach(b => b.onclick = () => { fitMachine = b.dataset.fit === 'machine'; renderPreview(); });
 $('tbpos').textContent = TB_ICONS[tbCorner];
 $('tbpos').onclick = () => { tbCorner = TB_CORNERS[(TB_CORNERS.indexOf(tbCorner) + 1) % 4]; $('tbpos').textContent = TB_ICONS[tbCorner]; try { localStorage.tbCorner = tbCorner; } catch (e) {} renderPreview(); };
