@@ -148,7 +148,7 @@ components:
     height: 21mm
   log:
     typography: "{typography.log}"
-    height: 104px
+    height: remaining column below the board (board takes 70 %)
     backgroundColor: "{colors.surface-container-low}"
 ---
 
