@@ -152,9 +152,22 @@ class Session:
                 "connected": p.connected,
                 "transport": p.transport.name if p.transport else None}
 
+    def outside(self, pts, rect):
+        x0, y0, x1, y1 = rect
+        return any(not (x0 - 0.01 <= x <= x1 + 0.01 and y0 - 0.01 <= y <= y1 + 0.01) for x, y in pts)
+
     def snapshot(self):
-        strokes, _pauses = self.plotter.strokes_from_layers(self.placed())
+        p = self.plotter
+        strokes, _pauses = p.strokes_from_layers(self.placed())
+        sheet = (0, 0, self.paper[0], self.paper[1])
+        machine = None
+        if p.bounds_known:
+            mw, mh = core.MODELS[p.model]
+            machine = (p.machine_origin[0], p.machine_origin[1], p.machine_origin[0] + mw, p.machine_origin[1] + mh)
+        out = [self.outside(s[0], sheet) for s in strokes]
+        beyond = [machine is not None and self.outside(s[0], machine) for s in strokes]
         return {
+            "outside": sum(out), "beyond": sum(beyond),    # strokes leaving the sheet / the machine travel
             "state": self.state_dict(),
             "profiles": self.profiles, "profile_name": self.profile_name,
             "unit": self.unit, "paper": self.paper, "paper_name": self.paper_name,
@@ -165,7 +178,7 @@ class Session:
             "tb_corner": self.tb_corner,
             "test_files": self.test_files(), "test_file": self.test_file,
             "doc_name": os.path.basename(self.svg_path) if self.svg_path else "",
-            "strokes": [{"pts": s[0], "layer": s[3]} for s in strokes],
+            "strokes": [{"pts": s[0], "layer": s[3], "out": o or b} for s, o, b in zip(strokes, out, beyond)],
             "ports": ["Simulation"] + core.SerialTransport.list_ports(),
             "models": list(core.MODELS), "formats": core.PAPER_FORMATS,
             "tests": list(core.TESTS), "log": list(self.log),

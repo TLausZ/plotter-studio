@@ -44,7 +44,12 @@ def main():
     st = wait_idle(base)
     assert st["homed"] and st["origin_set"]
     assert call(base + "/api/cmd", {"cmd": "set_unit", "unit": "cm"}) == {"ok": True}
+    assert call(base + "/api/cmd", {"cmd": "set_paper", "w": 148, "h": 105, "name": "A6", "orient": "landscape"}) == {"ok": True}
+    snap = call(base + "/api/snapshot")           # A4 drawing 1:1 on A6: paths leave the sheet
+    assert snap["outside"] > 0 and any(s["out"] for s in snap["strokes"]) and snap["beyond"] == 0, (snap["outside"], snap["beyond"])
+    assert call(base + "/api/cmd", {"cmd": "set_paper", "w": 297, "h": 210, "name": "A4", "orient": "landscape"}) == {"ok": True}
     assert call(base + "/api/cmd", {"cmd": "set_placement", "mode": "fit"}) == {"ok": True}
+    assert call(base + "/api/snapshot")["outside"] == 0
     assert call(base + "/api/cmd", {"cmd": "set_layer", "index": 1, "pause": False}) == {"ok": True}
     assert call(base + "/api/cmd", {"cmd": "jog", "dx": 10, "dy": 0}) == {"ok": True}
     assert abs(wait_idle(base)["x"] - 10) < 1e-6

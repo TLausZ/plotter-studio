@@ -156,6 +156,7 @@ header{flex:0 0 56px}
 .board svg{width:100%;height:100%;display:block}
 .stroke{fill:none;stroke:var(--ink-faint);stroke-linecap:round;stroke-linejoin:round}
 .stroke.done{stroke:var(--ink)}
+.stroke.out{stroke:var(--md-amber)}     /* leaves the sheet or the machine travel */
 .penmark.up,#trace .up{stroke:var(--pen-up)} .penmark.down,#trace .down{stroke:var(--pen-down)}
 .ruler text{font-family:var(--f-draft-mono);fill:rgba(255,255,255,.75)}
 .ruler line{stroke:rgba(255,255,255,.55)}
@@ -205,6 +206,11 @@ dialog.dialog{border:0;border-top:4px solid var(--md-primary);max-height:80vh;ov
   <button class="btn text" id="resetBtn" title="Back to the defaults">Reset</button>
   <button class="btn danger" id="stop" title="Stop after the current line (Esc)">Stop</button>
 </header>
+<dialog id="outDlg" class="dialog">
+  <h3>Plot outside the sheet?</h3>
+  <p id="outText"></p>
+  <div class="actions"><button class="btn text" id="outCancel">Cancel</button><button class="btn filled" id="outGo">Plot anyway</button></div>
+</dialog>
 <dialog id="resetDlg" class="dialog">
   <h3>Reset everything?</h3>
   <p>View, paper, placement, layers and origin go back to the defaults. Saved pen profiles and the connection stay.</p>
@@ -368,7 +374,7 @@ function renderPanel() {
     const p = S.progress, pct = p && p.total ? 100 * p.done / p.total : 0;
     h = hdr('Plot', `${S.svg_name} · page ${fmt(S.page[0])} × ${fmt(S.page[1])} · paper ${fmt(S.paper[0])} × ${fmt(S.paper[1])}`)
       + grp('Placement', `<div class="row"><div class="seg">${[['1:1', '1:1'], ['center', 'Centered'], ['fit', 'Fit to paper']].map(([v, t]) => `<button class="btn ${S.placement === v ? 'on' : ''}" data-pl="${v}">${t}</button>`).join('')}</div></div>
-        ${st.origin_set ? '' : '<div class="msg">Origin not set. Go to step 2, or plot from the current position.</div>'}`)
+        ${st.origin_set ? '' : '<div class="msg">Origin not set. Go to step 2, or plot from the current position.</div>'}${outsideMsg()}`)
       + grp('Layers', `<table class="layers"><tr><th>Plot</th><th>Pause before</th><th>Layer · paths</th></tr>${rows || '<tr><td colspan="3">No layers. Open an SVG with paths.</td></tr>'}</table>`)
       + grp('Run', `<div class="row"><button class="btn filled" data-cmd="plot">Start plot</button><button class="btn danger" data-cmd="stop">Stop</button><button class="btn outlined" data-cmd="frame" data-args='{"kind":"drawing"}'>Trace drawing frame</button></div>
         <div class="progress"><i id="pbar" style="width:${pct}%"></i></div><div class="mono body-small" id="ptxt">${progressText()}</div>`);
@@ -382,6 +388,13 @@ function progressText() {
   const eta = (p.eta == null || p.i >= p.n) ? '' : '   remaining ~' + Math.floor(p.eta / 60) + ':' + String(Math.round(p.eta % 60)).padStart(2, '0') + ' min';
   return `path ${p.i} / ${p.n}   ${pct} %${eta}`;
 }
+function outsideMsg() {
+  if (!S.outside && !S.beyond) return '';
+  const n = S.strokes.length;
+  let t = S.beyond ? `${S.beyond} of ${n} paths exceed the machine travel; the firmware stops at its limit. ` : '';
+  if (S.outside) t += `${S.outside} of ${n} paths leave the sheet (amber on the board). `;
+  return `<div class="msg" style="color:var(--md-amber)">${t}Move the origin, change the placement, or plot anyway.</div>`;
+}
 function renderProgress() { if (step !== 4) return; const p = S.progress; $('pbar').style.width = (p.total ? 100 * p.done / p.total : 0) + '%'; $('ptxt').textContent = progressText(); }
 function syncPenFields() { const pr = S.state.profile; ['pen_up', 'pen_down'].forEach(k => { const e = $(k); if (e && document.activeElement !== e) e.value = pr[k]; }); }
 
@@ -391,6 +404,7 @@ function wirePanel() {
     root.querySelectorAll('[data-cmd]').forEach(b => b.onclick = () => {
       const args = b.dataset.args ? JSON.parse(b.dataset.args) : {};
       if (b.dataset.cmd === 'connect') args.port = $('port').value;
+      if (b.dataset.cmd === 'plot' && (S.outside || S.beyond)) { $('outText').textContent = outsideMsg().replace(/<[^>]+>/g, ''); $('outDlg').showModal(); return; }
       cmd(b.dataset.cmd, args);
     });
     root.querySelectorAll('[data-move]').forEach(b => b.onclick = () => { const [x, y] = b.dataset.move.split(',').map(Number); jog(x, y); });
@@ -490,6 +504,8 @@ const REF = [
   };
 }
 // reset: server settings back to the defaults, browser storage cleared, page reloaded
+$('outCancel').onclick = () => $('outDlg').close();
+$('outGo').onclick = () => { $('outDlg').close(); cmd('plot'); };
 $('resetBtn').onclick = () => $('resetDlg').showModal();
 $('resetCancel').onclick = () => $('resetDlg').close();
 $('resetGo').onclick = async () => { await cmd('reset'); try { localStorage.clear(); } catch (e) {} location.reload(); };
@@ -529,7 +545,7 @@ function renderPreview() {
   g += `<rect x="0" y="0" width="${pw}" height="${ph}" fill="var(--paper)" stroke="rgba(0,0,0,.35)" stroke-width="${px(1)}"/>`;
   g += rulers(pw, ph);
   g += `<g id="strokes" stroke-width="${lw}">` + S.strokes.map((s, i) =>
-    `<path class="stroke ${i < done ? 'done' : ''}" d="M${s.pts.map(p => p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join('L')}"/>`).join('') + '</g>';
+    `<path class="stroke ${i < done ? 'done' : ''} ${s.out ? 'out' : ''}" d="M${s.pts.map(p => p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join('L')}"/>`).join('') + '</g>';
   g += `<circle cx="0" cy="0" r="${px(5)}" fill="none" stroke="var(--origin)" stroke-width="${px(1.5)}"/>`;
   g += `<g id="trace" class="penmark" stroke-width="${px(1)}" stroke-dasharray="${px(3)} ${px(3)}">${traceHtml()}</g>`;
   g += `<g id="pen" class="penmark ${st.z_up === false ? 'down' : 'up'}" transform="translate(${st.x} ${st.y})" stroke-width="${px(1.5)}"><circle r="${px(8)}" fill="none"/><line x1="${-px(14)}" x2="${px(14)}"/><line y1="${-px(14)}" y2="${px(14)}"/></g>`;
