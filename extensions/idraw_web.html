@@ -160,7 +160,11 @@ header{flex:0 0 56px}
 
 /* log */
 .console{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;background:var(--md-surface-container-low)}
-#cli{flex:0 0 32px;margin:0 16px 6px;padding:0 10px;border:1px solid var(--md-outline);border-radius:4px;background:var(--md-surface-container-lowest);font:400 12px/30px var(--f-mono);color:var(--md-on-surface);outline:none}
+.cliRow{display:flex;gap:8px;align-items:center;margin:0 16px 6px} .cliRow .icon-btn{width:32px;height:32px;font-size:15px;flex:0 0 32px}
+dialog.dialog{border:0;border-top:4px solid var(--md-primary);max-height:80vh;overflow:auto;width:640px} dialog::backdrop{background:rgba(0,0,0,.32)}
+.ref{border-collapse:collapse;width:100%;font:400 13px/18px var(--f);margin-bottom:8px} .ref td{padding:5px 8px;border-bottom:1px solid var(--md-outline-variant);vertical-align:top;cursor:pointer}
+.ref tr:hover td{background:var(--md-surface-container)} .ref td:first-child{font:500 13px/18px var(--f-mono);white-space:nowrap} .ref th{text-align:left;font:500 12px/16px var(--f);letter-spacing:.5px;text-transform:uppercase;color:var(--md-on-surface-variant);padding:8px 8px 4px}
+#cli{flex:1 1 auto;height:32px;margin:0;padding:0 10px;border:1px solid var(--md-outline);border-radius:4px;background:var(--md-surface-container-lowest);font:400 12px/30px var(--f-mono);color:var(--md-on-surface);outline:none}
 #cli:focus{border-color:var(--md-primary);box-shadow:inset 0 0 0 1px var(--md-primary)}
 .log{flex:1 1 auto;min-height:0;margin:0;padding:4px 16px;overflow:auto;font:400 12px/18px var(--f-mono);color:var(--md-on-surface-variant);white-space:pre-wrap;
   background:var(--md-surface-container-lowest);border-top:1px solid var(--md-outline-variant)}
@@ -207,8 +211,14 @@ header{flex:0 0 56px}
     </div>
     <div class="console">
       <pre class="log" id="log"></pre>
-      <input id="cli" class="mono" placeholder="G-code or $ command, Enter sends (↑↓ history)" autocomplete="off" spellcheck="false">
+      <div class="cliRow"><input id="cli" class="mono" placeholder="G-code or $ command, Enter sends (↑↓ history)" autocomplete="off" spellcheck="false"><button class="btn icon-btn outlined" id="refBtn" title="Command reference">?</button></div>
     </div>
+    <dialog id="ref" class="dialog">
+      <h3>DrawCore / GRBL commands</h3>
+      <p>Click a row to put the command into the input line. Reference: the original plugin's calls and the GRBL 1.1 manual; commands marked * are not verified on this device.</p>
+      <table class="ref"><tbody></tbody></table>
+      <div class="actions"><button class="btn text" id="refClose">Close</button></div>
+    </dialog>
   </section>
   <section class="side">
     <ol class="tabs" id="steps"></ol>
@@ -425,6 +435,44 @@ $('zoom').oninput = e => { zoomIdx = +e.target.value; $('zoomlbl').textContent =
   svg.onpointerup = svg.onpointercancel = () => { drag = null; };
   svg.ondblclick = () => { zoomIdx = 2; panX = panY = 0; $('zoom').value = 2; $('zoomlbl').textContent = '1×'; renderPreview(); };
 }
+// command reference: [command, purpose, reply]; '*' = not verified on the DrawCore board
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const REF = [
+  ['Machine'],
+  ['$H', 'Homing cycle; afterwards the head is at the home corner', 'ok when done'],
+  ['$X', 'Clear alarm (needed after a limit hit or a failed homing)', 'ok'],
+  ['?', 'Status report', '<Idle|MPos:...> or Alarm'],
+  ['$SLP', 'Sleep: motors unpowered; reset or reconnect afterwards', 'ok'],
+  ['$1=254', 'Step idle delay 254: release the motors (push the carriage by hand)', 'ok'],
+  ['$1=255', 'Step idle delay 255: hold the motors permanently', 'ok'],
+  ['$$', 'List all GRBL settings ($0 … $132)', 'multi-line'],
+  ['$RST=*', 'Reset all settings to factory defaults', 'multi-line'],
+  ['$QP', 'Pen state (0 = down)', 'digit, ok'],
+  ['$B', 'Pause button state', '0 or 1, ok'],
+  ['$QT', 'Read the board nickname', 'text, ok'],
+  ['$ST=NAME', 'Set the board nickname (max 16 chars, uppercase)', 'ok'],
+  ['v', 'Firmware version (handshake)', 'DrawCore Vx.xx'],
+  ['!', 'Feed hold: pause the current move *', 'realtime, no ok'],
+  ['~', 'Cycle start: resume after feed hold *', 'realtime, no ok'],
+  ['$J=G91 X10 F3000', 'Jog 10 mm in machine X (cancelled by feed hold) *', 'ok'],
+  ['Motion (machine axes: X = −document y, Y = −document x)'],
+  ['G90', 'Absolute positioning (modal)', 'ok'],
+  ['G91', 'Relative positioning (modal)', 'ok'],
+  ['G0 X-20 Y-10', 'Rapid move to machine (−20, −10) = document (10, 20)', 'ok'],
+  ['G1 X-20 Y-10 F3000', 'Linear move at 3000 mm/min (F stays modal)', 'ok'],
+  ['G1 F8000', 'Set the feed rate only', 'ok'],
+  ['G1 Z5 F5000', 'Pen to 5 mm (down); Z0.5 raises it', 'ok'],
+  ['G4 P0.5', 'Dwell 0.5 s', 'ok'],
+  ['G92 X0 Y0', 'Declare the current position as (0, 0)', 'ok'],
+  ['M3 S500', 'Laser/PWM on at 50 % (S0…1000)', 'ok'],
+  ['M5', 'Laser/PWM off *', 'ok'],
+];
+{ const tb = document.querySelector('#ref tbody');
+  tb.innerHTML = REF.map(r => r.length === 1 ? `<tr><th colspan="3">${r[0]}</th></tr>` : `<tr data-c="${r[0]}"><td>${esc(r[0])}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
+  tb.onclick = e => { const tr = e.target.closest('tr[data-c]'); if (tr) { $('cli').value = tr.dataset.c; $('ref').close(); $('cli').focus(); } };
+  $('refBtn').onclick = () => { $('ref').showModal(); $('ref').scrollTop = 0; };
+  $('refClose').onclick = () => $('ref').close();
+}
 // console: Enter sends the line as typed, up/down walk the history
 { const cli = $('cli'), hist = []; let hi = 0;
   cli.onkeydown = e => {
@@ -511,7 +559,6 @@ function titleBlock(pw, ph) {
   h += `<line x1="${x + col - W * 0.02}" y1="${y}" x2="${x + col - W * 0.02}" y2="${y + H}"/></g>`;
   return h;
 }
-const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 // trace of manual moves (jog, console): blue pen up, red pen down; plot runs show their strokes instead
 const trace = [];
 function addTrace(a, b) {
