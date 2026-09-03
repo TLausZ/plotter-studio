@@ -20,6 +20,7 @@ inkscape-extension/
     idraw_demo.svg                   example with three layers (normal, !-pause, %-notes)
     test_idraw_core.py               self-test for idraw_core
     test_idraw_server.py             self-test for the server (simulator, no browser)
+    test_idraw_e2e.py                end-to-end test of the web UI with Playwright (simulator, headless Chromium)
     idraw_interactive_settings.json  created on first run: paper, profiles, model, unit (not in git)
     idraw_interactive_last.svg       copy of the document handed over by Inkscape (not in git)
     idraw2_0.inx, idraw2_0_control.py, idraw2_0_conf.py, idraw_plot_utils_import.py
@@ -43,7 +44,7 @@ cd extensions
 
 The server prints its address (default `http://127.0.0.1:8765/`) and opens the browser. Options: `--port N`, `--no-browser`, `--lan` to accept connections from other devices (the LAN address is printed; open it on the iPad). Any Python 3.8+ with lxml works; pyserial is optional, without it the pure-Python copy in `idraw_deps/serial` is used. Inkscape's own Python has both.
 
-Self-tests: `python3 test_idraw_core.py` and `python3 test_idraw_server.py` each print `ok`.
+Self-tests: `python3 test_idraw_core.py` and `python3 test_idraw_server.py` each print `ok`. End-to-end: `python3 test_idraw_e2e.py` (once: `pip install playwright` and `playwright install chromium`; add `--headed` to watch) drives the page through connect, home, all five steps, keyboard jog, console, paper, units, a plot with layer pause and a stop; it restores the settings file afterwards.
 
 In Inkscape: copy the five new files into Inkscape's extension folder (the originals are already there):
 
