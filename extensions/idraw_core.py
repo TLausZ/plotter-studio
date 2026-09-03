@@ -681,7 +681,10 @@ class Plotter:
 
     @property
     def busy(self):
-        return bool(self._worker and self._worker.is_alive())
+        w = self._worker
+        if w and w.is_alive() and self.status in ("ready", "error", "disconnected"):
+            w.join(0.5)     # the worker reported its final status; let it exit before answering
+        return bool(w and w.is_alive())
 
     def plot_strokes(self, strokes, layer_pauses=None, finish_home=True):
         """Plot strokes in order.

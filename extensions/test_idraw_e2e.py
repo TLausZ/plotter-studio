@@ -10,6 +10,7 @@ import os
 import re
 import sys
 import threading
+import time
 
 from playwright.sync_api import expect, sync_playwright
 
@@ -25,6 +26,20 @@ def tab(page, i):
     page.locator("#steps li").nth(i).click()
 
 
+def click_cmd(page, selector):
+    """Click a command button and wait for the server's reply, so a following wait_idle sees the work."""
+    with page.expect_response(lambda r: "/api/cmd" in r.url):
+        page.click(selector)
+
+
+def wait_idle(page, timeout=15.0):
+    """Wait until the plotter's worker has finished (the status chip alone can lag or still say ready)."""
+    t0 = time.time()
+    while page.evaluate("async () => (await (await fetch('/api/snapshot')).json()).state.busy"):
+        assert time.time() - t0 < timeout, "plotter stayed busy"
+        time.sleep(0.05)
+
+
 def reset(page):
     """Ground state before every check: fresh page, no browser storage, mm, A4 landscape,
     1:1, connected to the simulator, homed, pen up, standing at the origin."""
@@ -37,8 +52,8 @@ def reset(page):
         page.select_option("#port", "Simulation")
         page.click("#connBtn")
     expect(page.locator("#status")).to_have_text("ready")
-    page.click("button[data-cmd=home]")
-    expect(page.locator("#status")).to_have_text("ready", timeout=15000)
+    click_cmd(page, "button[data-cmd=home]")
+    wait_idle(page)
     tab(page, 2)
     page.click("button[data-cmd=pen_up]")
     expect(page.locator("#penlbl")).to_have_text("pen up", timeout=10000)
@@ -59,9 +74,9 @@ def check_connect_and_home(page):
     page.select_option("#port", "Simulation")
     page.click("#connBtn")
     expect(page.locator("#status")).to_have_text("ready")
-    page.click("button[data-cmd=home]")
-    expect(page.locator("#status")).to_have_text("moving")
-    expect(page.locator("#status")).to_have_text("ready", timeout=15000)
+    click_cmd(page, "button[data-cmd=home]")
+    wait_idle(page)
+    expect(page.locator("#status")).to_have_text("ready")
     expect(page.locator("#pos")).to_have_text("X 0.0  Y 0.0 mm")
     expect(page.locator("#penlbl")).to_have_text("pen ?")   # home does not move the pen
 
@@ -181,14 +196,14 @@ def check_title_block_corner(page):
         return ("t" if y < ph / 2 else "b") + ("l" if x < pw / 2 else "r")
     assert corner() == "br"            # default
     btn = page.locator("#tbpos")
-    for icon, want in [("◰", "tl"), ("◳", "tr"), ("◲", "br"), ("◱", "bl"), ("◰", "tl")]:
+    for icon, want in [("◱", "bl"), ("◰", "tl"), ("◳", "tr"), ("◲", "br"), ("◱", "bl")]:   # cycle tl > tr > br > bl
         btn.click()
         expect(btn).to_have_text(icon)
         assert corner() == want, (want, corner())
-    assert page.evaluate("() => localStorage.tbCorner") == "tl"
+    assert page.evaluate("() => localStorage.tbCorner") == "bl"
     page.reload()
     expect(page.locator("#status")).to_have_text("ready")
-    assert corner() == "tl"            # remembered
+    assert corner() == "bl"            # remembered
 
 
 def check_paper_fields_and_orientation(page):
@@ -202,6 +217,7 @@ def check_paper_fields_and_orientation(page):
     expect(page.locator("#ph")).to_have_value("210.0")
     expect(page.locator("#preview rect[fill='var(--paper)']").first).to_have_attribute("height", "210")
     page.select_option("#fmt", "Custom")
+    expect(page.locator("#preview .tb")).to_contain_text("Custom 148.0 × 210.0 mm")   # panel re-rendered
     page.fill("#pw", "300")
     page.fill("#ph", "200")
     page.click("#paperApply")

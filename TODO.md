@@ -19,5 +19,6 @@ Tasks and ideas for iDraw Interactive. Move a line to Done when it is finished.
 
 ## Done
 
+- 3 Sep 2026: Playwright e2e suite (13 checks, reset before each, run by name), Reset button with dialog, TESTING.md.
 - 3 Sep 2026: console input under the log sends hand-typed G-code and $ commands; the state tracks every line (G0/G1, G90/G91, G92, $H, $1, $SLP, $RST); manual moves leave a dashed trace on the board. A ? button opens the command reference; a click fills the input line.
 - 3 Sep 2026: step tabs and Back/Next/Stop in the side column, board tools strip (title block corner, zoom, pan).
