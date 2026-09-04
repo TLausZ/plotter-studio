@@ -19,6 +19,7 @@ Tasks and ideas for iDraw Interactive. Move a line to Done when it is finished.
 
 ## Done
 
+- 4 Sep 2026: e2e suite at 17 checks, all passing (stop button, test drawing dropdown, outside-sheet warning, travel trace).
 - 3 Sep 2026: test drawings folder with dropdown in the Speed step (replaces the test pattern buttons); Piter Pasma line test and DrawingBotV3 calibration sheet added.
 - 3 Sep 2026: title block is plotted (Hershey single-stroke text, virtual last layer, corner button with off state as server setting).
 - 3 Sep 2026: Playwright e2e suite (13 checks, reset before each, run by name), Reset button with dialog, TESTING.md.

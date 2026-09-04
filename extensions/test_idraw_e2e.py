@@ -361,13 +361,15 @@ def check_travel_trace_during_plot(page):
     tab(page, 2)
     page.keyboard.press("2")
     page.keyboard.press("ArrowRight")
-    expect(page.locator("#trace line.up")).to_have_count(1)
+    expect(page.locator("#pos")).to_have_text("X 10.0  Y 0.0 mm", timeout=10000)
+    expect(page.locator("#trace line.up[x2='10']")).to_have_count(1)   # the jog's segment (reset may leave others)
     tab(page, 4)
     page.locator("#panel tr", has_text="!2 Detail red").locator("input[data-k=pause]").uncheck()
     click_cmd(page, "button[data-cmd=plot]")
     expect(page.locator("#log")).to_contain_text("Plot finished.", timeout=120000)
     wait_idle(page)
-    expect(page.locator("#trace line.up")).to_have_count(0)          # cleared at plot start
+    # cleared at plot start: the jog segment is gone; the return to the origin after the plot may remain
+    expect(page.locator("#trace line.up[x2='10']")).to_have_count(0)
     assert page.locator("#trace line.travel").count() > 0
     assert page.locator("#trace line.down").count() == 0            # pen-down parts are the strokes
     n_travel = page.locator("#trace line.travel").count()
