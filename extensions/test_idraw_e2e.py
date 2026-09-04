@@ -405,11 +405,37 @@ def check_stop_with_escape(page):
     expect(page.locator("#penlbl")).to_have_text("pen up")
 
 
+def check_model_dropdown(page):
+    """Untested models carry the label, show the hint and switch the command dialect."""
+    tab(page, 0)
+    before = page.locator("#model").input_value()
+    expect(page.locator("#model option[value='iDraw A1']")).to_have_text("iDraw A1")
+    expect(page.locator("#model option[value='AxiDraw V3/A4']")).to_have_text("AxiDraw V3/A4 (untested)")
+    page.select_option("#model", "AxiDraw V3/A4")
+    expect(page.locator("#panel")).to_contain_text("Only the iDraw A1 has been tested")
+    page.click("#connBtn")                    # reconnect: the dialect is set up on connect
+    expect(page.locator("#connBtn")).to_have_text("Connect")
+    page.click("#connBtn")
+    expect(page.locator("#log")).to_contain_text("> EM,1,1", timeout=10000)
+    click_cmd(page, "button[data-cmd=home]")  # no $H on an AxiDraw
+    wait_idle(page)
+    tab(page, 2)
+    page.keyboard.press("2")
+    page.keyboard.press("ArrowRight")         # 10 mm in x: a = b = 800 steps
+    expect(page.locator("#log")).to_contain_text(",800,800", timeout=10000)
+    after = page.locator("#log").text_content().split("> EM,1,1", 1)[1]
+    assert "$H" not in after and "G1 " not in after, after
+    tab(page, 0)
+    page.select_option("#model", "iDraw A1")
+    expect(page.locator("#panel")).not_to_contain_text("Only the iDraw A1 has been tested")
+    page.select_option("#model", before)
+
+
 CHECKS = [check_connect_and_home, check_steps_fit_without_scrolling, check_keyboard_jog_and_pen,
           check_console, check_paper_and_title_block, check_paper_fields_and_orientation, check_units,
           check_splitter, check_zoom_and_pan, check_title_block_corner, check_reset_button,
           check_plot_with_pause, check_stop_with_escape, check_stop_button, check_test_drawing_dropdown,
-          check_outside_sheet_warning, check_travel_trace_during_plot]
+          check_outside_sheet_warning, check_travel_trace_during_plot, check_model_dropdown]
 
 
 def main():
