@@ -53,6 +53,8 @@ PAPER_FORMATS = {  # mm, landscape (width, height)
 MODELS = {  # travel in mm (x, y), values from the original idraw2_0_conf.py
     "iDraw A4": (300, 210), "iDraw A3": (430, 297), "iDraw A2": (594, 432),
     "iDraw A1": (864, 594), "iDraw A0": (1189, 841),
+    # older models, in the original conf but not in its dropdown
+    "iDraw V3 XLX": (595, 218), "iDraw V3/B6": (190, 140), "iDraw MiniKit": (160, 101.6),
 }
 Z_RATE = 5000  # feed rate for Z moves (mm/min), as in the original
 
@@ -564,6 +566,8 @@ class Plotter:
         # $H, then a relative move of y_bounds along machine X. Verify orientation and
         # sign on the device and correct here.
         my = MODELS[self.model][1]
+        if self.model == "iDraw A4":
+            my -= 5     # the original moves 5 mm less on this model
         self._send("G91")
         self._send("G1 X%.1f Y0 F5000" % my, seconds=my / 5000 * 60)
         self._send("G90")
