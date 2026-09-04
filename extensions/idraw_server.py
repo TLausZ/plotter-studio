@@ -180,7 +180,8 @@ class Session:
             "doc_name": os.path.basename(self.svg_path) if self.svg_path else "",
             "strokes": [{"pts": s[0], "layer": s[3], "out": o or b} for s, o, b in zip(strokes, out, beyond)],
             "ports": ["Simulation"] + core.SerialTransport.list_ports(),
-            "models": list(core.MODELS), "formats": core.PAPER_FORMATS,
+            "models": [[m, core.model_label(m)] for m in core.MODELS], "model_sizes": core.MODELS,
+            "formats": core.PAPER_FORMATS,
             "tests": list(core.TESTS), "log": list(self.log),
             "progress": self.progress, "pause_layer": self.pause_layer, "sim": self.sim,
         }

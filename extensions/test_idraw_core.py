@@ -29,6 +29,29 @@ def test_mapping_and_plot():
     assert p.z_up is True and (p.x, p.y) == (30, 20)
 
 
+def test_dialects():
+    t = Capture()
+    p = core.Plotter()
+    p.model = "AxiDraw V3/A4"
+    p.connect(t)
+    p.home()
+    assert "EM,1,1" in t.lines and not any(l.startswith("$") for l in t.lines)
+    t.lines.clear()
+    p.profile.update(pen_up=60, pen_down=30)
+    p.plot_strokes([([(10, 20), (30, 20)], None, None, 0)], finish_home=False)
+    # (0,0) -> (10,20): a = 30 mm, b = -10 mm at 80 steps/mm; then +20 mm in x
+    sm = [l for l in t.lines if l.startswith("SM,")]
+    assert sm[0].endswith(",2400,-800") and sm[1].endswith(",1600,1600"), sm
+    assert "SC,5,15248" in t.lines and "SC,5,20641" in t.lines, t.lines   # 30 % and 60 %
+    assert (p.x, p.y) == (30, 20)
+    p.model = "GRBL plotter A3"
+    t.lines.clear()
+    p.home()
+    p.goto(10, 20)
+    assert t.lines[:2] == ["$H", "G92 X0 Y0"] and t.lines[-1].startswith("G1 X10.000 Y20.000"), t.lines
+    assert core.model_label("iDraw A1") == "iDraw A1" and core.model_label("iDraw A4").endswith("(untested)")
+
+
 def test_origin_and_stop():
     t = Capture()
     p = core.Plotter()
@@ -101,6 +124,7 @@ def test_place_and_tests():
 
 if __name__ == "__main__":
     test_mapping_and_plot()
+    test_dialects()
     test_origin_and_stop()
     test_raw_tracking()
     test_text_and_title_block()

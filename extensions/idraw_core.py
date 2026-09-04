@@ -50,12 +50,38 @@ PAPER_FORMATS = {  # mm, landscape (width, height)
     "A1": (841, 594), "A2": (594, 420), "A3": (420, 297),
     "A4": (297, 210), "A5": (210, 148), "Letter": (279.4, 215.9),
 }
-MODELS = {  # travel in mm (x, y), values from the original idraw2_0_conf.py
+MODELS = {  # travel in mm (x, y)
+    # iDraw (DrawCore board, GRBL dialect with Z as the pen); values from idraw2_0_conf.py
     "iDraw A4": (300, 210), "iDraw A3": (430, 297), "iDraw A2": (594, 432),
     "iDraw A1": (864, 594), "iDraw A0": (1189, 841),
     # older models, in the original conf but not in its dropdown
     "iDraw V3 XLX": (595, 218), "iDraw V3/B6": (190, 140), "iDraw MiniKit": (160, 101.6),
+    # AxiDraw (EiBotBoard, EBB commands, no G-code); values from axidraw_conf.py
+    "AxiDraw V3/A4": (300, 218), "AxiDraw V3/A3": (430, 297), "AxiDraw SE/A2": (594, 432),
+    "AxiDraw SE/A1": (864, 594), "AxiDraw V3 XLX": (595, 218), "AxiDraw V3/B6": (190, 140),
+    "AxiDraw MiniKit": (160, 101.6), "AxiDraw ArtStation 1824": (609.6, 457.2),
+    "AxiDraw ArtStation 2436": (914.4, 609.6),
+    # any other GRBL 1.1 pen plotter with Z as the pen and home switches
+    "GRBL plotter A4": (300, 210), "GRBL plotter A3": (430, 297),
+    "GRBL plotter A2": (594, 432), "GRBL plotter A1": (864, 594),
 }
+TESTED = {"iDraw A1"}   # the only model this extension has been run on; all others are untested
+
+
+def dialect(model):
+    """drawcore: iDraw (GRBL with the original's axis mapping and homing dance).
+    grbl: plain GRBL 1.1, document axes sent as they are. ebb: AxiDraw EiBotBoard."""
+    return "ebb" if model.startswith("AxiDraw") else "grbl" if model.startswith("GRBL") else "drawcore"
+
+
+def model_label(model):
+    return model if model in TESTED else model + " (untested)"
+
+
+# EBB (AxiDraw): 2032 steps per inch in high resolution (16x microstepping), servo pulse range
+# from axidraw_conf.py; the profile's pen_up/pen_down are servo percent (0-100) on this dialect.
+EBB_STEPS_PER_MM = 2032 / 25.4
+EBB_SERVO_MIN, EBB_SERVO_MAX = 9855, 27831
 Z_RATE = 5000  # feed rate for Z moves (mm/min), as in the original
 
 
@@ -108,8 +134,10 @@ class SimTransport:
 
 
 class SerialTransport:
-    """Real DrawCore over pyserial. Handshake as in the original drawcore_serial.testPort."""
+    """DrawCore, EBB or plain GRBL over pyserial. Handshake as in the original drawcore_serial.testPort."""
     # ponytail: not tested on the device yet; ? status and realtime commands (! ~) unverified
+    # ponytail: EBB and plain GRBL handshakes written from the archived AxiDraw code and the
+    # GRBL docs, never run on a board
 
     def __init__(self, port):
         self.name = port
@@ -130,8 +158,8 @@ class SerialTransport:
         found = []
         for p in comports():
             hw = getattr(p, "hwid", "") or ""
-            if "1A86:7523" in hw or "1A86:8040" in hw:
-                found.insert(0, p.device)  # DrawCore first
+            if "1A86:7523" in hw or "1A86:8040" in hw or "04D8:FD92" in hw:
+                found.insert(0, p.device)  # DrawCore and EBB first
             else:
                 found.append(p.device)
         return found
@@ -151,14 +179,20 @@ class SerialTransport:
         s.reset_input_buffer()
         s.write(b"v\r")
         v = s.readline().decode("ascii", "replace").strip()
-        if not v.startswith("DrawCore"):
-            s.close()
-            raise IOError("No DrawCore on %s (reply: %r)" % (self.port, v))
+        if not v.startswith(("DrawCore", "EBB")):
+            s.reset_input_buffer()      # plain GRBL answers "v" with an error; ask for $I
+            s.write(b"$I\r")
+            v = s.readline().decode("ascii", "replace").strip()
+            s.readline()                # the ok after the [VER:...] line
+            if not v.startswith("["):
+                s.close()
+                raise IOError("No DrawCore, EBB or GRBL on %s (reply: %r)" % (self.port, v))
         self.ser = s
         self.version = v
-        status = self.send("?")
-        if "Alarm" in status:
-            self.send("$X")   # clear alarm (e.g. after an emergency stop)
+        if not v.startswith("EBB"):
+            status = self.send("?")
+            if "Alarm" in status:
+                self.send("$X")   # clear alarm (e.g. after an emergency stop)
         return v
 
     def close(self):
@@ -175,7 +209,7 @@ class SerialTransport:
                 break
         if line.startswith("$B") or line.startswith("$QP") or line.startswith("$QT"):
             self.ser.readline()  # these queries return data followed by an ok
-        if resp.startswith("error") or resp.startswith("ALARM"):
+        if resp.startswith(("error", "ALARM", "!")):    # "!" is the EBB error prefix
             raise IOError("%s -> %s" % (line, resp))
         return resp
 
@@ -515,11 +549,21 @@ class Plotter:
     def connected(self):
         return self.transport is not None
 
+    @property
+    def dialect(self):
+        return dialect(self.model)
+
     def connect(self, transport):
         version = transport.open()
         self.transport = transport
         self.log("Connected to %s: %s" % (transport.name, version))
-        self._send("G90")  # absolute coordinates, permanently
+        if self.model not in TESTED:
+            self.log("%s is untested: verify axis directions and the pen with small moves first." % self.model)
+        if self.dialect == "ebb":
+            self._send("EM,1,1")  # motors on, 16x microstepping
+            self.log("Pen heights are servo percent (0-100) on this model, higher = up.")
+        else:
+            self._send("G90")  # absolute coordinates, permanently
         self._set_status("ready")
         return version
 
@@ -546,32 +590,55 @@ class Plotter:
         dist = math.hypot(x - self.x, y - self.y)
         if dist < 0.005:
             return
-        if self._rel:               # a hand-typed G91 is still modal in the firmware
-            self._send("G90")
-            self._rel = False
-        # document -> machine mapping as in the original: X = -y, Y = -x
-        self._send("G1 X%.3f Y%.3f F%d" % (-y, -x, feed), seconds=dist / feed * 60)
+        seconds = dist / feed * 60
+        if self.dialect == "ebb":
+            # ponytail: mixed axes as in the AxiDraw code (a = x + y, b = x - y); signs unverified
+            dx, dy = x - self.x, y - self.y
+            a, b = round((dx + dy) * EBB_STEPS_PER_MM), round((dx - dy) * EBB_STEPS_PER_MM)
+            self._send("SM,%d,%d,%d" % (max(1, round(seconds * 1000)), a, b), seconds=seconds)
+        else:
+            if self._rel:               # a hand-typed G91 is still modal in the firmware
+                self._send("G90")
+                self._rel = False
+            if self.dialect == "drawcore":
+                # document -> machine mapping as in the original: X = -y, Y = -x
+                self._send("G1 X%.3f Y%.3f F%d" % (-y, -x, feed), seconds=seconds)
+            else:
+                self._send("G1 X%.3f Y%.3f F%d" % (x, y, feed), seconds=seconds)
         self.x, self.y = x, y
         self.emit("state", None)
 
     def _z(self, z_mm):
+        if self.dialect == "ebb":
+            pct = min(100.0, max(0.0, z_mm))
+            val = round(EBB_SERVO_MIN + (EBB_SERVO_MAX - EBB_SERVO_MIN) * pct / 100)
+            self._send("SC,5,%d" % val)         # the "pen down" servo position is reused for every height
+            self._send("SP,0", seconds=0.3)
+            return
         self._send("G1 Z%.2f F%d" % (z_mm, Z_RATE), seconds=0.15)
 
     # --- commands (blocking; call from the UI through start() on the worker thread)
     def home(self):
         """Homing, then move to the origin corner and declare it (0,0)."""
         self._set_status("moving")
-        self._send("$H", seconds=3.0)
-        # ponytail: homing sequence taken from the original (manual_cmd machine_origin):
-        # $H, then a relative move of y_bounds along machine X. Verify orientation and
-        # sign on the device and correct here.
-        my = MODELS[self.model][1]
-        if self.model == "iDraw A4":
-            my -= 5     # the original moves 5 mm less on this model
-        self._send("G91")
-        self._send("G1 X%.1f Y0 F5000" % my, seconds=my / 5000 * 60)
-        self._send("G90")
-        self._send("G92 X0 Y0")
+        if self.dialect == "ebb":
+            # no home switches: wherever the carriage stands now is the home corner
+            self.pen_up()
+            self._send("EM,1,1")
+            self.log("AxiDraw has no home switches: the current position is taken as the home corner.")
+        else:
+            self._send("$H", seconds=3.0)
+            if self.dialect == "drawcore":
+                # ponytail: homing sequence taken from the original (manual_cmd machine_origin):
+                # $H, then a relative move of y_bounds along machine X. Verify orientation and
+                # sign on the device and correct here.
+                my = MODELS[self.model][1]
+                if self.model == "iDraw A4":
+                    my -= 5     # the original moves 5 mm less on this model
+                self._send("G91")
+                self._send("G1 X%.1f Y0 F5000" % my, seconds=my / 5000 * 60)
+                self._send("G90")
+            self._send("G92 X0 Y0")
         self.x = self.y = 0.0
         self.machine_origin = (0.0, 0.0)
         self.homed = True
@@ -681,7 +748,8 @@ class Plotter:
 
     def set_origin(self):
         """The current position becomes document (0,0) (G92). machine_origin moves along."""
-        self._send("G92 X0 Y0")
+        if self.dialect != "ebb":   # EBB moves are relative anyway
+            self._send("G92 X0 Y0")
         mx, my = self.machine_origin
         self.machine_origin = (mx - self.x, my - self.y)
         self.x = self.y = 0.0
@@ -691,8 +759,12 @@ class Plotter:
     def motors_off(self):
         """$SLP: sleep mode. A reset is needed afterwards, hence homed = False."""
         self.pen_up()
-        self._send("$SLP")
-        self.log("Motors off. Reconnect and home before the next move.")
+        if self.dialect == "ebb":
+            self._send("EM,0,0")
+            self.log("Motors off. Home before the next move.")
+        else:
+            self._send("$SLP")
+            self.log("Motors off. Reconnect and home before the next move.")
         self.homed = False
 
     def release_motors(self):
@@ -703,13 +775,13 @@ class Plotter:
         (bounds_known False).
         """
         self.pen_up()
-        self._send("$1=254")
+        self._send("EM,0,0" if self.dialect == "ebb" else "$1=254")
         self.motors_free = True
         self.bounds_known = False
         self.emit("state", None)
 
     def lock_motors(self):
-        self._send("$1=255")
+        self._send("EM,1,1" if self.dialect == "ebb" else "$1=255")
         self.motors_free = False
         self.emit("state", None)
 

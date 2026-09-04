@@ -4,11 +4,13 @@ Tasks and ideas for iDraw Interactive. Move a line to Done when it is finished.
 
 ## Next
 
-- Hardware test on the plotter: homing direction, axis signs, `$SLP` behaviour, `G92` after releasing motors.
+- Hardware test on the plotter (iDraw A1): homing direction, axis signs, `$SLP` behaviour, `G92` after releasing motors.
 - Test realtime commands (`!`, `~`, `?` during a move, `$J=`); if they work, make Stop immediate.
 - Copy the five files into Inkscape's extension folder and launch from the menu.
 
 ## Ideas
+
+- AxiDraw and plain GRBL dialects exist but were never run on a board: needs an owner to test axis signs, EBB step scale, servo range and the GRBL handshake.
 
 - Tablet: test on the iPad and optimise touch handling (splitter hit area ~24 px, `touch-action: none` on splitter, board and zoom slider, maybe pinch zoom).
 - Watercolor and brush setup wizard: guides through placing paint wells and brushes, dipping and rinsing positions.

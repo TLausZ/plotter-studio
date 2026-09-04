@@ -255,7 +255,6 @@ const STEPS = ['Connect','Paper','Pen','Speed','Plot'];
 const UNIT = {mm:1, cm:10, in:25.4};
 const DEC = {mm:1, cm:2, in:2};
 const JOG = {mm:[1,10,50], cm:[0.1,1,5], in:[0.05,0.5,2]};
-const MODELS = {"iDraw A4":[300,210],"iDraw A3":[430,297],"iDraw A2":[594,432],"iDraw A1":[864,594],"iDraw A0":[1189,841],"iDraw V3 XLX":[595,218],"iDraw V3/B6":[190,140],"iDraw MiniKit":[160,101.6]};
 let S = null;            // snapshot from the server
 let step = 0;
 let jogIdx = 1;
@@ -346,7 +345,8 @@ function renderPanel() {
     h = hdr('Connect', `Drawing: <b>${S.svg_name}</b>${S.svg_error ? ' <span style="color:var(--md-error)">(' + S.svg_error + ')</span>' : ''}`)
       + grp('Machine', `<div class="row">${sel('port', 'Port', S.ports, cur, 'grow', st.connected ? 'disabled' : '')}
         <button class="btn ${st.connected ? 'outlined' : 'filled'}" data-cmd="${st.connected ? 'disconnect' : 'connect'}" id="connBtn">${st.connected ? 'Disconnect' : 'Connect'}</button></div>
-        <div class="row">${sel('model', 'Model', S.models, st.model)}</div>`)
+        <div class="row">${sel('model', 'Model', S.models, st.model)}</div>
+        ${st.model.startsWith('iDraw A1') ? '' : '<p>Only the iDraw A1 has been tested. Other models follow the vendors\' code but have not been run on a device: check axis directions and pen heights with small moves first.</p>'}`)
       + grp('Reference', `<div class="row"><button class="btn filled" data-cmd="home" ${st.connected ? '' : 'disabled'}>Home</button></div>
         <p>Home moves the carriage to the reference corner and sets the origin there. After that the software knows the travel range.</p>`);
   } else if (step === 1) {
@@ -525,7 +525,7 @@ function renderPreview() {
   const svg = $('preview');
   const bw = svg.clientWidth || 800, bh = svg.clientHeight || 500;
   let mx = 0, my = 0, mw = 0, mh = 0;
-  if (st.bounds_known) { [mx, my] = st.machine_origin; [mw, mh] = MODELS[st.model] || [0, 0]; }
+  if (st.bounds_known) { [mx, my] = st.machine_origin; [mw, mh] = S.model_sizes[st.model] || [0, 0]; }
   let xs = [0, pw], ys = [0, ph];
   if (fitMachine && st.bounds_known) { xs.push(mx, mx + mw); ys.push(my, my + mh); }
   let x0 = Math.min(...xs), y0 = Math.min(...ys), x1 = Math.max(...xs), y1 = Math.max(...ys);

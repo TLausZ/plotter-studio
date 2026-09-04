@@ -80,9 +80,9 @@ browser (idraw_web.html)  <-- HTTP/SSE -->  idraw_server.Session  -->  idraw_cor
 
 Any client that speaks the three routes works: a native app, a CLI, a different web page. Nothing in `idraw_core` or `idraw_server` knows about the HTML. For a very different interaction (for example a Tk window) use `idraw_core.Plotter` directly, as the archived Tk UI did.
 
-### Another plotter
+### Other plotters
 
-Same G-code understanding (GRBL with Z as the pen): a new transport is enough, possibly with an adapted handshake in `open()`. AxiDraw/EBB (commands `SM`, `SP`, no G-code): override `_move_abs`, `_z`, `home`, `release_motors` in a subclass of `Plotter`; the rest (plot run, tests, placement, events) stays. Travel ranges go into `MODELS` (and the copy in `idraw_web.html` for the preview).
+Only the iDraw H A1 has been run on a device; every other model is marked "(untested)" in the Model dropdown and the page says so when one is selected. `MODELS` in `idraw_core.py` lists the travel ranges, `dialect()` picks the command set from the model name: `drawcore` (iDraw: GRBL with the original's axis mapping and homing dance), `grbl` (any GRBL 1.1 pen plotter with Z as the pen and home switches, document axes sent as they are), `ebb` (AxiDraw EiBotBoard: `SM` moves in mixed motor steps, `SC`/`SP` for the servo, `EM` for the motors, no home switches, pen heights are servo percent 0-100). `SerialTransport.open()` accepts a DrawCore, an EBB or a plain GRBL banner. The AxiDraw and GRBL branches were written from the vendors' code, so verify axis directions and pen heights with small moves first.
 
 ### New features
 
