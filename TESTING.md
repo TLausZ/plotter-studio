@@ -20,7 +20,7 @@ Browser, `python3 test_idraw_e2e.py`: starts the server with the simulator (40×
 | splitter | drag resizes the board, minimums for console and board, double-click resets and forgets |
 | zoom_and_pan | 4× quarters the viewBox around the centre, drag pans, 0.5× doubles it, double-click resets |
 | title_block_corner | button cycles the four corners and off with the matching icon, the title block is a virtual last layer with its own checkbox, the choice is a server setting and survives a reload |
-| reset_button | Reset in the app bar opens a dialog; Cancel changes nothing; Reset restores mm, A4, 1:1, view, layers, clears browser storage, keeps the connection |
+| reset_button | Reset in the app bar opens a dialog; Cancel changes nothing; Reset restores mm, A4, 1:1, view, layers, clears browser storage (the reloaded page starts at step 1 and stores only its new view), keeps the connection |
 | plot_with_pause | plot runs, pause dialog before the `!` layer, continue, finished with all strokes done (drawing plus title block) |
 | stop_with_escape | Esc stops a running plot, pen up, status ready |
 | stop_button | the red Stop in the app bar stops a running plot like Esc |
@@ -33,6 +33,7 @@ Browser, `python3 test_idraw_e2e.py`: starts the server with the simulator (40×
 | path_stepping | The number field picks a path (Enter; beyond the last means the last), ‹ and › step one path per click and stop at the first, held down they run on and stop when released; Resume from path N follows. |
 | large_drawing | Stress test: the engraving with 31'550 paths from tests/ loads and is drawn within 10 s, a click on the board picks a path; no plot (the 40× simulator outruns the page). |
 | plot_estimate | The time estimate next to Trace drawing frame equals `idraw_core.estimate` on the same paths and shows it with its parts in the hover text; a measured time factor for the model scales it. |
+| view_survives_reload | A reload keeps step 5, zoom 4× with the same viewBox, Machine and the open placement details; a reload during a plot comes back to step 5 with the plot running. |
 | hidden_lines | The checkbox in the Plot step reloads the drawing with lines behind fills split; the setting survives a reload. |
 | placement_adjust | Position, scale, rotation: rotate by 90°, a preset keeps the rotation, 15° steps and the angle field (rounded to 15°), align right to a 10 mm margin, X field, scale 50 % halves the width, back to 1:1. |
 | drag_drawing | With Position, scale, rotation open, dragging the drawing on the board moves it by the dragged distance; 1:1 brings it back. |

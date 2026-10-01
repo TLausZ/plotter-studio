@@ -19,6 +19,7 @@ Tasks and ideas for Plotter Studio. Move a line to Done when it is finished.
 
 ## Done
 
+- 1 Oct 2026: a reload keeps the view (step, zoom and pan, Sheet/Machine, placement details open), also during a plot; Reset starts at step 1 again; e2e suite at 27 checks.
 - 1 Oct 2026: plot time estimate in the Plot step (drawn length, travel, pen moves) with a time factor per model from the last real plot of a minute or more; e2e suite at 26 checks.
 - 1 Oct 2026: stress test drawing A4-portrait-migrant-mother-engraved.svg (31'550 paths) in tests/ with the e2e check large_drawing; e2e suite at 25 checks.
 - 1 Oct 2026: path picker layout: slider over the full width, below it ‹ number › with Resume from path N and Plot only; the arrows step one path and run on while held; e2e suite at 24 checks.

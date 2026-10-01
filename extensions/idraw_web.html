@@ -266,6 +266,9 @@ let jogIdx = 1;
 let done = 0;            // strokes plotted so far
 let pick = null;         // path picked on the board or with the slider (index) for Resume and Plot only; null = follow the progress
 let adjOpen = false, alignRef = 'sheet', alignMargin = 10, rotStep = 90;   // placement details: open, align to sheet or margin, margin in mm, rotation step
+// the view survives a reload (step, zoom and pan, sheet or machine, placement details open), restored at the end of this script
+let keepView = true;   // false from Reset on, so a late snapshot cannot write the old view back
+function saveView() { if (keepView) try { localStorage.view = JSON.stringify({step, zoomIdx, panX, panY, fitMachine, adjOpen}); } catch (e) {} }
 const $ = id => document.getElementById(id);
 
 // ---------------------------------------------------------------- units
@@ -327,7 +330,7 @@ function renderReadout() {
   pen.textContent = st.z_up === null ? 'pen ?' : (st.z_up ? 'pen up' : 'pen down');
   pen.className = 'pen ' + (st.z_up === null ? '' : (st.z_up ? 'up' : 'down'));
 }
-function showStep(i) { step = Math.max(0, Math.min(4, i)); renderSteps(); renderPanel(); }
+function showStep(i) { step = Math.max(0, Math.min(4, i)); renderSteps(); renderPanel(); saveView(); }
 
 // ---------------------------------------------------------------- panel
 const tf = (id, label, value, opts = {}) =>
@@ -509,7 +512,7 @@ function wirePanel() {
   const on = (id, ev, fn) => { const e = $(id); if (e) e.addEventListener(ev, fn); };
   on('model', 'change', e => cmd('set_model', {name: e.target.value}));
   // set on click, not on the async toggle event: a re-render in between would fold it again
-  P.querySelectorAll('#adj summary').forEach(el => el.onclick = () => { adjOpen = !el.parentNode.open; });
+  P.querySelectorAll('#adj summary').forEach(el => el.onclick = () => { adjOpen = !el.parentNode.open; saveView(); });
   on('plX', 'change', e => cmd('set_transform', {x: fromU(e.target.value)}));
   on('plY', 'change', e => cmd('set_transform', {y: fromU(e.target.value)}));
   on('plS', 'change', e => cmd('set_transform', {scale: parseFloat(e.target.value) / 100}));
@@ -631,7 +634,7 @@ $('outCancel').onclick = () => $('outDlg').close();
 $('outGo').onclick = () => { $('outDlg').close(); cmd('plot'); };
 $('resetBtn').onclick = () => $('resetDlg').showModal();
 $('resetCancel').onclick = () => $('resetDlg').close();
-$('resetGo').onclick = async () => { await cmd('reset'); try { localStorage.clear(); } catch (e) {} location.reload(); };
+$('resetGo').onclick = async () => { keepView = false; await cmd('reset'); try { localStorage.clear(); } catch (e) {} location.reload(); };
 // title block corner cycles tl > tr > br > bl; the icon shows the current corner
 // title block corner: server setting, cycles br > bl > tl > tr > off; the icon shows the current state
 const TB_CORNERS = ['br', 'bl', 'tl', 'tr', 'off'], TB_ICONS = {tl: '◰', tr: '◳', br: '◲', bl: '◱', off: '▢'};
@@ -676,6 +679,7 @@ function renderPreview() {
   $('fitseg').hidden = !st.bounds_known;
   $('tbpos').textContent = TB_ICONS[S.tb_corner] || '▢';
   $('fitseg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.fit === 'machine') === fitMachine));
+  saveView();
 }
 function rulers(pw, ph) {
   const unit = u(), step = {mm:10, cm:10, in:25.4}[unit], minor = {mm:5, cm:5, in:12.7}[unit];
@@ -747,6 +751,14 @@ window.addEventListener('resize', () => S && renderPreview());
 }
 $('fitseg').querySelectorAll('button').forEach(b => b.onclick = () => { fitMachine = b.dataset.fit === 'machine'; renderPreview(); });
 $('tbpos').onclick = () => cmd('set_title_block', {corner: TB_CORNERS[(TB_CORNERS.indexOf(S.tb_corner) + 1) % TB_CORNERS.length]});
+// restore the view saved by saveView(); Reset clears it with the rest of the storage
+try {
+  const v = JSON.parse(localStorage.view || '{}'), num = x => typeof x === 'number' && isFinite(x);
+  if ([0, 1, 2, 3, 4].includes(v.step)) step = v.step;
+  if (ZOOM[v.zoomIdx]) { zoomIdx = v.zoomIdx; $('zoom').value = zoomIdx; $('zoomlbl').textContent = ZOOM[zoomIdx] + '×'; }
+  if (num(v.panX) && num(v.panY)) { panX = v.panX; panY = v.panY; }
+  fitMachine = v.fitMachine === true; adjOpen = v.adjOpen === true;
+} catch (e) {}
 connectEvents();
 </script>
 </body>

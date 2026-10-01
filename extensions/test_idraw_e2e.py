@@ -294,6 +294,7 @@ def check_reset_button(page):
     page.click("#resetBtn")
     page.click("#resetGo")
     expect(page.locator("#steps li")).to_have_count(5)   # page reloaded
+    expect(page.locator("#steps li").nth(0)).to_have_class(re.compile("active"))   # the saved view is gone
     expect(page.locator("#pos")).to_contain_text("mm")
     wait_paper(page, "A4", 297, 210)
     assert page.evaluate("() => S.placement") == "1:1"
@@ -305,7 +306,7 @@ def check_reset_button(page):
         expect(box).to_be_checked()
     expect(page.locator("#panel input[data-k=pause]").nth(0)).not_to_be_checked()   # "1 Frame"
     expect(page.locator("#panel input[data-k=pause]").nth(1)).to_be_checked()       # "!2 Detail red"
-    assert page.evaluate("() => localStorage.length") == 0
+    assert page.evaluate("() => Object.keys(localStorage)") == ["view"]   # only the new page's own view
 
 
 def check_test_drawing_dropdown(page):
@@ -568,6 +569,32 @@ def check_plot_estimate(page):
     expect(page.locator("#est")).to_have_text("≈ " + dur(want))
 
 
+def check_view_survives_reload(page):
+    """A reload keeps the step, zoom and pan, Sheet/Machine and the open placement details, also while plotting."""
+    tab(page, 4)
+    page.locator("#zoom").fill("6")                           # 4x
+    page.click("button[data-fit=machine]")
+    page.click("#adj summary")
+    vb = page.locator("#preview").get_attribute("viewBox")
+    page.reload()
+    expect(page.locator("#steps li").nth(4)).to_have_class(re.compile("active"))
+    expect(page.locator("#zoomlbl")).to_have_text("4×")
+    expect(page.locator("button[data-fit=machine]")).to_have_class(re.compile(r"\bon\b"))
+    expect(page.locator("#adj")).to_have_attribute("open", "")
+    expect(page.locator("#preview")).to_have_attribute("viewBox", vb)
+    page.click("#adj summary")                                # closed stays closed
+    page.locator("#panel tr", has_text="!2 Detail red").locator("input[data-k=pause]").uncheck()
+    click_cmd(page, "button[data-cmd=plot]")
+    expect(page.locator("#status")).to_have_text("plotting", timeout=10000)
+    page.reload()                                             # in the middle of a plot
+    expect(page.locator("#steps li").nth(4)).to_have_class(re.compile("active"))
+    expect(page.locator("#status")).to_have_text("plotting")
+    expect(page.locator("#adj")).not_to_have_attribute("open", "")
+    page.keyboard.press("Escape")
+    expect(page.locator("#log")).to_contain_text("Plot stopped.", timeout=30000)
+    wait_idle(page)
+
+
 def check_hidden_lines(page):
     """Plot step: the checkbox reloads the drawing with lines behind fills removed."""
     tab(page, 3)
@@ -649,7 +676,7 @@ CHECKS = [check_connect_and_home, check_steps_fit_without_scrolling, check_keybo
           check_splitter, check_zoom_and_pan, check_title_block_corner, check_reset_button,
           check_plot_with_pause, check_stop_with_escape, check_stop_button, check_test_drawing_dropdown,
           check_outside_sheet_warning, check_travel_trace_during_plot, check_model_dropdown,
-          check_resume_from_path, check_path_picker, check_path_stepping, check_large_drawing, check_plot_estimate, check_hidden_lines, check_placement_adjust, check_drag_drawing]
+          check_resume_from_path, check_path_picker, check_path_stepping, check_large_drawing, check_plot_estimate, check_view_survives_reload, check_hidden_lines, check_placement_adjust, check_drag_drawing]
 
 
 def main():

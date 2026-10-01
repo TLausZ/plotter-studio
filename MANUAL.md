@@ -133,7 +133,9 @@ The software follows the typed commands (G0/G1, G90/G91, G92, `$H`, `$1`, `$SLP`
 
 ## Reset
 
-Reset in the app bar puts view, paper, placement, layers and origin back to the defaults after a confirmation. Saved pen profiles and the connection stay.
+A reload of the page, also in the middle of a plot, comes back to the same view: the step, zoom and pan of the board, Sheet or Machine, and whether Position, scale, rotation is open. The browser keeps this, so another browser or the iPad starts with its own view.
+
+Reset in the app bar puts view, paper, placement, layers and origin back to the defaults after a confirmation, and the page starts again at step 1. Saved pen profiles, the time factor and the connection stay.
 
 ## Troubleshooting
 
