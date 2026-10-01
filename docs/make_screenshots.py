@@ -21,6 +21,14 @@ docs/tests/<name>.png (MANUAL.md, "Test drawings"):
     device scale 2, layers hidden in Inkscape stay hidden. A drawing added to tests/ gets its picture
     on the next run; its paragraph in MANUAL.md is written by hand.
 
+docs/ui/<name>.png (MANUAL.md, next to the paragraph that describes the element):
+    Crops of single elements at device scale 2, on the demo drawing, A4 landscape, 1:1, iDraw A4,
+    connected and homed: app-bar (status to Stop), placement (Position, scale, rotation unfolded),
+    layers, run (Start plot to the estimate), outside-notice and outside-dialog (sheet A5),
+    pause-dialog (before "!2 Detail red"), path-picker (path 5), board-tools (corner button and
+    zoom), sheet-machine, title-block (its corner of the sheet), splitter, console, command-reference,
+    reset-dialog. The MANUAL.md width of each is half its pixel width.
+
 The other pictures (manual-connect, manual-paper, manual-pen, manual-steps) are cut from single
 steps of the panel and are not made by this script.
 """
@@ -134,6 +142,93 @@ def test_drawings(browser):
     page.close()
 
 
+def ui_crops(page):
+    out = os.path.join(HERE, "ui")
+    os.makedirs(out, exist_ok=True)
+    def shot(name, locator=None, clip=None):
+        page.mouse.move(1, 899)                                   # no hover effect on the element
+        page.wait_for_timeout(200)
+        path = os.path.join(out, name + ".png")
+        if locator is not None:
+            locator.screenshot(path=path)
+        else:
+            page.screenshot(path=path, clip=clip)
+        print("  ui/" + name + ".png")
+    def around(boxes, pad=8):                                     # clip around the union of bounding boxes
+        x0, y0 = min(b["x"] for b in boxes) - pad, min(b["y"] for b in boxes) - pad
+        x1, y1 = max(b["x"] + b["width"] for b in boxes) + pad, max(b["y"] + b["height"] for b in boxes) + pad
+        return {"x": max(0, x0), "y": max(0, y0), "width": x1 - max(0, x0), "height": y1 - max(0, y0)}
+    start(page, "iDraw A4")
+    tab(page, 1)
+    select(page, "#fmt", "A4")
+    select(page, "#orient", "landscape")
+    tab(page, 3)
+    select(page, "#testFile", "")
+    page.wait_for_function("() => S.svg_name === 'idraw_demo.svg'")
+    tab(page, 4)
+    page.click("button[data-pl='1:1']")
+    page.wait_for_function("() => S.placement === '1:1'")
+    group = lambda title: page.locator("#panel .grp", has=page.locator("h2", has_text=title))
+    dialog = lambda sel: around([page.locator(sel).bounding_box()], pad=16)   # with a margin of the scrim
+    page.evaluate("() => cmd('pen_up')")
+    expect(page.locator("#penlbl")).to_have_text("pen up")
+
+    shot("app-bar", clip=around([page.locator("#status").bounding_box(), page.locator("#stop").bounding_box()]))
+    shot("board-tools", page.locator(".board .tools"))
+    shot("sheet-machine", page.locator("#fitseg"))
+    layers = page.locator("#panel input[data-k=enabled]")
+    for i in range(2):                                            # the drawing's layers off: the title block alone
+        layers.nth(i).uncheck()
+    page.wait_for_function("() => S.strokes.every(s => s.layer === S.tb_index)")
+    page.evaluate("() => { trace.length = 0; renderPreview(); }")
+    shot("title-block", clip=around(page.evaluate("""() => [...document.querySelectorAll('#strokes path.tb')].map(p => {
+        const r = p.getBoundingClientRect(); return {x: r.x, y: r.y, width: r.width, height: r.height}; })"""), pad=10))
+    for i in range(2):
+        layers.nth(i).check()
+    page.wait_for_function("() => S.strokes.some(s => s.layer !== S.tb_index)")
+    sp = page.locator("#splitter").bounding_box()
+    shot("splitter", clip={"x": sp["x"] + sp["width"] / 2 - 140, "y": sp["y"] - 24, "width": 280, "height": 64})
+    shot("console", page.locator(".cliRow"))
+    page.click("#refBtn")
+    shot("command-reference", clip=dialog("#ref"))
+    page.click("#refClose")
+    page.click("#resetBtn")
+    shot("reset-dialog", clip=dialog("#resetDlg"))
+    page.click("#resetCancel")
+
+    page.click("#adj summary")
+    shot("placement", page.locator("#adj"))
+    page.click("#adj summary")
+    shot("layers", group("Layers"))
+    shot("run", group("Run").locator(".row").first)
+    page.fill("#pickN", "5")
+    page.press("#pickN", "Enter")
+    shot("path-picker", page.locator("#pickN").locator("xpath=.."))
+
+    tab(page, 1)
+    select(page, "#fmt", "A5")                                    # the A4 drawing at 1:1 leaves an A5 sheet
+    tab(page, 4)
+    page.wait_for_function("() => S.outside > 0")
+    shot("outside-notice", page.locator("#panel .msg", has_text="leave the sheet"))
+    page.click("button[data-cmd=plot]")
+    shot("outside-dialog", clip=dialog("#outDlg"))
+    page.click("#outCancel")
+    tab(page, 1)
+    select(page, "#fmt", "A4")
+    tab(page, 4)
+    page.wait_for_function("() => S.outside === 0")
+
+    pause = page.locator("#panel tr", has_text="!2 Detail red").locator("input[data-k=pause]")
+    if not pause.is_checked():
+        pause.check()
+    page.wait_for_function("() => S.layers[1].pause")
+    page.click("button[data-cmd=plot]")
+    page.wait_for_selector("#overlay.show", timeout=60000)
+    shot("pause-dialog", clip=dialog("#overlay .dialog"))
+    page.click("#pauseStop")
+    page.wait_for_function("() => S.state.status === 'ready' && !S.state.busy", timeout=30000)
+
+
 def main():
     httpd = idraw_server.serve(os.path.join(EXT, "idraw_demo.svg"), sim=True, port=0, open_browser=False)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
@@ -141,7 +236,7 @@ def main():
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
             test_drawings(browser)
-            for shot in (readme, manual_resume):
+            for shot in (readme, manual_resume, ui_crops):
                 page = browser.new_page(viewport={"width": 1440, "height": 900}, device_scale_factor=2)
                 page.goto("http://127.0.0.1:%d/" % httpd.server_address[1])
                 shot(page)

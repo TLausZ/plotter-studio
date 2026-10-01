@@ -37,6 +37,8 @@ The board on the left shows the sheet, the drawing and the carriage. Below it is
 
 The app bar at the top shows the status (ready, moving, plotting, paused), the position, the pen state, the unit switch (mm, cm, in), Reset and a red Stop.
 
+<img src="docs/ui/app-bar.png" alt="App bar: status Ready, position X 0.0 Y 0.0 mm, pen up, unit switch with mm selected, Reset, red Stop" width="600">
+
 ## The five steps
 
 <img src="docs/manual-steps.png" alt="The five step tabs: 1 Connect, 2 Paper, 3 Pen, 4 Speed, 5 Plot" width="500">
@@ -89,17 +91,35 @@ Placement puts the drawing on the sheet:
 
 Position, scale, rotation (click to unfold) places the drawing freely. X and Y are the top-left corner of the drawing on the sheet, Scale is in percent and keeps the drawing's centre. The six align buttons put the drawing against the left, centre or right and the top, middle or bottom of the sheet; with Margin selected, they keep the distance set under Margin from the edges. ↺ and ↻ turn the drawing about its centre by the step chosen next to them, 90° (for example a portrait drawing onto a sheet taped in landscape) or 15°. The Angle field takes a number directly and rounds it to 15°. The presets fit the whole turned page, so Fit to paper makes a drawing at 45° smaller. The size of the drawing is shown next to the angle. While this part is unfolded, you can also drag the drawing on the board with the mouse; folded, a drag on the board moves the view as before. The three buttons above start again from 1:1, Centered or Fit to paper and keep the rotation.
 
+<img src="docs/ui/placement.png" alt="Position, scale, rotation unfolded: X, Y and Scale fields, six align buttons, Sheet or Margin, Margin field with the drawing size, Angle field, rotate left and right, 15 or 90 degree steps" width="479">
+
 Layers lists the layers of the document with their number of paths. Untick a layer to skip it. Tick "Pause before" to stop before a layer, for example to change the pen; a dialog asks to continue. Layer names in Inkscape set the defaults: a name starting with `!` pauses before the layer, a name starting with `%` is a note layer and is never plotted. The last row, Title block, is the title block from the board. Its Plot box and the corner button on the board show the same thing: turned off with the corner button, the box is empty, and unticking the box turns the title block off. Turning it on again, with the box or the corner button, brings it back where it was when the box turned it off; after the corner button turned it off, it goes on with bottom right, as the button's cycle does.
+
+<img src="docs/ui/layers.png" alt="Layers group: Hide lines behind filled shapes, and the table with Plot and Pause before boxes for 1 Frame, !2 Detail red and Title block" width="479">
+
+The dialog before a paused layer:
+
+<img src="docs/ui/pause-dialog.png" alt="Dialog Pause before layer !2 Detail red with the buttons Stop and Continue" width="480">
 
 Hide lines behind filled shapes drops the parts of lines that lie behind a filled shape drawn later in the document, as if the shape covered them. The drawing is loaded again when the box is toggled.
 
 Start plot starts. If paths leave the sheet or the machine travel, they are amber on the board, the step says how many, and Start plot asks before plotting anyway. Stop (or Esc) stops after the current line and raises the pen. Trace drawing frame moves around the drawing with the pen up.
+
+<img src="docs/ui/run.png" alt="Run row: Start plot, Stop, Trace drawing frame and the estimate of about 2 minutes" width="479">
+
+The notice in the step and the question of Start plot when paths leave the sheet:
+
+<img src="docs/ui/outside-notice.png" alt="Amber notice: 6 of 165 paths leave the sheet (amber on the board). Move the origin, change the placement, or plot anyway." width="479">
+
+<img src="docs/ui/outside-dialog.png" alt="Dialog Plot outside the sheet? with the buttons Cancel and Plot anyway" width="480">
 
 Next to the buttons, ≈ shows how long the plot will take: the drawn length at the drawing feed, the travel between the paths at the travel feed, and a pen down and up per path. Hover over it for the three parts. Acceleration and the time the plotter takes to answer each line are not in the formula, so on a real plotter the first estimate is probably too short; by how much is not measured yet and depends on the drawing. After the first finished plot of at least a minute, Plotter Studio knows the ratio of the measured to the estimated time for this model and multiplies every later estimate by it; the hover text shows the factor. Time spent in layer pauses does not count, plots in the simulator do not change the factor, and Reset keeps it.
 
 Once a plot has run, a bar under the buttons shows the path number, the share of the drawn length that is done, and the estimated time left. Travel moves are not counted, so both run a little ahead on drawings with many long jumps.
 
 Below them you pick a path: drag the slider across the full width, click a path on the board (the pointer turns into a crosshair over a path; with a finger, within about 20 px of the line), type its number in the field and press Enter, or step with ‹ and ›. One click on an arrow moves one path; hold it and it runs on, about 20 paths a second. The picked path is drawn thick, the paths before it count as done. "Resume from path N" next to the field plots from there to the end, for example after a stop or when the pen ran dry. "Plot only" plots just that one path and leaves out the layer pauses, for example to redraw a line the pen skipped. After a stop the picker stands on the path where the plot stopped.
+
+<img src="docs/ui/path-picker.png" alt="Path picker row: previous and next arrows around the path number 5, Resume from path 5, Plot only" width="479">
 
 ![After a stop: a click on the curve picked path 5, drawn thick, path number 5 next to the arrows, Resume from path 5 and Plot only in the Run group](docs/manual-resume.png)
 
@@ -165,11 +185,17 @@ An engraving after Dorothea Lange's photograph Migrant Mother (1936), made by th
 
 Sheet fits the sheet into the view, Machine shows the whole travel range. The zoom slider on the left goes from 0.5× to 8×; drag on the board to pan, double-click to go back to the fitted view. The rulers follow the unit switch.
 
+<img src="docs/ui/board-tools.png" alt="Board tools: the corner button for the title block above the vertical zoom slider at 1x" width="48"> &nbsp; <img src="docs/ui/sheet-machine.png" alt="Sheet and Machine toggle with Sheet selected" width="165">
+
 Plotted paths turn dark, travel moves are dotted. Moves made by hand (jog, console) leave a dashed trace; a plot clears it.
 
 The title block (sheet, scale, pen, feed, file) is plotted in single-stroke text as the last layer, "Title block". The corner button on the board moves it through the four corners and off. It can also be unticked in the layer list.
 
+<img src="docs/ui/title-block.png" alt="Title block on the sheet: sheet A4 297.0 x 210.0 mm, scale 1:1, pen Default 0.3 mm, feed 2000 / 8000 mm/min, file idraw_demo.svg" width="197">
+
 The line between board and log can be dragged to change their size; double-click resets it.
+
+<img src="docs/ui/splitter.png" alt="The grip, a short grey bar on the edge between the green board and the log" width="280">
 
 ## Keyboard
 
@@ -187,6 +213,10 @@ Keys work when no input field has focus.
 
 The line under the log sends a G-code or `$` command as typed, for example `G1 X-20 Y-10 F3000` or `$H`. The reply appears in the log. Up and Down in the line go through the history. The ? button opens a command reference; a click on a command puts it into the line.
 
+<img src="docs/ui/console.png" alt="Console input line with the placeholder G-code or $ command and the ? button" width="600">
+
+<img src="docs/ui/command-reference.png" alt="Command reference dialog DrawCore / GRBL commands, a table of command, purpose and reply" width="420">
+
 The software follows the typed commands (G0/G1, G90/G91, G92, `$H`, `$1`, `$SLP`, `$RST`), so position and pen stay right. Typed coordinates are machine coordinates. On the iDraw, G-code X is minus document Y and G-code Y is minus document X: `G1 X-20 Y-10` moves to document X 10, Y 20.
 
 ## Reset
@@ -194,6 +224,8 @@ The software follows the typed commands (G0/G1, G90/G91, G92, `$H`, `$1`, `$SLP`
 A reload of the page, also in the middle of a plot, comes back to the same view: the step, zoom and pan of the board, Sheet or Machine, and whether Position, scale, rotation is open. The browser keeps this, so another browser or the iPad starts with its own view.
 
 Reset in the app bar puts view, paper, placement, layers and origin back to the defaults after a confirmation, and the page starts again at step 1. Saved pen profiles, the time factor and the connection stay.
+
+<img src="docs/ui/reset-dialog.png" alt="Dialog Reset everything? with the buttons Cancel and Reset" width="480">
 
 ## Troubleshooting
 

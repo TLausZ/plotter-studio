@@ -19,6 +19,7 @@ Tasks and ideas for Plotter Studio. Move a line to Done when it is finished.
 
 ## Done
 
+- 2 Oct 2026: MANUAL.md shows a crop of every small control and dialog it describes (docs/ui/, made by docs/make_screenshots.py); command reference escapes all columns.
 - 1 Oct 2026: MANUAL.md section Test drawings: every file in tests/ with a picture (docs/tests/, made by docs/make_screenshots.py) and what it is for.
 - 1 Oct 2026: e2e check title_block_switches uses corner button and Plot box in turn; e2e suite at 28 checks.
 - 1 Oct 2026: corner button and the title block's Plot box no longer disagree on the corner: the server keeps the cycle, turning it on goes where the button would go next.
