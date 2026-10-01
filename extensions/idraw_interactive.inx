@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
-<name>iDraw Interactive</name>
+<name>Plotter Studio</name>
 <id>command.idraw.interactive</id>
 <dependency type="executable" location="extensions">idraw_interactive.py</dependency>
 <param name="info" type="description">Opens the control page in your browser with the current document. Inkscape stays usable.</param>
@@ -9,7 +9,7 @@
 <effect needs-live-preview="false">
 <object-type>all</object-type>
 <effects-menu>
-<submenu name="iDraw"/>
+<submenu name="Plotter"/>
 </effects-menu>
 </effect>
 <script>

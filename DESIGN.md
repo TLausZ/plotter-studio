@@ -1,6 +1,6 @@
 ---
 version: alpha
-name: iDraw Interactive
+name: Plotter Studio
 description: Material Design 3 components on the drafting palette (light panel, ink black, white controls) around a drafting board that stays a drafting board.
 omitted:
   - elevation-levels-4-5

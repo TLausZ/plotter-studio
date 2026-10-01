@@ -1,6 +1,6 @@
 # TODO
 
-Tasks and ideas for iDraw Interactive. Move a line to Done when it is finished.
+Tasks and ideas for Plotter Studio. Move a line to Done when it is finished.
 
 ## Next
 
