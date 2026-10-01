@@ -23,8 +23,6 @@ Pen plotter control for Inkscape with a local web UI. Built for the UUNA TEK iDr
 
 How to use it: [MANUAL.md](MANUAL.md), online at [tlausz.github.io/plotter-studio/MANUAL.html](https://tlausz.github.io/plotter-studio/MANUAL.html).
 
-![Plotter Studio: web UI plotting the iDraw A3 test sheet in the simulator](docs/screenshot.png)
-
 ![Plotter Studio in the simulator: the stress test drawing is plotted, zoomed in, stopped, then a path is picked and plotted again](docs/plotter-studio.webp)
 
 ## Running
