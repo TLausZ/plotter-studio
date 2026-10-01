@@ -33,6 +33,6 @@ Browser, `python3 test_idraw_e2e.py`: starts the server with the simulator (40×
 | placement_adjust | Position, scale, rotation: rotate by 90°, a preset keeps the rotation, 15° steps and the angle field (rounded to 15°), align right to a 10 mm margin, X field, scale 50 % halves the width, back to 1:1. |
 | drag_drawing | With Position, scale, rotation open, dragging the drawing on the board moves it by the dragged distance; 1:1 brings it back. |
 
-The e2e run changes paper and unit and restores the settings file afterwards. Add a check by writing `check_<name>(page)`, listing it in `CHECKS`, and adding its line to the table above.
+The server and e2e runs write their settings to an empty file in a temporary folder, so they start from the defaults and never touch `idraw_interactive_settings.json`. Add a check by writing `check_<name>(page)`, listing it in `CHECKS`, and adding its line to the table above.
 
 Not covered: screenshot comparisons, touch and tablet, the real plotter (see TODO.md).

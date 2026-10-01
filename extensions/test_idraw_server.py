@@ -1,6 +1,7 @@
 """Self-test for idraw_server: python3 test_idraw_server.py (uses the simulator, no browser)."""
 import json
 import os
+import tempfile
 import threading
 import time
 import urllib.request
@@ -28,8 +29,8 @@ def wait_idle(base, limit=60):
 
 
 def main():
-    settings = os.path.join(HERE, "idraw_interactive_settings.json")
-    keep = open(settings, "rb").read() if os.path.exists(settings) else None
+    tmp = tempfile.TemporaryDirectory()   # empty settings: the user's file is never touched
+    idraw_server.core.SETTINGS_FILE = os.path.join(tmp.name, "settings.json")
     httpd = idraw_server.serve(os.path.join(HERE, "idraw_demo.svg"), sim=True, port=0, open_browser=False)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     base = "http://127.0.0.1:%d" % httpd.server_address[1]
@@ -81,8 +82,6 @@ def main():
     assert wait_idle(base)["status"] == "ready"
     assert "error" in call(base + "/api/cmd", {"cmd": "nonsense"})
     httpd.shutdown()
-    if keep is not None:              # the run changes unit and title block; restore the user's settings
-        open(settings, "wb").write(keep)
     print("ok")
 
 

@@ -9,6 +9,7 @@ can be run by name: python3 test_idraw_e2e.py splitter zoom_and_pan
 import os
 import re
 import sys
+import tempfile
 import threading
 import time
 
@@ -541,8 +542,8 @@ def main():
     names = [a for a in sys.argv[1:] if not a.startswith("--")]
     checks = [c for c in CHECKS if not names or c.__name__[6:] in names]
     assert len(checks) == (len(names) or len(CHECKS)), "unknown check name in %s" % names
-    settings = os.path.join(HERE, "idraw_interactive_settings.json")
-    keep = open(settings, "rb").read() if os.path.exists(settings) else None
+    tmp = tempfile.TemporaryDirectory()   # empty settings: the user's file is never touched
+    idraw_server.core.SETTINGS_FILE = os.path.join(tmp.name, "settings.json")
     httpd = idraw_server.serve(os.path.join(HERE, "idraw_demo.svg"), sim=True, port=0, open_browser=False)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     base = "http://127.0.0.1:%d/" % httpd.server_address[1]
@@ -558,8 +559,6 @@ def main():
             browser.close()
     finally:
         httpd.shutdown()
-        if keep is not None:              # the run changes paper and unit; restore the user's settings
-            open(settings, "wb").write(keep)
     print("ok")
 
 
