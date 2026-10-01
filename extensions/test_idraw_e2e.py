@@ -536,6 +536,10 @@ def check_path_picker(page):
     assert page.evaluate("() => S.progress.i") == 6           # stopped after path 6, not at the end
     expect(page.locator("#strokes path.sel")).to_have_count(0)
     expect(page.locator("#pickN")).to_have_value("7")
+    assert page.evaluate("() => Math.hypot(S.state.x, S.state.y)") > 1   # stays at the end of the path
+    click_cmd(page, "#panel button[aria-label='Go to origin']")  # ⌂ after Stop goes to the origin
+    wait_idle(page)
+    assert page.evaluate("() => Math.hypot(S.state.x, S.state.y)") < 1e-6
 
 
 def check_path_stepping(page):

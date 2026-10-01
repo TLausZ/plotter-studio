@@ -107,9 +107,9 @@ The dialog before a paused layer:
 
 Hide lines behind filled shapes drops the parts of lines that lie behind a filled shape drawn later in the document, as if the shape covered them. The drawing is loaded again when the box is toggled.
 
-Start plot starts. If paths leave the sheet or the machine travel, they are amber on the board, the step says how many, and Start plot asks before plotting anyway. Stop (or Esc) stops after the current line and raises the pen. Trace drawing frame moves around the drawing with the pen up.
+Start plot starts. If paths leave the sheet or the machine travel, they are amber on the board, the step says how many, and Start plot asks before plotting anyway. Stop (or Esc) stops after the current line and raises the pen. ⌂ moves the head to the origin. Trace drawing frame moves around the drawing with the pen up.
 
-<img src="docs/ui/run.png" alt="Run row: Start plot, Stop, Trace drawing frame and the estimate of about 2 minutes" width="479">
+<img src="docs/ui/run.png" alt="Run row: Start plot, Stop, the origin button ⌂, Trace drawing frame and the estimate of about 2 minutes" width="479">
 
 The notice in the step and the question of Start plot when paths leave the sheet:
 
@@ -123,7 +123,7 @@ Next to the buttons, ≈ shows how long the plot will take: the drawn length at 
 
 Once a plot has run, a bar under the buttons shows the path number, the share of the drawn length that is done, and the estimated time left. Travel moves are not counted, so both run a little ahead on drawings with many long jumps.
 
-Below them you pick a path: drag the slider across the full width, click a path on the board (the pointer turns into a crosshair over a path; with a finger, within about 20 px of the line), type its number in the field and press Enter, or step with ‹ and ›. One click on an arrow moves one path; hold it and it runs on, about 20 paths a second. The picked path is drawn thick, the paths before it count as done. "Resume from N" next to the field plots from there to the end, for example after a stop or when the pen ran dry. "Plot this path" plots just that one path and leaves out the layer pauses, for example to redraw a line the pen skipped; the head stays at the end of the path instead of going back to the origin. After a stop the picker stands on the path where the plot stopped.
+Below them you pick a path: drag the slider across the full width, click a path on the board (the pointer turns into a crosshair over a path; with a finger, within about 20 px of the line), type its number in the field and press Enter, or step with ‹ and ›. One click on an arrow moves one path; hold it and it runs on, about 20 paths a second. The picked path is drawn thick, the paths before it count as done. "Resume from N" next to the field plots from there to the end, for example after a stop or when the pen ran dry. "Plot this path" plots just that one path and leaves out the layer pauses, for example to redraw a line the pen skipped; the head stays at the end of the path instead of going back to the origin. ⌂ next to Stop sends it to the origin. After a stop the picker stands on the path where the plot stopped.
 
 <img src="docs/ui/path-number-tooltip.png" alt="Path picker after a stop: slider, arrows around the path number 56, Resume from path 56, Plot only, and the hover text Path 1 to 185; Enter picks it" width="489">
 
