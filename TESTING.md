@@ -19,7 +19,7 @@ Browser, `python3 test_idraw_e2e.py`: starts the server with the simulator (40×
 | units | cm in readout and title block, back to mm |
 | splitter | drag resizes the board, minimums for console and board, double-click resets and forgets |
 | zoom_and_pan | 4× quarters the viewBox around the centre, drag pans, 0.5× doubles it, double-click resets |
-| title_block_corner | button cycles the four corners and off with the matching icon, the title block is a virtual last layer; off keeps the row with its Plot box empty and no strokes; the box turns it on in the last corner and off again, in step with the corner button; the choice is a server setting and survives a reload |
+| title_block_corner | button cycles the four corners and off with the matching icon, the title block is a virtual last layer; off keeps the row with its Plot box empty and no strokes; box and corner button turn it on where the button would go next and off again, in step; the choice is a server setting and survives a reload |
 | reset_button | Reset in the app bar opens a dialog; Cancel changes nothing; Reset restores mm, A4, 1:1, view, layers, clears browser storage (the reloaded page starts at step 1 and stores only its new view), keeps the connection |
 | plot_with_pause | plot runs, pause dialog before the `!` layer, continue, finished with all strokes done (drawing plus title block) |
 | stop_with_escape | Esc stops a running plot, pen up, status ready |

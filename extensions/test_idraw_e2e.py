@@ -232,9 +232,9 @@ def check_title_block_corner(page):
     assert page.evaluate("() => S.tb_corner") == "off"
     page.reload()
     expect(btn).to_have_text("▢")                          # remembered on the server
-    box.check()                                            # the box turns it on in the last corner
-    expect(btn).to_have_text("◳")
-    assert corner() == "tr"
+    box.check()                                            # off came from the button after tr: on again continues the cycle
+    expect(btn).to_have_text("◲")
+    assert corner() == "br"
     box.uncheck()                                          # and off again, like the corner button
     expect(btn).to_have_text("▢")
     page.wait_for_function("() => !S.strokes.some(s => s.layer === S.layers.length - 1)")   # neither plotted nor drawn

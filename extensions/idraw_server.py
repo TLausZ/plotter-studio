@@ -19,7 +19,7 @@ pen_down, pen_toggle, nudge_z(delta), set_origin, release_motors, lock_motors,
 motors_off, frame(kind=paper|drawing), test(name), test_stroke, cycle, plot, stop,
 resume, set_profile(fields), load_profile(name), save_profile(name), set_paper(w,h,
 name,orient), set_pos_mode(mode), set_placement(mode: 1:1|center|fit), set_layer(index,enabled,pause),
-set_model(name), set_unit(unit), set_title_block(corner: tl|tr|br|bl|off), load_test(name from tests/, "" = the document), reset.
+set_model(name), set_unit(unit), set_title_block(corner: tl|tr|br|bl|off|next; next = the corner button), load_test(name from tests/, "" = the document), reset.
     plot takes an optional "start" (stroke index) to resume or replot from that path, and an
     optional "end" (stroke index to stop before; start + 1 plots only that path, without layer pauses).
     set_hiding(on): hidden-line removal, lines behind filled shapes are dropped on load.
@@ -46,6 +46,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import idraw_core as core
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+TB_CYCLE = ("br", "bl", "tl", "tr")   # title block corners in the order of the corner button
 HTML_FILE = os.path.join(HERE, "idraw_web.html")
 
 
@@ -64,7 +65,7 @@ class Session:
         self.orient = self.settings.get("orient", "landscape")
         self.pos_mode = self.settings.get("pos_mode", "jog")
         self.tb_corner = self.settings.get("tb_corner", "br")   # title block: tl, tr, br, bl or off
-        self.tb_last = self.settings.get("tb_last", "br")       # the corner its Plot box turns it on in
+        self.tb_last = self.settings.get("tb_last", "br")       # where turning it on puts it: the box, or the corner button from off
         self.hiding = bool(self.settings.get("hiding", False))  # hidden-line removal on load
         self.tb_layer = core.Layer("Title block", [])          # virtual last layer, shown and plotted unless tb_corner is off
         self.placement = "1:1"     # a preset (core.PLACEMENTS) or "custom", which uses self.tf
@@ -447,11 +448,19 @@ class Session:
                 self.layers, self.svg_name = [], "(no SVG)"
             return {"ok": True}
         if cmd == "set_title_block":
-            if a.get("corner") not in ("tl", "tr", "br", "bl", "off"):
+            corner = a.get("corner")
+            if corner == "next":    # the corner button: br, bl, tl, tr, off; from off back to tb_last
+                if self.tb_corner == "off":
+                    corner = self.tb_last
+                elif self.tb_corner == TB_CYCLE[-1]:
+                    corner, self.tb_last = "off", TB_CYCLE[0]   # on again continues the cycle
+                else:
+                    corner = TB_CYCLE[TB_CYCLE.index(self.tb_corner) + 1]
+            if corner not in TB_CYCLE + ("off",):
                 return {"error": "Unknown corner."}
-            self.tb_corner = a["corner"]
-            if self.tb_corner != "off":
-                self.tb_last = self.tb_corner
+            self.tb_corner = corner
+            if corner != "off":
+                self.tb_last = corner
             self.save()
             return {"ok": True}
         if cmd == "set_model":

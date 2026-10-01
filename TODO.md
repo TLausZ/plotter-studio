@@ -19,6 +19,7 @@ Tasks and ideas for Plotter Studio. Move a line to Done when it is finished.
 
 ## Done
 
+- 1 Oct 2026: corner button and the title block's Plot box no longer disagree on the corner: the server keeps the cycle, turning it on goes where the button would go next.
 - 1 Oct 2026: the Title block row stays in the layer table when the title block is off; its Plot box and the corner button are the same switch.
 - 1 Oct 2026: a reload keeps the view (step, zoom and pan, Sheet/Machine, placement details open), also during a plot; Reset starts at step 1 again; e2e suite at 27 checks.
 - 1 Oct 2026: plot time estimate in the Plot step (drawn length, travel, pen moves) with a time factor per model from the last real plot of a minute or more; e2e suite at 26 checks.

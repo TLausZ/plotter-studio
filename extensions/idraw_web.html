@@ -640,7 +640,7 @@ $('resetCancel').onclick = () => $('resetDlg').close();
 $('resetGo').onclick = async () => { keepView = false; await cmd('reset'); try { localStorage.clear(); } catch (e) {} location.reload(); };
 // title block corner cycles tl > tr > br > bl; the icon shows the current corner
 // title block corner: server setting, cycles br > bl > tl > tr > off; the icon shows the current state
-const TB_CORNERS = ['br', 'bl', 'tl', 'tr', 'off'], TB_ICONS = {tl: '◰', tr: '◳', br: '◲', bl: '◱', off: '▢'};
+const TB_ICONS = {tl: '◰', tr: '◳', br: '◲', bl: '◱', off: '▢'};
 let pxPerMm = 3;
 const ZOOM = [0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8];   // slider snaps to these factors relative to the fitted view
 let zoomIdx = 2, panX = 0, panY = 0;                // pan in mm
@@ -753,7 +753,7 @@ window.addEventListener('resize', () => S && renderPreview());
   sp.ondblclick = () => { set(0); try { delete localStorage.boardH; } catch (e) {} };
 }
 $('fitseg').querySelectorAll('button').forEach(b => b.onclick = () => { fitMachine = b.dataset.fit === 'machine'; renderPreview(); });
-$('tbpos').onclick = () => cmd('set_title_block', {corner: TB_CORNERS[(TB_CORNERS.indexOf(S.tb_corner) + 1) % TB_CORNERS.length]});
+$('tbpos').onclick = () => cmd('set_title_block', {corner: 'next'});   // the server keeps the cycle, in step with the layer's Plot box
 // restore the view saved by saveView(); Reset clears it with the rest of the storage
 try {
   const v = JSON.parse(localStorage.view || '{}'), num = x => typeof x === 'number' && isFinite(x);
