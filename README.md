@@ -20,7 +20,11 @@ inkscape-extension/
     idraw_interactive.py             Inkscape entry point: copies the document, starts the server detached, returns
     idraw_interactive.inx            menu entry Extensions > iDraw > iDraw Interactive
     idraw_demo.svg                   example with three layers (normal, !-pause, %-notes)
-    tests/                           test drawings, offered in the Speed step as a dropdown: the four built-in patterns as SVG (make_test_svgs.py writes them), Piter Pasma's line test , "iDraw A3 - Test.svg" (the manufacturer's A3 test sheet) and "A3_Pen_CalibrationTest.svg" (DrawingBotV3 calibration sheet)
+    tests/                           test drawings, offered in the Speed step as a dropdown: the four built-in patterns as SVG
+                                     (A4-landscape-line-width, -speed-rows, -accuracy, -pen-height; make_test_svgs.py writes them),
+                                     A4-landscape-hidden-lines.svg (hidden-line removal), A3-landscape-line-width.svg (Piter Pasma's
+                                     line test), A3-portrait-iDraw-test-sheet.svg (the manufacturer's A3 test sheet) and
+                                     A3-portrait-pen-calibration.svg (DrawingBotV3 calibration sheet)
     HersheySans1.svg                 single-stroke font for the plotted title block (Hershey Fonts, see HersheySans1-LICENSE.txt)
     test_idraw_core.py               self-test for idraw_core
     test_idraw_server.py             self-test for the server (simulator, no browser)
@@ -60,7 +64,7 @@ cp extensions/idraw_core.py extensions/idraw_server.py extensions/idraw_web.html
 
 Restart Inkscape, open a document, Extensions > iDraw > iDraw Interactive. The model defaults to iDraw A4; pick yours in step 1 (Connect), it is remembered. Tick "Simulation" for a dry run, "Allow other devices" for the iPad. The extension returns at once; Inkscape stays usable and the SVG is not modified. Run the extension again to load a changed drawing (it starts a second server on the next free port only if the first was closed; close the old browser tab first).
 
-Keyboard on the page: arrow keys move the carriage, 1/2/3 set the step, Space toggles the pen, Shift+Up/Down shifts the current pen height by 0.5 mm and writes it into the profile, Esc stops. Keys are ignored while a field has focus. The input line under the log sends a hand-typed G-code or `$` command as is; the reply appears in the log (position is not tracked after hand-typed moves, run Home to resync). The unit switch (mm, cm, in) changes the readout, the paper fields, the jog steps and the rulers; everything is stored in mm. Paths that leave the sheet or the machine travel are amber on the board, the Plot step says how many, and Start plot asks before plotting anyway. The title block (sheet, scale, pen, feed, file) is plotted as a last layer "Title block" in single-stroke text; untick it in the Plot step or switch it off with the corner button on the board. Reset in the app bar puts view, paper, placement, layers and origin back to the defaults after a confirmation; saved pen profiles and the connection stay.
+Keyboard on the page: arrow keys move the carriage, 1/2/3 set the step, Space toggles the pen, Shift+Up/Down shifts the current pen height by 0.5 mm and writes it into the profile, Esc stops. Keys are ignored while a field has focus. The input line under the log sends a hand-typed G-code or `$` command as is; the reply appears in the log (position is not tracked after hand-typed moves, run Home to resync). The unit switch (mm, cm, in) changes the readout, the paper fields, the jog steps and the rulers; everything is stored in mm. Paths that leave the sheet or the machine travel are amber on the board, the Plot step says how many, and Start plot asks before plotting anyway. The title block (sheet, scale, pen, feed, file) is plotted as a last layer "Title block" in single-stroke text; untick it in the Plot step or switch it off with the corner button on the board. Reset in the app bar puts view, paper, placement, layers and origin back to the defaults after a confirmation; saved pen profiles and the connection stay. After a stop (or a finished plot) the Run group shows a slider and "Resume from path N": drag it to the path to continue from, the board shows the paths still to plot, and the plot starts there; use it after a stop or when the pen ran dry. "Hide lines behind filled shapes" in the Plot step drops the parts of lines that lie behind shapes with a fill drawn later in the document (hidden-line removal, pure Python, no pyclipper needed); the drawing is loaded again when toggled. If the board stops answering, the transport gives up after the expected move time plus 15 s (homing: 120 s) and the connection is dropped; reconnect and home.
 
 ## Architecture
 
@@ -86,7 +90,7 @@ Only the iDraw H A1 has been run on a device; every other model is marked "(unte
 
 ### New features
 
-Test drawings: drop an SVG into `extensions/tests/`, it appears in the Speed step dropdown. The generated patterns in `idraw_core.TESTS` are only used by `tests/make_test_svgs.py` (and `Plotter.run_test`, which no button calls any more). Placement modes: extend `place()` and the button row in step 5. Resume after abort: `plot_strokes` reports the index in every `progress` event; a resume is a start with `strokes[i:]`. Hidden-line removal, path sorting: apply `plot_optimizations.reorder` from `idraw_deps/idraw2_0internal` to the digest before `load_svg` builds the layers.
+Test drawings: drop an SVG into `extensions/tests/`, it appears in the Speed step dropdown. The generated patterns in `idraw_core.TESTS` are only used by `tests/make_test_svgs.py` (and `Plotter.run_test`, which no button calls any more). Placement modes: extend `place()` and the button row in step 5. Path sorting: apply `plot_optimizations.reorder` from `idraw_deps/idraw2_0internal` to the digest before `load_svg` builds the layers.
 
 ## Firmware, short version
 
@@ -94,7 +98,7 @@ DrawCore enumerates as CH340 (USB VID:PID 1A86:7523), 115200 baud, `rts`/`dtr` o
 
 ## Status
 
-As of 2 September 2026. Built and exercised in the simulator: all five steps, jog, pen, profiles, unit switch, test drawings, plot with layer pause, stop, progress, preview with rulers and title block, LAN access.
+As of 14 September 2026. Built and exercised in the simulator: all five steps, jog, pen, profiles, unit switch, test drawings, plot with layer pause, stop, resume from path N, progress, preview with rulers and title block, hidden-line removal, transport timeouts, LAN access. The e2e suite has 20 checks.
 
 Not verified on the device yet:
 
@@ -105,4 +109,4 @@ Not verified on the device yet:
 
 Security note: with `--lan` anyone on the network can move the plotter. There is no authentication; use it only on a trusted network.
 
-Not built: resume after abort, copies, laser, multiple devices, webhook, hidden-line removal, free positioning with the mouse on the board.
+Not built: copies, laser, multiple devices, webhook, path sorting, free positioning with the mouse on the board.
