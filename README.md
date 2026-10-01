@@ -6,6 +6,8 @@ Interactive pen plotter control as an Inkscape extension with a local web UI. Bu
 
 Have a pen plotter? You can help. Try Plotter Studio on your machine and tell us how it went in [issue #1](https://github.com/TLausZ/plotter-studio/issues/1); a short note like "homing went to the wrong corner" already helps. New features, other platforms and other plotters are welcome too. The rest of this README is written for people and agents who want to build on the code.
 
+Manual: how to use Plotter Studio step by step, with keys, console and troubleshooting, in [MANUAL.md](MANUAL.md).
+
 ![Plotter Studio: web UI plotting the iDraw A3 test sheet in the simulator](docs/screenshot.png)
 
 ## Folders
@@ -66,8 +68,6 @@ cp extensions/idraw_core.py extensions/idraw_server.py extensions/idraw_web.html
 ```
 
 Restart Inkscape, open a document, Extensions > Plotter > Plotter Studio. The model defaults to iDraw A4; pick yours in step 1 (Connect), it is remembered. Tick "Simulation" for a dry run, "Allow other devices" for the iPad. The extension returns at once; Inkscape stays usable and the SVG is not modified. Run the extension again to load a changed drawing (it starts a second server on the next free port only if the first was closed; close the old browser tab first).
-
-How to use the page, step by step, with keys, console and troubleshooting: [MANUAL.md](MANUAL.md).
 
 ## Architecture
 
