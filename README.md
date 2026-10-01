@@ -6,6 +6,8 @@ Interactive pen plotter control as an Inkscape extension with a local web UI. Bu
 
 This document is for people and agents building on it: other features, other platforms, other plotters.
 
+![Plotter Studio: web UI plotting the iDraw A3 test sheet in the simulator](docs/screenshot.png)
+
 ## Folders
 
 ```
@@ -15,6 +17,7 @@ plotter-studio/
   TESTING.md                         the three test levels, what each check verifies, how to add one
   TODO.md                            tasks and ideas
   iDraw Extension Analysis 2026-09-02.md   how the original plugin works, firmware commands, axis mapping
+  docs/screenshot.png                web UI in the simulator, plotting the A3 test sheet (picture above)
   extensions/                        working copy; Inkscape reads ~/Library/Application Support/org.inkscape.Inkscape/config/inkscape/extensions
     idraw_core.py                    plotter logic without UI (transport, state, plot run, tests, SVG loading)
     idraw_server.py                  local HTTP server: one Session around a Plotter, JSON commands, server-sent events
