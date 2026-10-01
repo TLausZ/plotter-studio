@@ -282,7 +282,8 @@ function connectEvents() {
     if (prev && (prev.svg_name !== S.svg_name || prev.test_file !== S.test_file)) trace.length = 0;   // another drawing: old journey is meaningless
     renderAll();
   });
-  es.addEventListener('state', e => { if (!S) return; const prev = S.state; S.state = JSON.parse(e.data); addTrace(prev, S.state); renderReadout(); renderPen(); if (step === 2) syncPenFields(); });
+  es.addEventListener('state', e => { if (!S) return; const prev = S.state; S.state = JSON.parse(e.data); addTrace(prev, S.state); renderReadout(); renderPen(); if (step === 2) syncPenFields();
+    if (step === 4 && (prev.status === 'plotting') !== (S.state.status === 'plotting')) renderPanel(); });   // the Run group differs while plotting (resume slider)
   es.addEventListener('log', e => logLine(JSON.parse(e.data)));
   es.addEventListener('progress', e => { const p = JSON.parse(e.data); done = p.i; S.progress = p; renderProgress(); markDone(); });
   es.addEventListener('pause', e => { $('pauseName').textContent = JSON.parse(e.data); $('overlay').classList.add('show'); });
@@ -379,12 +380,16 @@ function renderPanel() {
     h = hdr('Plot', `${S.svg_name} · page ${fmt(S.page[0])} × ${fmt(S.page[1])} · paper ${fmt(S.paper[0])} × ${fmt(S.paper[1])}`)
       + grp('Placement', `<div class="row"><div class="seg">${[['1:1', '1:1'], ['center', 'Centered'], ['fit', 'Fit to paper']].map(([v, t]) => `<button class="btn ${S.placement === v ? 'on' : ''}" data-pl="${v}">${t}</button>`).join('')}</div></div>
         ${st.origin_set ? '' : '<div class="msg">Origin not set. Go to step 2, or plot from the current position.</div>'}${outsideMsg()}`)
-      + grp('Layers', `<table class="layers"><tr><th>Plot</th><th>Pause before</th><th>Layer · paths</th></tr>${rows || '<tr><td colspan="3">No layers. Open an SVG with paths.</td></tr>'}</table>`)
+      + grp('Layers', `<label class="row"><input type="checkbox" id="hiding" ${S.hiding ? 'checked' : ''}> Hide lines behind filled shapes</label>
+        <table class="layers"><tr><th>Plot</th><th>Pause before</th><th>Layer · paths</th></tr>${rows || '<tr><td colspan="3">No layers. Open an SVG with paths.</td></tr>'}</table>`)
       + grp('Run', `<div class="row"><button class="btn filled" data-cmd="plot">Start plot</button><button class="btn danger" data-cmd="stop">Stop</button><button class="btn outlined" data-cmd="frame" data-args='{"kind":"drawing"}'>Trace drawing frame</button></div>
-        <div class="progress"><i id="pbar" style="width:${pct}%"></i></div><div class="mono body-small" id="ptxt">${progressText()}</div>`);
+        <div class="progress"><i id="pbar" style="width:${pct}%"></i></div><div class="mono body-small" id="ptxt">${progressText()}</div>
+        ${p && st.status !== 'plotting' && st.status !== 'paused' ? `<div class="row"><input type="range" id="resumeAt" min="0" max="${S.strokes.length}" value="${Math.min(done, S.strokes.length)}" aria-label="Resume from path"><button class="btn outlined" id="resumeBtn">Resume from path ${Math.min(done, S.strokes.length) + 1}</button></div>
+        <p>Drag to pick the path to continue from; the board shows the paths still to plot. Paths before it count as done. Use it after a stop, or to replot from where the pen ran dry.</p>` : ''}`);
   }
   $('panel').innerHTML = h;
   wirePanel();
+  wireResume();
 }
 function progressText() {
   const p = S.progress; if (!p) return '';
@@ -398,6 +403,12 @@ function outsideMsg() {
   let t = S.beyond ? `${S.beyond} of ${n} paths exceed the machine travel; the firmware stops at its limit. ` : '';
   if (S.outside) t += `${S.outside} of ${n} paths leave the sheet (amber on the board). `;
   return `<div class="msg" style="color:var(--md-amber)">${t}Move the origin, change the placement, or plot anyway.</div>`;
+}
+function wireResume() {
+  const hb = $('hiding'); if (hb) hb.onchange = () => cmd('set_hiding', {on: hb.checked});
+  const r = $('resumeAt'); if (!r) return;
+  r.oninput = () => { done = +r.value; markDone(); $('resumeBtn').textContent = `Resume from path ${done + 1}`; };
+  $('resumeBtn').onclick = () => cmd('plot', {start: +r.value});
 }
 function renderProgress() { if (step !== 4) return; const p = S.progress; $('pbar').style.width = (p.total ? 100 * p.done / p.total : 0) + '%'; $('ptxt').textContent = progressText(); }
 function syncPenFields() { const pr = S.state.profile; ['pen_up', 'pen_down'].forEach(k => { const e = $(k); if (e && document.activeElement !== e) e.value = pr[k]; }); }

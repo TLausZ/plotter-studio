@@ -20,6 +20,8 @@ motors_off, frame(kind=paper|drawing), test(name), test_stroke, cycle, plot, sto
 resume, set_profile(fields), load_profile(name), save_profile(name), set_paper(w,h,
 name,orient), set_pos_mode(mode), set_placement(mode), set_layer(index,enabled,pause),
 set_model(name), set_unit(unit), set_title_block(corner: tl|tr|br|bl|off), load_test(name from tests/, "" = the document), reset.
+    plot takes an optional "start" (stroke index) to resume or replot from that path.
+    set_hiding(on): hidden-line removal, lines behind filled shapes are dropped on load.
 
 Session keeps what the UI needs beyond the Plotter: the loaded SVG (page, layers),
 paper, placement, unit, profiles. Everything moving the machine goes through
@@ -58,6 +60,7 @@ class Session:
         self.orient = self.settings.get("orient", "landscape")
         self.pos_mode = self.settings.get("pos_mode", "jog")
         self.tb_corner = self.settings.get("tb_corner", "br")   # title block: tl, tr, br, bl or off
+        self.hiding = bool(self.settings.get("hiding", False))  # hidden-line removal on load
         self.tb_layer = core.Layer("Title block", [])          # virtual last layer; enabled = plot it
         self.placement = "1:1"
         self.page = (297.0, 210.0)
@@ -101,7 +104,7 @@ class Session:
     # --- state
     def load_svg(self, path):
         try:
-            w, h, layers = core.load_svg(path)
+            w, h, layers = core.load_svg(path, hiding=self.hiding)
             self.page, self.layers = (w, h), layers
             self.svg_name = os.path.basename(path)
             self.svg_error = None
@@ -175,7 +178,7 @@ class Session:
             "page": self.page, "svg_name": self.svg_name, "svg_error": self.svg_error,
             "layers": [{"name": l.name, "enabled": l.enabled, "pause": l.pause, "n": len(l.paths)}
                        for l in self.all_layers()],
-            "tb_corner": self.tb_corner,
+            "tb_corner": self.tb_corner, "hiding": self.hiding,
             "test_files": self.test_files(), "test_file": self.test_file,
             "doc_name": os.path.basename(self.svg_path) if self.svg_path else "",
             "strokes": [{"pts": s[0], "layer": s[3], "out": o or b} for s, o, b in zip(strokes, out, beyond)],
@@ -189,7 +192,7 @@ class Session:
     def save(self):
         self.settings.update(unit=self.unit, paper=self.paper, paper_name=self.paper_name,
                              orient=self.orient, pos_mode=self.pos_mode, model=self.plotter.model,
-                             tb_corner=self.tb_corner,
+                             tb_corner=self.tb_corner, hiding=self.hiding,
                              last_profile=self.profile_name)
         core.save_settings(self.settings)
 
@@ -274,7 +277,10 @@ class Session:
             strokes, pauses = p.strokes_from_layers(self.placed())
             if not strokes:
                 return {"error": "No paths selected."}
-            return self.run(p.plot_strokes, strokes, pauses)
+            start = int(a.get("start", 0))          # resume/replot from this stroke index
+            if start:
+                p.log("Resuming from path %d of %d." % (start + 1, len(strokes)))
+            return self.run(p.plot_strokes, strokes, pauses, True, start)
 
         # settings; these do not move the machine except a live pen height change
         if cmd == "set_profile":
@@ -324,6 +330,13 @@ class Session:
                 layers[i].enabled = bool(a["enabled"])
             if "pause" in a:
                 layers[i].pause = bool(a["pause"])
+            return {"ok": True}
+        if cmd == "set_hiding":
+            # the drawing is loaded again: clipping needs the fills, which the layers no longer have
+            self.hiding = bool(a.get("on"))
+            self.progress = None
+            self.load_svg(os.path.join(self.TESTS_DIR, self.test_file) if self.test_file else self.svg_path)
+            self.save()
             return {"ok": True}
         if cmd == "load_test":
             # a test drawing from tests/ replaces the document; "" brings the document back
@@ -439,7 +452,7 @@ class Handler(BaseHTTPRequestHandler):
         # settings commands change what the preview shows; push a fresh snapshot
         if args.get("cmd") in ("set_paper", "set_placement", "set_layer", "load_profile",
                                "set_unit", "set_pos_mode", "connect", "disconnect", "set_model",
-                               "set_title_block", "save_profile", "reset", "load_test"):
+                               "set_title_block", "save_profile", "reset", "load_test", "set_hiding"):
             self.session.broadcast("snapshot", self.session.snapshot())
         self._json(result)
 

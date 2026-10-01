@@ -431,11 +431,53 @@ def check_model_dropdown(page):
     page.select_option("#model", before)
 
 
+def check_resume_from_path(page):
+    """After a stop the Run group offers a slider and Resume from path N; the plot continues from there."""
+    tab(page, 4)
+    page.locator("#panel tr", has_text="!2 Detail red").locator("input[data-k=pause]").uncheck()
+    click_cmd(page, "button[data-cmd=plot]")
+    expect(page.locator("#status")).to_have_text("plotting", timeout=10000)
+    page.click("#stop")
+    expect(page.locator("#log")).to_contain_text("Plot stopped.", timeout=30000)
+    wait_idle(page)
+    expect(page.locator("#resumeAt")).to_be_visible()
+    n = page.evaluate("() => S.strokes.length")
+    page.locator("#resumeAt").fill("1")                       # replot from the second path
+    expect(page.locator("#resumeBtn")).to_have_text("Resume from path 2")
+    expect(page.locator("#strokes path.done")).to_have_count(1)
+    click_cmd(page, "#resumeBtn")
+    expect(page.locator("#log")).to_contain_text("Resuming from path 2 of %d." % n, timeout=10000)
+    expect(page.locator("#log")).to_contain_text("Plot finished.", timeout=120000)
+    expect(page.locator("#status")).to_have_text("ready", timeout=15000)
+    expect(page.locator("#strokes path.done")).to_have_count(n)
+
+
+def check_hidden_lines(page):
+    """Plot step: the checkbox reloads the drawing with lines behind fills removed."""
+    tab(page, 3)
+    page.select_option("#testFile", "A4-landscape-hidden-lines.svg")
+    page.wait_for_function("() => S.svg_name === 'A4-landscape-hidden-lines.svg'")
+    n = page.evaluate("() => S.strokes.length")
+    tab(page, 4)
+    expect(page.locator("#hiding")).not_to_be_checked()
+    page.check("#hiding")
+    page.wait_for_function("(n) => S.hiding && S.strokes.length === n + 3", arg=n)
+    page.reload()                                            # the setting is remembered
+    expect(page.locator("#steps li")).to_have_count(5)
+    tab(page, 4)
+    expect(page.locator("#hiding")).to_be_checked()
+    page.uncheck("#hiding")
+    page.wait_for_function("(n) => !S.hiding && S.strokes.length === n", arg=n)
+    tab(page, 3)
+    page.select_option("#testFile", "")
+
+
 CHECKS = [check_connect_and_home, check_steps_fit_without_scrolling, check_keyboard_jog_and_pen,
           check_console, check_paper_and_title_block, check_paper_fields_and_orientation, check_units,
           check_splitter, check_zoom_and_pan, check_title_block_corner, check_reset_button,
           check_plot_with_pause, check_stop_with_escape, check_stop_button, check_test_drawing_dropdown,
-          check_outside_sheet_warning, check_travel_trace_during_plot, check_model_dropdown]
+          check_outside_sheet_warning, check_travel_trace_during_plot, check_model_dropdown,
+          check_resume_from_path, check_hidden_lines]
 
 
 def main():

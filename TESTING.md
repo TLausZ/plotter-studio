@@ -27,6 +27,9 @@ Browser, `python3 test_idraw_e2e.py`: starts the server with the simulator (40×
 | test_drawing_dropdown | Speed step: a file from tests/ replaces the document and clears trace, done marks and progress; the first entry brings the document back |
 | outside_sheet_warning | A4 drawing at 1:1 on a 148 × 105 sheet: amber paths, notice in the Plot step, Start plot opens the confirm dialog, Cancel starts nothing, Plot anyway starts |
 | travel_trace_during_plot | a plot clears the manual trace, leaves dotted travel segments only, the next plot starts with an empty trace |
+| model_dropdown | Untested models carry the label and the hint; after a reconnect an AxiDraw model sends EBB commands, no G-code. |
+| resume_from_path | After a stop the Run group shows a slider and Resume from path N; the plot continues from there and finishes. |
+| hidden_lines | The checkbox in the Plot step reloads the drawing with lines behind fills split; the setting survives a reload. |
 
 The e2e run changes paper and unit and restores the settings file afterwards. Add a check by writing `check_<name>(page)`, listing it in `CHECKS`, and adding its line to the table above.
 

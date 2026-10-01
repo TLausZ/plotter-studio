@@ -7,9 +7,36 @@ class Capture(core.SimTransport):
         super().__init__(speed_factor=1e9)
         self.lines = []
 
-    def send(self, line, seconds=0.0):
+    def send(self, line, seconds=0.0, timeout=None):
         self.lines.append(line)
         return super().send(line, 0)
+
+
+class DeadSerial:
+    """A pyserial stand-in that never answers."""
+    def write(self, data):
+        pass
+
+    def readline(self):
+        return b""
+
+    def close(self):
+        pass
+
+
+def test_link_lost():
+    core.REPLY_SLACK = 0.05
+    t = core.SerialTransport("dead")
+    t.ser = DeadSerial()
+    p = core.Plotter()
+    p.transport = t          # skip open(): the handshake needs a live board
+    p.status = "ready"
+    p.start(p.goto, 10, 0)
+    p._worker.join(5)
+    assert not p._worker.is_alive()
+    kinds = [k for k, _ in list(p.events.queue)]
+    assert "error" in kinds and p.status == "disconnected" and p.transport is None, (kinds, p.status)
+    core.REPLY_SLACK = 15.0
 
 
 def test_mapping_and_plot():
@@ -50,6 +77,42 @@ def test_dialects():
     p.goto(10, 20)
     assert t.lines[:2] == ["$H", "G92 X0 Y0"] and t.lines[-1].startswith("G1 X10.000 Y20.000"), t.lines
     assert core.model_label("iDraw A1") == "iDraw A1" and core.model_label("iDraw A4").endswith("(untested)")
+
+
+def test_resume_from():
+    t = Capture()
+    p = core.Plotter()
+    p.connect(t)
+    p.home()
+    t.lines.clear()
+    strokes = [([(0, 0), (10, 0)], None, None, 0), ([(20, 0), (30, 0)], None, None, 1), ([(40, 0), (50, 0)], None, None, 1)]
+    p.plot_strokes(strokes, {1: "pause layer"}, finish_home=False, start=2)   # layer 1 already begun: no pause
+    moves = [l for l in t.lines if l.startswith("G1 X")]
+    assert moves[0].startswith("G1 X0.000 Y-40.000") and len(moves) == 2, moves
+    kinds = [k for k, _ in list(p.events.queue)]
+    assert "pause" not in kinds
+    prog = [d for k, d in list(p.events.queue) if k == "progress"]
+    assert prog[0]["i"] == 2 and prog[0]["done"] == 20 and prog[-1]["i"] == 3 and prog[-1]["done"] == 30, prog
+
+
+def test_hide_lines():
+    line = [[(0, 5), (20, 5)]]
+    square = [[(5, 0), (15, 0), (15, 10), (5, 10)]]
+    ring = [[(0, 0), (30, 0), (30, 30), (0, 30)], [(10, 10), (20, 10), (20, 20), (10, 20)]]
+    # a filled square hides the middle of the line below it; its own outline stays
+    r = core.hide_lines([(line, False, None, True), (square, True, "nonzero", True)])
+    assert r[0] == [[(0, 5), (5, 5)], [(15, 5), (20, 5)]] and len(r[1]) == 1, r
+    # unfilled square hides nothing; an unstroked fill plots nothing
+    r = core.hide_lines([(line, False, None, True), (square, False, None, True), (square, True, None, False)])
+    assert r[0] == [[(0, 5), (5, 5)], [(15, 5), (20, 5)]] and r[1] and r[2] == [], r
+    # evenodd ring: the hole is see-through
+    r = core.hide_lines([([[(-5, 15), (35, 15)]], False, None, True), (ring, True, "evenodd", False)])
+    assert r[0] == [[(-5, 15), (0, 15)], [(10, 15), (20, 15)], [(30, 15), (35, 15)]], r
+    # through the loader: the test drawing has two lines, a filled square, an open square and a ring
+    import os
+    _w, _h, layers = core.load_svg(os.path.join(core.HERE, "tests", "A4-landscape-hidden-lines.svg"), hiding=True)
+    n_plain = len(core.load_svg(os.path.join(core.HERE, "tests", "A4-landscape-hidden-lines.svg"))[2][0].paths)
+    assert len(layers[0].paths) == n_plain + 3, (len(layers[0].paths), n_plain)   # 2 lines each split once, ring line split twice
 
 
 def test_origin_and_stop():
@@ -125,6 +188,9 @@ def test_place_and_tests():
 if __name__ == "__main__":
     test_mapping_and_plot()
     test_dialects()
+    test_link_lost()
+    test_resume_from()
+    test_hide_lines()
     test_origin_and_stop()
     test_raw_tracking()
     test_text_and_title_block()

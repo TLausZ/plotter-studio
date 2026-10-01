@@ -15,11 +15,12 @@ Tasks and ideas for iDraw Interactive. Move a line to Done when it is finished.
 - Tablet: test on the iPad and optimise touch handling (splitter hit area ~24 px, `touch-action: none` on splitter, board and zoom slider, maybe pinch zoom).
 - Watercolor and brush setup wizard: guides through placing paint wells and brushes, dipping and rinsing positions.
 
-- Resume a plot after abort (progress index is already reported).
 - Free positioning of the drawing with the mouse on the board.
-- Path sorting / hidden-line removal via `plot_optimizations.reorder` before load_svg.
+- Path sorting via `plot_optimizations.reorder` before load_svg.
 
 ## Done
+
+- 14 Sep 2026: transport reply timeouts (expected move time plus 15 s, homing 120 s), link loss drops the connection; Resume from path N with slider after a stop; hidden-line removal in pure Python (checkbox in the Plot step, test drawing); AxiDraw (EBB) and plain GRBL dialects, marked untested; e2e suite at 20 checks.
 
 - 4 Sep 2026: e2e suite at 18 checks, all passing (stop button, test drawing dropdown, outside-sheet warning, travel trace).
 - 3 Sep 2026: test drawings folder with dropdown in the Speed step (replaces the test pattern buttons); Piter Pasma line test and DrawingBotV3 calibration sheet added.

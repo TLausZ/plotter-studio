@@ -83,6 +83,11 @@ def model_label(model):
 EBB_STEPS_PER_MM = 2032 / 25.4
 EBB_SERVO_MIN, EBB_SERVO_MAX = 9855, 27831
 Z_RATE = 5000  # feed rate for Z moves (mm/min), as in the original
+REPLY_SLACK = 15.0  # s: a reply may arrive this much later than the expected move time
+
+
+class LinkLost(IOError):
+    """No reply from the board, or the serial port failed: the connection is dropped."""
 
 
 def _import_serial():
@@ -123,7 +128,7 @@ class SimTransport:
     def close(self):
         pass
 
-    def send(self, line, seconds=0.0):
+    def send(self, line, seconds=0.0, timeout=None):
         if seconds:
             time.sleep(seconds / self.speed_factor)
         if line.startswith("$B"):
@@ -200,13 +205,20 @@ class SerialTransport:
             self.ser.close()
             self.ser = None
 
-    def send(self, line, seconds=0.0):
-        self.ser.write((line + "\r").encode("ascii"))
+    def send(self, line, seconds=0.0, timeout=None):
+        """Send one line, return the reply. seconds is the expected move time; the reply
+        may take that plus REPLY_SLACK (or timeout, if given), then LinkLost is raised."""
+        limit = timeout if timeout is not None else seconds + REPLY_SLACK
+        deadline = time.time() + limit
         resp = ""
-        for _ in range(100):  # wait up to 100 s for a reply (long moves, homing)
-            resp = self.ser.readline().decode("ascii", "replace").strip()
-            if resp:
-                break
+        try:
+            self.ser.write((line + "\r").encode("ascii"))
+            while not resp and time.time() < deadline:
+                resp = self.ser.readline().decode("ascii", "replace").strip()
+        except (OSError, ValueError) as err:   # cable pulled, port closed
+            raise LinkLost("Serial port failed after %s: %s" % (line, err))
+        if not resp:
+            raise LinkLost("No reply to %s within %d s." % (line, limit))
         if line.startswith("$B") or line.startswith("$QP") or line.startswith("$QT"):
             self.ser.readline()  # these queries return data followed by an ok
         if resp.startswith(("error", "ALARM", "!")):    # "!" is the EBB error prefix
@@ -256,8 +268,81 @@ class Layer:
         self.enabled = not skip
 
 
-def load_svg(path):
-    """SVG -> (page_w_mm, page_h_mm, [Layer]).
+# --- hidden-line removal (pure Python; Inkscape's Python has no pyclipper)
+
+def _inside(pt, polys, rule):
+    """Point in a filled shape made of closed polygons, by SVG fill rule."""
+    x, y = pt
+    wn = cr = 0
+    for poly in polys:
+        n = len(poly)
+        for i in range(n):
+            (x0, y0), (x1, y1) = poly[i], poly[(i + 1) % n]
+            if (y0 <= y) != (y1 <= y):              # edge crosses the horizontal ray's height
+                xi = x0 + (y - y0) * (x1 - x0) / (y1 - y0)
+                if xi > x:
+                    cr += 1
+                    wn += 1 if y1 > y0 else -1
+    return (cr % 2 == 1) if rule == "evenodd" else (wn != 0)
+
+
+def _clip_polyline(pts, polys, rule):
+    """Parts of the open polyline pts that lie outside the filled shape polys."""
+    out, cur = [], []
+    for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+        ts = [0.0, 1.0]
+        for poly in polys:
+            n = len(poly)
+            for i in range(n):
+                (cx, cy), (dx, dy) = poly[i], poly[(i + 1) % n]
+                den = (bx - ax) * (dy - cy) - (by - ay) * (dx - cx)
+                if abs(den) < 1e-12:
+                    continue
+                t = ((cx - ax) * (dy - cy) - (cy - ay) * (dx - cx)) / den
+                u = ((cx - ax) * (by - ay) - (cy - ay) * (bx - ax)) / den
+                if 0 < t < 1 and 0 <= u <= 1:
+                    ts.append(t)
+        ts.sort()
+        for t0, t1 in zip(ts, ts[1:]):
+            if t1 - t0 < 1e-9:
+                continue
+            p0 = (ax + (bx - ax) * t0, ay + (by - ay) * t0)
+            p1 = (ax + (bx - ax) * t1, ay + (by - ay) * t1)
+            mid = ((p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2)
+            if _inside(mid, polys, rule):
+                if len(cur) > 1:
+                    out.append(cur)
+                cur = []
+            else:
+                if not cur:
+                    cur = [p0]
+                cur.append(p1)
+    if len(cur) > 1:
+        out.append(cur)
+    return out
+
+
+def hide_lines(items):
+    """items: [(subpaths, filled, fill_rule, stroked)] in z-order, bottom first; every subpath
+    is a point list. Returns [[polyline, ...]] per item: the stroked parts not covered by a
+    filled item above. A filled item hides everything below it, its own outline included."""
+    # ponytail: every segment against every edge of every fill above; fine for hundreds of
+    # shapes, add bounding-box checks if a drawing with thousands of fills feels slow
+    result = []
+    for i, (subs, _f, _r, stroked) in enumerate(items):
+        lines = [list(sp) for sp in subs if len(sp) > 1] if stroked else []
+        for subs2, filled, rule, _s in items[i + 1:]:
+            if not filled or not lines:
+                continue
+            polys = [sp for sp in subs2 if len(sp) > 2]
+            lines = [piece for ln in lines for piece in _clip_polyline(ln, polys, rule or "nonzero")]
+        result.append(lines)
+    return result
+
+
+def load_svg(path, hiding=False):
+    """SVG -> (page_w_mm, page_h_mm, [Layer]). hiding: drop the parts of lines that lie
+    behind filled shapes drawn later in the document (hidden-line removal).
 
     Uses the digest from idraw_deps/idraw2_0internal (resolve transforms, flatten
     curves, parse layer names). The digest needs lxml; lxml must be imported before
@@ -297,6 +382,13 @@ def load_svg(path):
     # digest_params: [width, height (inch), scale x, y, layer selection (-2 = all), curve tolerance inch]
     digest = digest_svg.DigestSVG(default_logging=False).process_svg(
         svg, plot_warnings.PlotWarnings(), [w_in, h_in, sx, sy, -2, 0.002], mat)
+    if hiding:
+        items = [(p.subpaths, str(p.fill).lower() != "none", p.fill_rule, p.has_stroke())
+                 for lyr in digest.layers for p in lyr.paths]
+        kept = iter(hide_lines(items))
+        for lyr in digest.layers:
+            for p in lyr.paths:
+                p.subpaths = next(kept)     # empty for hidden or unstroked paths; flatten drops them
     digest.flatten()
 
     layers = []
@@ -576,8 +668,8 @@ class Plotter:
         self._set_status("disconnected")
 
     # --- low level: the only places that produce G-code
-    def _send(self, line, seconds=0.0):
-        resp = self.transport.send(line, seconds)
+    def _send(self, line, seconds=0.0, timeout=None):
+        resp = self.transport.send(line, seconds, timeout=timeout)
         self.log("> %s   %s" % (line, resp if resp != "ok" else ""))
         return resp
 
@@ -627,7 +719,7 @@ class Plotter:
             self._send("EM,1,1")
             self.log("AxiDraw has no home switches: the current position is taken as the home corner.")
         else:
-            self._send("$H", seconds=3.0)
+            self._send("$H", seconds=3.0, timeout=120)   # homing an A1 takes a while
             if self.dialect == "drawcore":
                 # ponytail: homing sequence taken from the original (manual_cmd machine_origin):
                 # $H, then a relative move of y_bounds along machine X. Verify orientation and
@@ -806,6 +898,9 @@ class Plotter:
         def run():
             try:
                 target(*args)
+            except LinkLost as err:    # board gone: drop the connection, the UI shows it
+                self.emit("error", str(err))
+                self.disconnect()
             except Exception as err:  # report to the GUI, do not crash
                 self.emit("error", str(err))
                 self._set_status("error")
@@ -827,22 +922,28 @@ class Plotter:
             w.join(0.5)     # the worker reported its final status; let it exit before answering
         return bool(w and w.is_alive())
 
-    def plot_strokes(self, strokes, layer_pauses=None, finish_home=True):
+    def plot_strokes(self, strokes, layer_pauses=None, finish_home=True, start=0):
         """Plot strokes in order.
 
         strokes: [(points, feed|None, z_down|None, layer_index)]
         layer_pauses: {layer_index: layer_name}; before the first stroke of such a layer
                       ("pause", name) is emitted and the run waits for resume().
         finish_home: move to the origin at the end (not for tests).
+        start: first stroke index; strokes before it count as done (resume after a stop,
+               or replot from an earlier path when the pen ran dry).
         """
         layer_pauses = layer_pauses or {}
+        start = max(0, min(start, len(strokes)))
         total = sum(path_length(s[0]) for s in strokes)
-        done = 0.0
+        done = sum(path_length(s[0]) for s in strokes[:start])
+        done0 = done
         t0 = time.time()
         self._set_status("plotting")
-        self.emit("progress", {"i": 0, "n": len(strokes), "done": 0, "total": total, "eta": None})
-        seen_layers = set()
+        self.emit("progress", {"i": start, "n": len(strokes), "done": done, "total": total, "eta": None})
+        seen_layers = set(s[3] for s in strokes[:start])   # no pause for a layer already begun
         for i, (pts, feed, z_down, layer_idx) in enumerate(strokes):
+            if i < start:
+                continue
             if self._stop.is_set():
                 break
             if layer_idx in layer_pauses and layer_idx not in seen_layers:
@@ -867,7 +968,7 @@ class Plotter:
             self.pen_up()
             done += path_length(pts)
             elapsed = time.time() - t0
-            eta = elapsed / done * (total - done) if done > 0 else None
+            eta = elapsed / (done - done0) * (total - done) if done > done0 else None
             self.emit("progress", {"i": i + 1, "n": len(strokes), "done": done, "total": total, "eta": eta})
         stopped = self._stop.is_set()
         self.pen_up()

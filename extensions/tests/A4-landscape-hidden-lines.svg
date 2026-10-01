@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="297mm" height="210mm" viewBox="0 0 297 210">
+  <g id="layer1">
+    <path d="M 20,60 L 277,60" fill="none" stroke="#000"/>
+    <path d="M 20,140 L 277,140" fill="none" stroke="#000"/>
+    <rect x="60" y="40" width="40" height="40" fill="#ccc" stroke="#000"/>
+    <rect x="140" y="40" width="40" height="40" fill="none" stroke="#000"/>
+    <path d="M 200,140 m -30,0 a 30,30 0 1,0 60,0 a 30,30 0 1,0 -60,0 M 200,140 m -15,0 a 15,15 0 1,0 30,0 a 15,15 0 1,0 -30,0" fill="#ccc" fill-rule="evenodd" stroke="#000"/>
+  </g>
+</svg>
