@@ -39,6 +39,8 @@ The app bar at the top shows the status (ready, moving, plotting, paused), the p
 
 ## The five steps
 
+<img src="docs/manual-steps.png" alt="The five step tabs: 1 Connect, 2 Paper, 3 Pen, 4 Speed, 5 Plot" width="500">
+
 ### Connect
 
 Choose the port and click Connect. "Simulation" is always in the list. Choose your plotter in Model; the choice is remembered. Models other than the iDraw A1 are marked "(untested)": their commands were written from the vendors' code and have not run on a device yet.
