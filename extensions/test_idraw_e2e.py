@@ -472,12 +472,68 @@ def check_hidden_lines(page):
     page.select_option("#testFile", "")
 
 
+
+def check_placement_adjust(page):
+    """Plot step: rotate in 90° and 15° steps and by the angle field, align to the margin, X field and scale; presets keep the rotation."""
+    tab(page, 4)
+    page.click("#adj summary")
+    click_cmd(page, "button[data-rot='1']")                   # default step 90°
+    page.wait_for_function("() => S.tf.rot === 90 && S.placement === 'custom'")
+    click_cmd(page, "button[data-pl='1:1']")                  # a preset keeps the rotation
+    page.wait_for_function("() => S.tf.rot === 90 && S.placement === '1:1'")
+    expect(page.locator("#adj")).to_have_attribute("open", "")    # stays open across re-renders
+    page.click("button[data-ref=margin]")
+    page.fill("#plM", "10")
+    page.press("#plM", "Enter")
+    click_cmd(page, "button[data-al='right,']")
+    page.wait_for_function("() => S.placement === 'custom' && Math.abs(S.content[2] - (S.paper[0] - 10)) < 0.01")
+    page.fill("#plX", "20")
+    page.press("#plX", "Enter")
+    page.wait_for_function("() => Math.abs(S.content[0] - 20) < 0.01")
+    w = page.evaluate("() => S.content[2] - S.content[0]")
+    page.fill("#plS", "50")
+    page.press("#plS", "Enter")
+    page.wait_for_function("(w) => Math.abs((S.content[2] - S.content[0]) - w / 2) < 0.01", arg=w)
+    expect(page.locator("#strokes path.tb").first).to_be_attached()    # title block strokes stay apart
+    page.click("button[data-rstep='15']")
+    click_cmd(page, "button[data-rot='-1']")
+    page.wait_for_function("() => S.tf.rot === 75")
+    page.fill("#plR", "8")                                    # the angle field rounds to 15°
+    page.press("#plR", "Enter")
+    page.wait_for_function("() => S.tf.rot === 15")
+    click_cmd(page, "button[data-rot='-1']")
+    page.wait_for_function("() => S.tf.rot === 0")
+    click_cmd(page, "button[data-pl='1:1']")
+    page.wait_for_function("() => S.placement === '1:1' && S.tf.scale === 1 && S.tf.x === 0")
+
+
+def check_drag_drawing(page):
+    """With Position, scale, rotation open, dragging the drawing moves it by the dragged distance."""
+    tab(page, 4)
+    page.click("#adj summary")
+    c0 = page.evaluate("() => S.content")
+    # screen point of the drawing's centre, and screen pixels per mm
+    cx, cy, ppm = page.evaluate("""() => { const svg = document.getElementById('preview'), m = svg.getScreenCTM(), c = S.content;
+        const p = svg.createSVGPoint(); p.x = (c[0] + c[2]) / 2; p.y = (c[1] + c[3]) / 2; const q = p.matrixTransform(m);
+        return [q.x, q.y, m.a]; }""")
+    page.mouse.move(cx, cy)
+    page.mouse.down()
+    page.mouse.move(cx + 40, cy + 20, steps=5)
+    page.mouse.move(cx + 80, cy + 40, steps=5)
+    with page.expect_response(lambda r: "/api/cmd" in r.url):
+        page.mouse.up()
+    page.wait_for_function("([x, y, dx, dy]) => S.placement === 'custom' && Math.abs(S.content[0] - x - dx) < 0.5 && Math.abs(S.content[1] - y - dy) < 0.5",
+                           arg=[c0[0], c0[1], 80 / ppm, 40 / ppm])
+    click_cmd(page, "button[data-pl='1:1']")
+    page.wait_for_function("(x) => S.placement === '1:1' && Math.abs(S.content[0] - x) < 0.01", arg=c0[0])
+
+
 CHECKS = [check_connect_and_home, check_steps_fit_without_scrolling, check_keyboard_jog_and_pen,
           check_console, check_paper_and_title_block, check_paper_fields_and_orientation, check_units,
           check_splitter, check_zoom_and_pan, check_title_block_corner, check_reset_button,
           check_plot_with_pause, check_stop_with_escape, check_stop_button, check_test_drawing_dropdown,
           check_outside_sheet_warning, check_travel_trace_during_plot, check_model_dropdown,
-          check_resume_from_path, check_hidden_lines]
+          check_resume_from_path, check_hidden_lines, check_placement_adjust, check_drag_drawing]
 
 
 def main():

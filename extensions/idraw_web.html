@@ -118,7 +118,8 @@ header{flex:0 0 56px}
 #zoom{display:block;margin:8px auto 4px;writing-mode:vertical-lr;direction:rtl;height:140px;width:18px;accent-color:var(--md-surface-container-lowest);cursor:pointer}
 #zoomlbl{display:block;text-align:center;font:500 12px/18px var(--f-mono);color:#fff;pointer-events:none}
 .tools{position:absolute;top:8px;left:8px;z-index:1;width:48px;padding:4px;background:rgba(0,0,0,.5);border-radius:28px;text-align:center}
-.board svg.pan{cursor:grab} .board svg.pan:active{cursor:grabbing}
+.board svg.pan{cursor:grab} .board svg.pan:active{cursor:grabbing} .board svg.movable{cursor:move}
+details#adj{margin:2px 0 6px} details#adj summary{cursor:pointer;color:var(--md-on-surface-variant);margin-bottom:8px} details#adj .seg .btn{padding:0 12px} .tf.ang{width:96px}
 #tbpos{font-size:20px;background:var(--md-surface-container-lowest);border-color:var(--md-outline)}
 .split{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(440px,520px)}
 .boardwrap{display:flex;flex-direction:column;min-height:0;min-width:0}
@@ -259,6 +260,7 @@ let S = null;            // snapshot from the server
 let step = 0;
 let jogIdx = 1;
 let done = 0;            // strokes plotted so far
+let adjOpen = false, alignRef = 'sheet', alignMargin = 10, rotStep = 90;   // placement details: open, align to sheet or margin, margin in mm, rotation step
 const $ = id => document.getElementById(id);
 
 // ---------------------------------------------------------------- units
@@ -379,6 +381,7 @@ function renderPanel() {
     const p = S.progress, pct = p && p.total ? 100 * p.done / p.total : 0;
     h = hdr('Plot', `${S.svg_name} · page ${fmt(S.page[0])} × ${fmt(S.page[1])} · paper ${fmt(S.paper[0])} × ${fmt(S.paper[1])}`)
       + grp('Placement', `<div class="row"><div class="seg">${[['1:1', '1:1'], ['center', 'Centered'], ['fit', 'Fit to paper']].map(([v, t]) => `<button class="btn ${S.placement === v ? 'on' : ''}" data-pl="${v}">${t}</button>`).join('')}</div></div>
+        ${adjustHtml()}
         ${st.origin_set ? '' : '<div class="msg">Origin not set. Go to step 2, or plot from the current position.</div>'}${outsideMsg()}`)
       + grp('Layers', `<label class="row"><input type="checkbox" id="hiding" ${S.hiding ? 'checked' : ''}> Hide lines behind filled shapes</label>
         <table class="layers"><tr><th>Plot</th><th>Pause before</th><th>Layer · paths</th></tr>${rows || '<tr><td colspan="3">No layers. Open an SVG with paths.</td></tr>'}</table>`)
@@ -390,6 +393,20 @@ function renderPanel() {
   $('panel').innerHTML = h;
   wirePanel();
   wireResume();
+}
+// position, scale, rotation and alignment of the drawing on the sheet; folded so the Plot step fits without scrolling
+function adjustHtml() {
+  const c = S.content, t = S.tf, dis = c ? '' : 'disabled';
+  const al = [['left', '', 'Align left', '⇤'], ['center', '', 'Center horizontally', '↔'], ['right', '', 'Align right', '⇥'],
+              ['', 'top', 'Align top', '⤒'], ['', 'middle', 'Center vertically', '↕'], ['', 'bottom', 'Align bottom', '⤓']]
+    .map(([h, v, l, i]) => `<button class="btn" data-al="${h},${v}" title="${l}" aria-label="${l}" ${dis}>${i}</button>`).join('');
+  return `<details id="adj" ${adjOpen ? 'open' : ''}><summary>Position, scale, rotation</summary>
+    <div class="row">${tf('plX', 'X', c ? toU(c[0]) : '', {suffix: u(), attrs: dis})}${tf('plY', 'Y', c ? toU(c[1]) : '', {suffix: u(), attrs: dis})}${tf('plS', 'Scale', +(t.scale * 100).toFixed(2), {suffix: '%', attrs: dis})}</div>
+    <div class="row"><div class="seg">${al}</div><div class="seg">${[['sheet', 'Sheet'], ['margin', 'Margin']].map(([v, l]) => `<button class="btn ${alignRef === v ? 'on' : ''}" data-ref="${v}">${l}</button>`).join('')}</div></div>
+    <div class="row">${tf('plM', 'Margin', toU(alignMargin), {suffix: u()})}${c ? `<span class="mono body-small" style="color:var(--md-on-surface-variant)">${toU(c[2] - c[0])} × ${toU(c[3] - c[1])} ${u()}</span>` : ''}</div>
+    <div class="row">${tf('plR', 'Angle', t.rot, {suffix: '°', attrs: dis, cls: 'ang'})}<button class="btn icon-btn outlined" data-rot="-1" title="Rotate ${rotStep}° left" aria-label="Rotate ${rotStep} degrees left" ${dis}>↺</button><button class="btn icon-btn outlined" data-rot="1" title="Rotate ${rotStep}° right" aria-label="Rotate ${rotStep} degrees right" ${dis}>↻</button>
+    <div class="seg">${[15, 90].map(v => `<button class="btn ${rotStep === v ? 'on' : ''}" data-rstep="${v}">${v}°</button>`).join('')}</div></div>
+    <p>While this is open, drag the drawing on the board to move it.</p></details>`;
 }
 function progressText() {
   const p = S.progress; if (!p) return '';
@@ -428,9 +445,20 @@ function wirePanel() {
   wireCmds(P);
   P.querySelectorAll('[data-nz]').forEach(b => b.onclick = () => { const [k, d] = b.dataset.nz.split(','); const v = Math.max(0, +(S.state.profile[k] + +d).toFixed(2)); cmd('set_profile', {[k]: v}); });
   P.querySelectorAll('[data-pl]').forEach(b => b.onclick = () => cmd('set_placement', {mode: b.dataset.pl}));
+  P.querySelectorAll('[data-al]').forEach(b => b.onclick = () => { const [h, v] = b.dataset.al.split(','); cmd('align', {h: h || null, v: v || null, margin: alignRef === 'margin' ? alignMargin : 0}); });
+  P.querySelectorAll('[data-ref]').forEach(b => b.onclick = () => { alignRef = b.dataset.ref; renderPanel(); });
+  P.querySelectorAll('[data-rot]').forEach(b => b.onclick = () => cmd('rotate', {step: +b.dataset.rot * rotStep}));
+  P.querySelectorAll('[data-rstep]').forEach(b => b.onclick = () => { rotStep = +b.dataset.rstep; renderPanel(); });
   P.querySelectorAll('[data-layer]').forEach(c => c.onchange = () => cmd('set_layer', {index: +c.dataset.layer, [c.dataset.k]: c.checked}));
   const on = (id, ev, fn) => { const e = $(id); if (e) e.addEventListener(ev, fn); };
   on('model', 'change', e => cmd('set_model', {name: e.target.value}));
+  // set on click, not on the async toggle event: a re-render in between would fold it again
+  P.querySelectorAll('#adj summary').forEach(el => el.onclick = () => { adjOpen = !el.parentNode.open; });
+  on('plX', 'change', e => cmd('set_transform', {x: fromU(e.target.value)}));
+  on('plY', 'change', e => cmd('set_transform', {y: fromU(e.target.value)}));
+  on('plS', 'change', e => cmd('set_transform', {scale: parseFloat(e.target.value) / 100}));
+  on('plR', 'change', e => cmd('set_transform', {rot: parseFloat(e.target.value)}));   // the server rounds to 15°
+  on('plM', 'change', e => { const v = fromU(e.target.value); if (v >= 0) alignMargin = v; renderPanel(); });
   on('testFile', 'change', () => cmd('load_test', {name: $('testFile').value}));
   on('fmt', 'change', applyPaper); on('orient', 'change', applyPaper); on('paperApply', 'click', () => applyPaper(true));
   on('prof', 'change', e => cmd('load_profile', {name: e.target.value}));
@@ -464,11 +492,25 @@ function jog(x, y) { const s = JOG[u()][jogIdx] * UNIT[u()]; cmd('jog', {dx: x *
 // ---------------------------------------------------------------- preview (SVG, user units = mm)
 let fitMachine = false;   // false: view fits the paper; true: view fits the machine travel
 $('zoom').oninput = e => { zoomIdx = +e.target.value; $('zoomlbl').textContent = ZOOM[zoomIdx] + '×'; if (zoomIdx <= 2) panX = panY = 0; renderPreview(); };
-{ // drag to pan; double-click resets zoom and pan
-  const svg = $('preview'); let drag = null;
-  svg.onpointerdown = e => { if (ZOOM[zoomIdx] > 1) { drag = [e.clientX, e.clientY, panX, panY]; svg.setPointerCapture(e.pointerId); } };
-  svg.onpointermove = e => { if (drag) { panX = drag[2] - (e.clientX - drag[0]) / pxPerMm; panY = drag[3] - (e.clientY - drag[1]) / pxPerMm; renderPreview(); } };
-  svg.onpointerup = svg.onpointercancel = () => { drag = null; };
+{ // with Position, scale, rotation open in the Plot step a drag on the drawing moves it; otherwise a drag pans (above 1x); double-click resets zoom and pan
+  const svg = $('preview'); let drag = null, move = null;
+  const mm = e => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+  const onDrawing = e => { const c = S && S.content, p = mm(e);
+    return c && step === 4 && adjOpen && !S.state.busy && p.x >= c[0] && p.x <= c[2] && p.y >= c[1] && p.y <= c[3]; };
+  const shift = (dx, dy) => svg.querySelectorAll('#strokes path:not(.tb)').forEach(el => el.setAttribute('transform', `translate(${dx} ${dy})`));
+  svg.onpointerdown = e => {
+    if (onDrawing(e)) { const p = mm(e); move = [p.x, p.y, 0, 0]; svg.setPointerCapture(e.pointerId); }
+    else if (ZOOM[zoomIdx] > 1) { drag = [e.clientX, e.clientY, panX, panY]; svg.setPointerCapture(e.pointerId); }
+  };
+  svg.onpointermove = e => {
+    if (move) { const p = mm(e); move[2] = p.x - move[0]; move[3] = p.y - move[1]; shift(move[2], move[3]); }
+    else if (drag) { panX = drag[2] - (e.clientX - drag[0]) / pxPerMm; panY = drag[3] - (e.clientY - drag[1]) / pxPerMm; renderPreview(); }
+    else svg.classList.toggle('movable', onDrawing(e));
+  };
+  svg.onpointerup = svg.onpointercancel = () => {
+    if (move && (move[2] || move[3])) cmd('move_by', {dx: move[2], dy: move[3]});
+    drag = move = null;
+  };
   svg.ondblclick = () => { zoomIdx = 2; panX = panY = 0; $('zoom').value = 2; $('zoomlbl').textContent = '1×'; renderPreview(); };
 }
 // command reference: [command, purpose, reply]; '*' = not verified on the DrawCore board
@@ -560,7 +602,7 @@ function renderPreview() {
   g += `<rect x="0" y="0" width="${pw}" height="${ph}" fill="var(--paper)" stroke="rgba(0,0,0,.35)" stroke-width="${px(1)}"/>`;
   g += rulers(pw, ph);
   g += `<g id="strokes" stroke-width="${lw}">` + S.strokes.map((s, i) =>
-    `<path class="stroke ${i < done ? 'done' : ''} ${s.out ? 'out' : ''}" d="M${s.pts.map(p => p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join('L')}"/>`).join('') + '</g>';
+    `<path class="stroke ${i < done ? 'done' : ''} ${s.out ? 'out' : ''} ${s.layer === S.tb_index ? 'tb' : ''}" d="M${s.pts.map(p => p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join('L')}"/>`).join('') + '</g>';
   g += `<circle cx="0" cy="0" r="${px(5)}" fill="none" stroke="var(--origin)" stroke-width="${px(1.5)}"/>`;
   g += `<g id="trace" class="penmark" stroke-width="${px(1)}" stroke-dasharray="${px(3)} ${px(3)}">${traceHtml()}</g>`;
   g += `<g id="pen" class="penmark ${st.z_up === false ? 'down' : 'up'}" transform="translate(${st.x} ${st.y})" stroke-width="${px(1.5)}"><circle r="${px(8)}" fill="none"/><line x1="${-px(14)}" x2="${px(14)}"/><line y1="${-px(14)}" y2="${px(14)}"/></g>`;

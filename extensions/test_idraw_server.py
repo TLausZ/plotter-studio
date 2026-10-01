@@ -50,6 +50,25 @@ def main():
     assert call(base + "/api/cmd", {"cmd": "set_paper", "w": 297, "h": 210, "name": "A4", "orient": "landscape"}) == {"ok": True}
     assert call(base + "/api/cmd", {"cmd": "set_placement", "mode": "fit"}) == {"ok": True}
     assert call(base + "/api/snapshot")["outside"] == 0
+    c0 = call(base + "/api/snapshot")["content"]
+    assert call(base + "/api/cmd", {"cmd": "rotate", "step": 90}) == {"ok": True}
+    snap = call(base + "/api/snapshot")              # turned about its centre
+    c1 = snap["content"]
+    assert snap["placement"] == "custom" and snap["tf"]["rot"] == 90
+    assert abs((c0[0] + c0[2]) - (c1[0] + c1[2])) < 1e-6 and abs((c1[2] - c1[0]) - (c0[3] - c0[1])) < 1e-6
+    assert call(base + "/api/cmd", {"cmd": "align", "h": "left", "v": "top", "margin": 5}) == {"ok": True}
+    assert [round(v, 6) for v in call(base + "/api/snapshot")["content"][:2]] == [5, 5]
+    assert call(base + "/api/cmd", {"cmd": "move_by", "dx": 3, "dy": -1}) == {"ok": True}
+    assert call(base + "/api/cmd", {"cmd": "set_transform", "x": 12}) == {"ok": True}
+    c2 = call(base + "/api/snapshot")["content"]
+    assert abs(c2[0] - 12) < 1e-6 and abs(c2[1] - 4) < 1e-6, c2
+    assert "error" in call(base + "/api/cmd", {"cmd": "rotate", "step": 10})
+    assert "error" in call(base + "/api/cmd", {"cmd": "set_transform", "scale": 0})
+    assert call(base + "/api/cmd", {"cmd": "set_placement", "mode": "fit"}) == {"ok": True}   # preset, still turned
+    snap = call(base + "/api/snapshot")
+    assert snap["tf"]["rot"] == 90 and snap["outside"] == 0
+    assert call(base + "/api/cmd", {"cmd": "rotate", "step": -90}) == {"ok": True}
+    assert call(base + "/api/cmd", {"cmd": "set_placement", "mode": "fit"}) == {"ok": True}
     assert call(base + "/api/cmd", {"cmd": "set_layer", "index": 1, "pause": False}) == {"ok": True}
     assert call(base + "/api/cmd", {"cmd": "jog", "dx": 10, "dy": 0}) == {"ok": True}
     assert abs(wait_idle(base)["x"] - 10) < 1e-6

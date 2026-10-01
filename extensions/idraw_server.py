@@ -18,10 +18,13 @@ Commands: connect(port), disconnect, home, jog(dx,dy in mm), goto(x,y), raw(line
 pen_down, pen_toggle, nudge_z(delta), set_origin, release_motors, lock_motors,
 motors_off, frame(kind=paper|drawing), test(name), test_stroke, cycle, plot, stop,
 resume, set_profile(fields), load_profile(name), save_profile(name), set_paper(w,h,
-name,orient), set_pos_mode(mode), set_placement(mode), set_layer(index,enabled,pause),
+name,orient), set_pos_mode(mode), set_placement(mode: 1:1|center|fit), set_layer(index,enabled,pause),
 set_model(name), set_unit(unit), set_title_block(corner: tl|tr|br|bl|off), load_test(name from tests/, "" = the document), reset.
     plot takes an optional "start" (stroke index) to resume or replot from that path.
     set_hiding(on): hidden-line removal, lines behind filled shapes are dropped on load.
+    Free placement (switches the placement to "custom"): set_transform(x, y: top-left of the drawing
+    in mm; scale: factor, kept about the drawing's centre; rot: angle in degrees, rounded to 15),
+    move_by(dx, dy), rotate(step: a multiple of 15, about the centre), align(h: left|center|right, v: top|middle|bottom, margin mm from the edges).
 
 Session keeps what the UI needs beyond the Plotter: the loaded SVG (page, layers),
 paper, placement, unit, profiles. Everything moving the machine goes through
@@ -62,7 +65,8 @@ class Session:
         self.tb_corner = self.settings.get("tb_corner", "br")   # title block: tl, tr, br, bl or off
         self.hiding = bool(self.settings.get("hiding", False))  # hidden-line removal on load
         self.tb_layer = core.Layer("Title block", [])          # virtual last layer; enabled = plot it
-        self.placement = "1:1"
+        self.placement = "1:1"     # a preset (core.PLACEMENTS) or "custom", which uses self.tf
+        self.tf = core.preset("1:1", (297.0, 210.0), core.PAPER_FORMATS["A4"])
         self.page = (297.0, 210.0)
         self.layers = []
         self.svg_name = "(no SVG)"
@@ -121,9 +125,28 @@ class Session:
         except OSError:
             return []
 
+    def cur_tf(self):
+        """Current transform: a preset follows paper and page changes, custom stays where it was put."""
+        if self.placement in core.PLACEMENTS:
+            return core.preset(self.placement, self.page, self.paper, self.tf["rot"])
+        return self.tf
+
+    def content(self, tf=None):
+        """Box of the placed drawing (title block not included), or None."""
+        return core.bbox(core.place(self.layers, self.page, tf or self.cur_tf()))
+
+    def set_tf(self, tf, keep_center=None):
+        """Store a custom transform; with keep_center, shift it so the drawing's centre stays there."""
+        if keep_center:
+            box = self.content(tf)
+            if box:
+                tf = dict(tf, x=tf["x"] + keep_center[0] - (box[0] + box[2]) / 2,
+                          y=tf["y"] + keep_center[1] - (box[1] + box[3]) / 2)
+        self.tf, self.placement = tf, "custom"
+
     def placed(self):
         """Placed SVG layers plus the title block as a virtual last layer (when shown)."""
-        layers = core.place(self.layers, self.page, self.paper, self.placement)
+        layers = core.place(self.layers, self.page, self.cur_tf())
         if self.tb_corner == "off":
             return layers
         self.tb_layer.paths = core.title_block_strokes(self.paper, self.tb_corner, self.tb_rows())
@@ -137,11 +160,11 @@ class Session:
         k, d = {"mm": 1, "cm": 10, "in": 25.4}[self.unit], {"mm": 1, "cm": 2, "in": 2}[self.unit]
         f = lambda mm: "%.*f" % (d, mm / k)
         pr = self.plotter.profile
-        if self.placement == "fit":
-            sc = min((self.paper[0] - 20) / self.page[0], (self.paper[1] - 20) / self.page[1])
-            scale = "1:%.2f (%.2fx)" % (1 / sc, sc)
-        else:
-            scale = "1:1"
+        tf = self.cur_tf()
+        sc = tf["scale"]
+        scale = "1:1" if abs(sc - 1) < 1e-9 else "1:%.2f (%.2fx)" % (1 / sc, sc)
+        if tf["rot"]:
+            scale += " rot %d deg" % tf["rot"]
         return [("SHEET", "%s %s x %s %s" % (self.paper_name, f(self.paper[0]), f(self.paper[1]), self.unit)),
                 ("SCALE", scale), ("PEN", "%s - %s mm" % (self.profile_name, pr["line_width"])),
                 ("FEED", "%s / %s mm/min" % (pr["feed_draw"], pr["feed_travel"])), ("FILE", self.svg_name)]
@@ -175,6 +198,8 @@ class Session:
             "profiles": self.profiles, "profile_name": self.profile_name,
             "unit": self.unit, "paper": self.paper, "paper_name": self.paper_name,
             "orient": self.orient, "pos_mode": self.pos_mode, "placement": self.placement,
+            "tf": self.cur_tf(), "content": self.content(),
+            "tb_index": len(self.layers) if self.tb_corner != "off" else None,   # stroke layer index of the title block
             "page": self.page, "svg_name": self.svg_name, "svg_error": self.svg_error,
             "layers": [{"name": l.name, "enabled": l.enabled, "pause": l.pause, "n": len(l.paths)}
                        for l in self.all_layers()],
@@ -320,7 +345,45 @@ class Session:
             self.save()
             return {"ok": True}
         if cmd == "set_placement":
-            self.placement = a.get("mode", "1:1")
+            if a.get("mode") not in core.PLACEMENTS:
+                return {"error": "Unknown placement."}
+            self.tf = dict(self.cur_tf())
+            self.placement = a["mode"]
+            return {"ok": True}
+        if cmd in ("set_transform", "move_by", "rotate", "align"):
+            tf, box = dict(self.cur_tf()), self.content()
+            if box is None:
+                return {"error": "No drawing to place."}
+            center = ((box[0] + box[2]) / 2, (box[1] + box[3]) / 2)
+            try:
+                if cmd == "set_transform":
+                    if "rot" in a:
+                        rot = int(round(float(a["rot"]) / 15)) * 15 % 360
+                        self.set_tf(dict(tf, rot=rot), keep_center=center)
+                        tf, box = self.tf, self.content()
+                    if "scale" in a:
+                        sc = float(a["scale"])
+                        if not 0.01 <= sc <= 100:
+                            return {"error": "Scale out of range."}
+                        self.set_tf(dict(tf, scale=sc), keep_center=center)
+                        tf, box = self.tf, self.content()
+                    if "x" in a or "y" in a:
+                        tf = dict(tf, x=tf["x"] + float(a.get("x", box[0])) - box[0],
+                                  y=tf["y"] + float(a.get("y", box[1])) - box[1])
+                    self.set_tf(tf)
+                elif cmd == "move_by":
+                    self.set_tf(dict(tf, x=tf["x"] + float(a.get("dx", 0)), y=tf["y"] + float(a.get("dy", 0))))
+                elif cmd == "rotate":
+                    step = int(a.get("step", 90))
+                    if step % 15:
+                        return {"error": "Rotation in 15 degree steps only."}
+                    self.set_tf(dict(tf, rot=(tf["rot"] + step) % 360), keep_center=center)
+                else:
+                    if a.get("h") not in (None, "left", "center", "right") or a.get("v") not in (None, "top", "middle", "bottom"):
+                        return {"error": "Unknown alignment."}
+                    self.set_tf(core.align(tf, box, self.paper, a.get("h"), a.get("v"), float(a.get("margin", 0))))
+            except (TypeError, ValueError):
+                return {"error": "Bad number."}
             return {"ok": True}
         if cmd == "set_layer":
             i, layers = int(a.get("index", -1)), self.all_layers()
@@ -369,6 +432,7 @@ class Session:
             # everything but the connection and the saved pen profiles goes back to the defaults
             self.unit, self.paper, self.paper_name, self.orient = "mm", core.PAPER_FORMATS["A4"], "A4", "landscape"
             self.pos_mode, self.placement = "jog", "1:1"
+            self.tf = core.preset("1:1", self.page, self.paper)
             for lyr in self.layers:
                 lyr.enabled, lyr.pause = not lyr.skip, lyr.name.startswith("!")
             self.tb_corner, self.tb_layer.enabled = "br", True
@@ -458,7 +522,8 @@ class Handler(BaseHTTPRequestHandler):
         # settings commands change what the preview shows; push a fresh snapshot
         if args.get("cmd") in ("set_paper", "set_placement", "set_layer", "load_profile",
                                "set_unit", "set_pos_mode", "connect", "disconnect", "set_model",
-                               "set_title_block", "save_profile", "reset", "load_test", "set_hiding"):
+                               "set_title_block", "save_profile", "reset", "load_test", "set_hiding",
+                               "set_transform", "move_by", "rotate", "align"):
             self.session.broadcast("snapshot", self.session.snapshot())
         self._json(result)
 

@@ -474,15 +474,34 @@ def title_block_strokes(paper, corner, rows):
     return out
 
 
-def place(layers, page, paper, mode, margin=10.0):
-    """Put the drawing (page size `page`) onto the paper. Returns new layers with moved paths.
+PLACEMENTS = ("1:1", "center", "fit")
 
-    mode '1:1': page origin on paper origin, no scaling.
-    mode 'center': 1:1, page centered on the paper.
-    mode 'fit': scaled proportionally so the page fits the paper with `margin`.
-    Add further modes (free position, rotation) here; the UI only passes the name.
-    """
+
+def _cos_sin(rot):
+    """cos and sin of a clockwise turn by rot degrees; exact for multiples of 90."""
+    r = rot % 360
+    if r % 90 == 0:
+        return {0: (1, 0), 90: (0, 1), 180: (-1, 0), 270: (0, -1)}[r]
+    a = math.radians(r)
+    return math.cos(a), math.sin(a)
+
+
+def rotated_size(page, rot):
+    """Width and height of the box around the page turned by rot degrees."""
+    c, s = _cos_sin(rot)
     pw, ph = page
+    return pw * abs(c) + ph * abs(s), pw * abs(s) + ph * abs(c)
+
+
+def preset(mode, page, paper, rot=0, margin=10.0):
+    """Transform for a placement mode, with the page turned by `rot` degrees (multiples of 15 in the UI).
+
+    '1:1': page corner on the paper origin, no scaling. 'center': 1:1, page centered.
+    'fit': scaled proportionally so the page fits the paper with `margin`.
+    A transform is {x, y, scale, rot}: turn the page clockwise about its centre, put the box around
+    the turned page at 0/0, scale, shift by x, y. Presets use that box, so a turned page fits whole.
+    """
+    pw, ph = rotated_size(page, rot)
     tw, th = paper
     scale, dx, dy = 1.0, 0.0, 0.0
     if mode == "center":
@@ -490,13 +509,49 @@ def place(layers, page, paper, mode, margin=10.0):
     elif mode == "fit":
         scale = min((tw - 2 * margin) / pw, (th - 2 * margin) / ph)
         dx, dy = (tw - pw * scale) / 2, (th - ph * scale) / 2
+    return {"x": dx, "y": dy, "scale": scale, "rot": rot % 360}
+
+
+def place(layers, page, tf):
+    """Put the drawing (page size `page`) onto the paper with transform `tf` (see preset).
+    Returns new layers with moved paths."""
+    pw, ph = page
+    s, dx, dy = tf["scale"], tf["x"], tf["y"]
+    c, sn = _cos_sin(tf["rot"])
+    bw, bh = rotated_size(page, tf["rot"])
+    cx, cy = pw / 2, ph / 2
+
+    def turn(x, y):   # about the page centre, then the turned page's box to 0/0
+        return (bw / 2 + (x - cx) * c - (y - cy) * sn, bh / 2 + (x - cx) * sn + (y - cy) * c)
     out = []
     for lyr in layers:
-        paths = [[(x * scale + dx, y * scale + dy) for x, y in p] for p in lyr.paths]
+        paths = [[(u * s + dx, v * s + dy) for u, v in (turn(x, y) for x, y in p)] for p in lyr.paths]
         new = Layer(lyr.name, paths, lyr.pause, lyr.skip, lyr.number)
         new.enabled = lyr.enabled
         out.append(new)
     return out
+
+
+def bbox(layers):
+    """(x0, y0, x1, y1) of all paths in layers that can be plotted (not % layers), or None."""
+    pts = [pt for lyr in layers if not lyr.skip for p in lyr.paths for pt in p]
+    if not pts:
+        return None
+    xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+def align(tf, box, paper, h=None, v=None, margin=0.0):
+    """Shift tf so the drawing's box sits left/center/right (h) and top/middle/bottom (v)
+    on the paper, `margin` mm inside its edges. None leaves that axis alone."""
+    x0, y0, x1, y1 = box
+    tw, th = paper
+    tf = dict(tf)
+    if h:
+        tf["x"] += {"left": margin - x0, "center": (tw - x1 - x0) / 2, "right": tw - margin - x1}[h]
+    if v:
+        tf["y"] += {"top": margin - y0, "middle": (th - y1 - y0) / 2, "bottom": th - margin - y1}[v]
+    return tf
 
 
 def path_length(p):

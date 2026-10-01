@@ -95,7 +95,7 @@ No model has been run on a device yet; the iDraw H A1 is the one to test first (
 
 ### New features
 
-Test drawings: drop an SVG into `extensions/tests/`, it appears in the Speed step dropdown. The generated patterns in `idraw_core.TESTS` are only used by `tests/make_test_svgs.py` (and `Plotter.run_test`, which no button calls any more). Placement modes: extend `place()` and the button row in step 5. Path sorting: apply `plot_optimizations.reorder` from `idraw_deps/idraw2_0internal` to the digest before `load_svg` builds the layers.
+Test drawings: drop an SVG into `extensions/tests/`, it appears in the Speed step dropdown. The generated patterns in `idraw_core.TESTS` are only used by `tests/make_test_svgs.py` (and `Plotter.run_test`, which no button calls any more). Placement: `preset()` makes the transform for the buttons in step 5, `place()` applies it (rotation about the page centre in degrees, the UI uses 15° steps; scale; shift), `align()` moves the drawing's box; free moves are server commands (`set_transform`, `move_by`, `rotate`, `align`). Path sorting: apply `plot_optimizations.reorder` from `idraw_deps/idraw2_0internal` to the digest before `load_svg` builds the layers.
 
 ## Firmware, short version
 
@@ -114,7 +114,7 @@ Not verified on the device yet:
 
 Security note: with `--lan` anyone on the network can move the plotter. There is no authentication; use it only on a trusted network.
 
-Not built: copies, laser, multiple devices, webhook, path sorting, free positioning with the mouse on the board.
+Not built: copies, laser, multiple devices, webhook, path sorting.
 
 ## Related projects
 

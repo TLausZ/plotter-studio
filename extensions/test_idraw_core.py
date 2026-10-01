@@ -175,14 +175,41 @@ def test_load_svg_without_viewbox(tmp=None):
 
 def test_place_and_tests():
     lyr = core.Layer("a", [[(0, 0), (297, 210)]])
-    fit = core.place([lyr], (297, 210), (420, 297), "fit")[0].paths[0]
+    fit = core.place([lyr], (297, 210), core.preset("fit", (297, 210), (420, 297)))[0].paths[0]
     assert abs(fit[0][1] - 10) < 1e-6 and abs(fit[1][1] - 287) < 1e-6  # height fills, 10 mm margin
-    cen = core.place([lyr], (297, 210), (420, 297), "center")[0].paths[0]
+    cen = core.place([lyr], (297, 210), core.preset("center", (297, 210), (420, 297)))[0].paths[0]
     assert abs(cen[0][0] - 61.5) < 1e-6
     for name, fn in core.TESTS.items():
         strokes = fn(0, 0)
         assert strokes and all(len(s[0]) >= 2 for s in strokes), name
     assert abs(core.path_length([(0, 0), (3, 4)]) - 5) < 1e-9
+
+
+def test_rotate_and_align():
+    page = (297, 210)
+    lyr = core.Layer("a", [[(10, 20), (110, 70)]])          # 100 x 50 mm box, 10/20 from the page corner
+    tf = core.preset("1:1", page, (210, 297), rot=90)       # portrait page box on a portrait sheet
+    (x0, y0), (x1, y1) = core.place([lyr], page, tf)[0].paths[0]
+    assert (round(x0, 6), round(y0, 6), round(x1, 6), round(y1, 6)) == (190, 10, 140, 110), (x0, y0, x1, y1)
+    assert core.rotated_size(page, 90) == (210, 297) and core.rotated_size(page, 180) == page
+    p180 = core.place([lyr], page, core.preset("1:1", page, page, rot=180))[0].paths[0]
+    assert p180[0] == (287, 190)
+    fit = core.preset("fit", page, (210, 297), rot=90)       # turned page fits the portrait sheet exactly
+    assert abs(fit["scale"] - (210 - 20) / 210) < 1e-9
+    box = core.bbox(core.place([lyr], page, tf))
+    assert box == (140, 10, 190, 110)
+    right = core.align(tf, box, (210, 297), h="right", v="bottom", margin=10)
+    box2 = core.bbox(core.place([lyr], page, right))
+    assert abs(box2[2] - 200) < 1e-9 and abs(box2[3] - 287) < 1e-9
+    mid = core.align(tf, box, (210, 297), h="center", v="middle")
+    b3 = core.bbox(core.place([lyr], page, mid))
+    assert abs((b3[0] + b3[2]) / 2 - 105) < 1e-9 and abs((b3[1] + b3[3]) / 2 - 148.5) < 1e-9
+    sq = core.place([core.Layer("a", [[(0, 0), (100, 0)]])], (100, 100), core.preset("1:1", (100, 100), (200, 200), rot=45))
+    (ax, ay), (bx, by) = sq[0].paths[0]                     # 45°: the corner goes to the top of the box around the turned page
+    assert abs(ax - 50 * 2 ** 0.5) < 1e-9 and abs(ay) < 1e-9 and abs(bx - 100 * 2 ** 0.5) < 1e-9 and abs(by - 50 * 2 ** 0.5) < 1e-9
+    w45 = core.rotated_size((100, 100), 45)[0]
+    assert abs(w45 - 100 * 2 ** 0.5) < 1e-9 and abs(core.preset("fit", (100, 100), (200, 200), rot=45)["scale"] - 180 / w45) < 1e-9
+    assert core.bbox([core.Layer("%note", [[(0, 0), (1, 1)]], skip=True)]) is None
 
 
 if __name__ == "__main__":
@@ -196,4 +223,5 @@ if __name__ == "__main__":
     test_text_and_title_block()
     test_load_svg_without_viewbox()
     test_place_and_tests()
+    test_rotate_and_align()
     print("ok")
