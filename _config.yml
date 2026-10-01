@@ -1,0 +1,6 @@
+# GitHub Pages: README.md is the start page, MANUAL.md the manual (links between .md files are rewritten)
+title: Plotter Studio
+description: Interactive pen plotter control for Inkscape with a local web UI. Alpha.
+theme: jekyll-theme-cayman
+exclude:
+  - extensions
