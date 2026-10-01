@@ -29,7 +29,8 @@ Browser, `python3 test_idraw_e2e.py`: starts the server with the simulator (40×
 | travel_trace_during_plot | a plot clears the manual trace, leaves dotted travel segments only, the next plot starts with an empty trace |
 | model_dropdown | Untested models carry the label and the hint; after a reconnect an AxiDraw model sends EBB commands, no G-code. |
 | resume_from_path | After a stop the Run group shows a slider and Resume from path N; the plot continues from there and finishes. |
-| path_picker | Without a stop first the Run group offers Plot only path 1; over a path the board shows the crosshair, a click picks it (thick, the paths before done), a click on the empty mat keeps the pick and drops the crosshair, Plot only draws just that path and the slider moves on to the next. |
+| path_picker | Without a stop first the Run group offers the picker at path 1; over a path the board shows the crosshair, a click picks it (thick, the paths before done), a click on the empty mat keeps the pick and drops the crosshair, Plot only draws just that path and the picker moves on to the next. |
+| path_stepping | The number field picks a path (Enter; beyond the last means the last), ‹ and › step one path per click and stop at the first, held down they run on and stop when released; Resume from path N follows. |
 | hidden_lines | The checkbox in the Plot step reloads the drawing with lines behind fills split; the setting survives a reload. |
 | placement_adjust | Position, scale, rotation: rotate by 90°, a preset keeps the rotation, 15° steps and the angle field (rounded to 15°), align right to a 10 mm margin, X field, scale 50 % halves the width, back to 1:1. |
 | drag_drawing | With Position, scale, rotation open, dragging the drawing on the board moves it by the dragged distance; 1:1 brings it back. |

@@ -441,7 +441,7 @@ def check_model_dropdown(page):
 
 
 def check_resume_from_path(page):
-    """After a stop the Run group offers a slider and Resume from path N; the plot continues from there."""
+    """After a stop the Run group offers a slider and Resume; the plot continues from the picked path."""
     tab(page, 4)
     page.locator("#panel tr", has_text="!2 Detail red").locator("input[data-k=pause]").uncheck()
     click_cmd(page, "button[data-cmd=plot]")
@@ -452,7 +452,7 @@ def check_resume_from_path(page):
     expect(page.locator("#resumeAt")).to_be_visible()
     n = page.evaluate("() => S.strokes.length")
     page.locator("#resumeAt").fill("1")                       # replot from the second path
-    expect(page.locator("#resumeBtn")).to_have_text("Resume from path 2")
+    expect(page.locator("#pickN")).to_have_value("2")
     expect(page.locator("#strokes path.done")).to_have_count(1)
     click_cmd(page, "#resumeBtn")
     expect(page.locator("#log")).to_contain_text("Resuming from path 2 of %d." % n, timeout=10000)
@@ -464,29 +464,63 @@ def check_resume_from_path(page):
 def check_path_picker(page):
     """Plot step without a stop first: a click on a path on the board picks it, Plot only draws just that path."""
     tab(page, 4)
-    expect(page.locator("#onlyBtn")).to_have_text("Plot only path 1")
+    expect(page.locator("#pickN")).to_have_value("1")
     n = page.evaluate("() => S.strokes.length")
     x, y = page.evaluate("""() => { const el = document.querySelectorAll('#strokes path')[5];
         const p = el.getPointAtLength(el.getTotalLength() / 2).matrixTransform(el.getScreenCTM()); return [p.x, p.y]; }""")
     page.mouse.move(x, y)
     expect(page.locator("#preview")).to_have_class(re.compile(r"\bpick\b"))   # crosshair over a path
     page.mouse.click(x, y)
-    expect(page.locator("#onlyBtn")).to_have_text("Plot only path 6")
+    expect(page.locator("#pickN")).to_have_value("6")
     expect(page.locator("#resumeBtn")).to_have_text("Resume from path 6")
+    expect(page.locator("#resumeAt")).to_have_value("5")
     expect(page.locator("#strokes path.sel")).to_have_count(1)
     assert page.evaluate("() => [...document.querySelectorAll('#strokes path')].findIndex(p => p.classList.contains('sel'))") == 5
     expect(page.locator("#strokes path.done")).to_have_count(5)
     box = page.locator("#preview").bounding_box()
     page.mouse.click(box["x"] + 5, box["y"] + 5)              # empty mat, far from any path: the pick stays
     expect(page.locator("#preview")).not_to_have_class(re.compile(r"\bpick\b"))
-    expect(page.locator("#onlyBtn")).to_have_text("Plot only path 6")
+    expect(page.locator("#pickN")).to_have_value("6")
     click_cmd(page, "#onlyBtn")
     expect(page.locator("#log")).to_contain_text("Plotting only path 6 of %d." % n, timeout=10000)
     expect(page.locator("#log")).to_contain_text("Plot finished.", timeout=60000)
     expect(page.locator("#status")).to_have_text("ready", timeout=15000)
     assert page.evaluate("() => S.progress.i") == 6           # stopped after path 6, not at the end
     expect(page.locator("#strokes path.sel")).to_have_count(0)
-    expect(page.locator("#onlyBtn")).to_have_text("Plot only path 7")
+    expect(page.locator("#pickN")).to_have_value("7")
+
+
+def check_path_stepping(page):
+    """The arrows next to the path number step one path per click and run on while held; the number field picks a path."""
+    tab(page, 4)
+    n = page.evaluate("() => S.strokes.length")
+    page.fill("#pickN", "1")                                  # an earlier plot may have moved the pick on
+    page.press("#pickN", "Enter")
+    expect(page.locator("#resumeBtn")).to_have_text("Resume from path 1")
+    page.click("button[data-step='1']")
+    expect(page.locator("#pickN")).to_have_value("2")
+    expect(page.locator("#resumeBtn")).to_have_text("Resume from path 2")
+    expect(page.locator("#strokes path.sel")).to_have_count(1)
+    page.click("button[data-step='-1']")
+    expect(page.locator("#pickN")).to_have_value("1")
+    page.click("button[data-step='-1']")                     # stops at the first path
+    expect(page.locator("#pickN")).to_have_value("1")
+    page.hover("button[data-step='1']")
+    page.mouse.down()
+    page.wait_for_timeout(1000)                               # 400 ms delay, then one path per 50 ms
+    page.mouse.up()
+    held = int(page.locator("#pickN").input_value())
+    assert 5 < held < 25, held
+    page.wait_for_timeout(300)
+    expect(page.locator("#pickN")).to_have_value(str(held))  # released: no more steps
+    page.fill("#pickN", "100")
+    page.press("#pickN", "Enter")
+    expect(page.locator("#resumeAt")).to_have_value("99")
+    expect(page.locator("#strokes path.done")).to_have_count(99)
+    page.fill("#pickN", "99999")                              # beyond the last path: the last one
+    page.press("#pickN", "Enter")
+    expect(page.locator("#pickN")).to_have_value(str(n))
+    expect(page.locator("#resumeAt")).to_have_value(str(n - 1))
 
 
 def check_hidden_lines(page):
@@ -570,7 +604,7 @@ CHECKS = [check_connect_and_home, check_steps_fit_without_scrolling, check_keybo
           check_splitter, check_zoom_and_pan, check_title_block_corner, check_reset_button,
           check_plot_with_pause, check_stop_with_escape, check_stop_button, check_test_drawing_dropdown,
           check_outside_sheet_warning, check_travel_trace_during_plot, check_model_dropdown,
-          check_resume_from_path, check_path_picker, check_hidden_lines, check_placement_adjust, check_drag_drawing]
+          check_resume_from_path, check_path_picker, check_path_stepping, check_hidden_lines, check_placement_adjust, check_drag_drawing]
 
 
 def main():

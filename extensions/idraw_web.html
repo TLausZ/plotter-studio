@@ -120,6 +120,9 @@ header{flex:0 0 56px}
 .tools{position:absolute;top:8px;left:8px;z-index:1;width:48px;padding:4px;background:rgba(0,0,0,.5);border-radius:28px;text-align:center}
 .board svg.pan{cursor:grab} .board svg.pan:active{cursor:grabbing} .board svg.movable{cursor:move} .board svg.pick{cursor:crosshair}   /* pick: over a path a click would pick */
 details#adj{margin:2px 0 6px} details#adj summary{cursor:pointer;color:var(--md-on-surface-variant);margin-bottom:8px} details#adj .seg .btn{padding:0 12px} .tf.ang{width:96px}
+#resumeAt{display:block;width:100%;margin:0 0 6px}   /* path picker: slider over the full width, then ‹ number › and the two buttons */
+.pickn{width:60px;height:40px;padding:0 6px;text-align:center;border:1px solid var(--md-outline);border-radius:4px;background:var(--md-surface-container-lowest);color:var(--md-on-surface);outline:0}
+.pickn:focus{border:2px solid var(--md-primary);padding:0 5px}
 #tbpos{font-size:20px;background:var(--md-surface-container-lowest);border-color:var(--md-outline)}
 .split{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(440px,520px)}
 .boardwrap{display:flex;flex-direction:column;min-height:0;min-width:0}
@@ -389,7 +392,8 @@ function renderPanel() {
         <table class="layers"><tr><th>Plot</th><th>Pause before</th><th>Layer · paths</th></tr>${rows || '<tr><td colspan="3">No layers. Open an SVG with paths.</td></tr>'}</table>`)
       + grp('Run', `<div class="row"><button class="btn filled" data-cmd="plot">Start plot</button><button class="btn danger" data-cmd="stop">Stop</button><button class="btn outlined" data-cmd="frame" data-args='{"kind":"drawing"}'>Trace drawing frame</button></div>
         ${p ? `<div class="progress"><i id="pbar" style="width:${pct}%"></i></div><div class="mono body-small" id="ptxt">${progressText()}</div>` : ''}
-        ${S.strokes.length && st.status !== 'plotting' && st.status !== 'paused' ? `<div class="row"><input type="range" id="resumeAt" min="0" max="${S.strokes.length - 1}" value="${pickIdx()}" aria-label="Path" title="Click a path on the board or drag the slider"><button class="btn outlined" id="resumeBtn" title="Plot from this path to the end; the paths before count as done">Resume from path ${pickIdx() + 1}</button><button class="btn outlined" id="onlyBtn" title="Plot just this path, for a line the pen skipped">Plot only path ${pickIdx() + 1}</button></div>` : ''}`);
+        ${S.strokes.length && st.status !== 'plotting' && st.status !== 'paused' ? `<input type="range" id="resumeAt" min="0" max="${S.strokes.length - 1}" value="${pickIdx()}" aria-label="Path" title="Click a path on the board or drag the slider">
+        <div class="row"><button class="btn icon-btn outlined" data-step="-1" aria-label="Previous path" title="Previous path; hold to run back">‹</button><input id="pickN" class="pickn mono" inputmode="numeric" value="${pickIdx() + 1}" aria-label="Path number" title="Path 1 to ${S.strokes.length}; Enter picks it"><button class="btn icon-btn outlined" data-step="1" aria-label="Next path" title="Next path; hold to run on">›</button><button class="btn outlined" id="resumeBtn" title="Plot from this path to the end; the paths before count as done">Resume from path ${pickIdx() + 1}</button><button class="btn outlined" id="onlyBtn" title="Plot just this path, for a line the pen skipped">Plot only</button></div>` : ''}`);
   }
   $('panel').innerHTML = h;
   wirePanel();
@@ -426,6 +430,9 @@ function wireResume() {
   const hb = $('hiding'); if (hb) hb.onchange = () => cmd('set_hiding', {on: hb.checked});
   const r = $('resumeAt'); if (!r) return;
   r.oninput = () => setPick(+r.value);
+  const nf = $('pickN');
+  nf.onchange = () => { const v = Math.round(+nf.value); if (v >= 1) setPick(Math.min(v, S.strokes.length) - 1); nf.value = pickIdx() + 1; };
+  $('panel').querySelectorAll('[data-step]').forEach(b => holdRepeat(b, () => setPick(Math.max(0, Math.min(S.strokes.length - 1, pickIdx() + +b.dataset.step)))));
   $('resumeBtn').onclick = () => { pick = null; cmd('plot', {start: +r.value}); };
   $('onlyBtn').onclick = () => { pick = null; cmd('plot', {start: +r.value, end: +r.value + 1}); };
 }
@@ -433,7 +440,17 @@ const pickIdx = () => pick != null ? pick : (done < S.strokes.length ? done : 0)
 function setPick(i) {   // the board marks the paths before i as done and path i as picked
   pick = i; done = i; markDone();
   const r = $('resumeAt'); if (!r) return;
-  r.value = i; $('resumeBtn').textContent = `Resume from path ${i + 1}`; $('onlyBtn').textContent = `Plot only path ${i + 1}`;
+  const nf = $('pickN'); if (nf) nf.value = i + 1;   // typing only picks on change, so this never overwrites a half-typed number
+  r.value = i; $('resumeBtn').textContent = `Resume from path ${i + 1}`;
+}
+// one step per press; held down, one step every 50 ms after 400 ms
+function holdRepeat(b, fn) {
+  let t = null;
+  const stop = () => { clearTimeout(t); clearInterval(t); t = null; };
+  b.onpointerdown = e => { e.preventDefault(); stop(); fn(); t = setTimeout(() => { t = setInterval(fn, 50); }, 400);
+    window.addEventListener('pointerup', stop, {once: true}); window.addEventListener('pointercancel', stop, {once: true}); };   // also when a re-render drops the button
+  b.onpointerleave = stop;
+  b.onclick = e => { if (e.detail === 0) fn(); };   // keyboard: Enter or Space
 }
 // index of the stroke nearest to x/y (mm) within tol mm, or -1
 function nearestStroke(x, y, tol) {
