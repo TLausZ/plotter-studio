@@ -16,9 +16,15 @@ docs/manual-resume.png (MANUAL.md, end of "Plot"):
     curve (path 5) is clicked on the board: drawn thick, paths 1 to 4 done, the field shows 5,
     the buttons read "Resume from path 5" and "Plot only".
 
+docs/tests/<name>.png (MANUAL.md, "Test drawings"):
+    Each SVG in extensions/tests/ on a white sheet with a thin grey edge, 500 px on its long side at
+    device scale 2, layers hidden in Inkscape stay hidden. A drawing added to tests/ gets its picture
+    on the next run; its paragraph in MANUAL.md is written by hand.
+
 The other pictures (manual-connect, manual-paper, manual-pen, manual-steps) are cut from single
 steps of the panel and are not made by this script.
 """
+import glob
 import os
 import sys
 import tempfile
@@ -105,12 +111,36 @@ def manual_resume(page):
     page.screenshot(path=os.path.join(HERE, "manual-resume.png"))
 
 
+def test_drawings(browser):
+    out = os.path.join(HERE, "tests")
+    os.makedirs(out, exist_ok=True)
+    page = browser.new_page(device_scale_factor=2)
+    for path in sorted(glob.glob(os.path.join(EXT, "tests", "*.svg"))):
+        page.goto("file://" + os.path.abspath(path))
+        w, h = page.evaluate("""() => {
+            const s = document.documentElement, w = s.width.baseVal.value, h = s.height.baseVal.value;
+            if (!s.getAttribute('viewBox')) s.setAttribute('viewBox', `0 0 ${w} ${h}`);   // DrawingBot exports: px user units
+            const vb = s.viewBox.baseVal, sheet = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            for (const [k, v] of Object.entries({x: vb.x, y: vb.y, width: vb.width, height: vb.height, fill: '#fff',
+                stroke: '#bbb', 'stroke-width': 2, 'vector-effect': 'non-scaling-stroke'})) sheet.setAttribute(k, v);
+            s.insertBefore(sheet, s.firstChild);
+            const k = 500 / Math.max(w, h);
+            s.setAttribute('width', Math.round(w * k)); s.setAttribute('height', Math.round(h * k));
+            return [Math.round(w * k), Math.round(h * k)]; }""")
+        page.set_viewport_size({"width": w, "height": h})
+        name = os.path.splitext(os.path.basename(path))[0] + ".png"
+        page.screenshot(path=os.path.join(out, name))
+        print("  tests/" + name)
+    page.close()
+
+
 def main():
     httpd = idraw_server.serve(os.path.join(EXT, "idraw_demo.svg"), sim=True, port=0, open_browser=False)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
+            test_drawings(browser)
             for shot in (readme, manual_resume):
                 page = browser.new_page(viewport={"width": 1440, "height": 900}, device_scale_factor=2)
                 page.goto("http://127.0.0.1:%d/" % httpd.server_address[1])

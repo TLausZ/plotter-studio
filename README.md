@@ -24,7 +24,8 @@ plotter-studio/
   iDraw Extension Analysis 2026-09-02.md   how the original plugin works, firmware commands, axis mapping
   docs/screenshot.png                web UI in the simulator, plotting the A3 test sheet (picture above)
   docs/manual-*.png                  pictures for MANUAL.md
-  docs/make_screenshots.py           makes screenshot.png and manual-resume.png again; says what each shows
+  docs/tests/*.png                   pictures of the test drawings for MANUAL.md, rasterized from extensions/tests/
+  docs/make_screenshots.py           makes screenshot.png, manual-resume.png and docs/tests/ again; says what each shows
   extensions/                        working copy; Inkscape reads ~/Library/Application Support/org.inkscape.Inkscape/config/inkscape/extensions
     idraw_core.py                    plotter logic without UI (transport, state, plot run, tests, SVG loading)
     idraw_server.py                  local HTTP server: one Session around a Plotter, JSON commands, server-sent events
