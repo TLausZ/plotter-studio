@@ -309,12 +309,14 @@ def check_plot_with_pause(page):
     expect(page.locator("#status")).to_have_text("plotting", timeout=10000)
     expect(page.locator("#overlay")).to_have_class(re.compile("show"), timeout=60000)
     expect(page.locator("#pauseName")).to_have_text("!2 Detail red")
+    expect(page.locator("#ptxt")).to_have_text(re.compile(r"^path \d+ / \d+ · \d+% done · ~\d+:\d\d min left$"))
     page.click("#pauseGo")
     expect(page.locator("#overlay")).not_to_have_class(re.compile("show"))
     expect(page.locator("#log")).to_contain_text("Plot finished.", timeout=120000)
     expect(page.locator("#status")).to_have_text("ready", timeout=15000)
     n = page.evaluate("() => S.strokes.length")
     expect(page.locator("#strokes path.done")).to_have_count(n)   # drawing plus title block
+    expect(page.locator("#ptxt")).to_have_text("path %d / %d · 100%% done" % (n, n))
 
 
 def check_reset_button(page):

@@ -444,8 +444,9 @@ function estimateHtml() {
 function progressText() {
   const p = S.progress; if (!p) return '';
   const pct = p.total ? Math.round(100 * p.done / p.total) : 0;
-  const eta = (p.eta == null || p.i >= p.n) ? '' : '   remaining ~' + Math.floor(p.eta / 60) + ':' + String(Math.round(p.eta % 60)).padStart(2, '0') + ' min';
-  return `path ${p.i} / ${p.n}   ${pct}%${eta}`;
+  const s = p.eta == null ? null : Math.round(p.eta);   // whole seconds first, so 59.6 s shows 1:00, not 0:60
+  const eta = (s == null || p.i >= p.n) ? '' : ` · ~${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')} min left`;
+  return `path ${p.i} / ${p.n} · ${pct}% done${eta}`;
 }
 function outsideMsg() {
   if (!S.outside && !S.beyond) return '';
