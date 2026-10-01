@@ -108,3 +108,7 @@ Not verified on the device yet:
 Security note: with `--lan` anyone on the network can move the plotter. There is no authentication; use it only on a trusted network.
 
 Not built: copies, laser, multiple devices, webhook, path sorting, free positioning with the mouse on the board.
+
+## License
+
+GPL-3.0-or-later, see [LICENSE](LICENSE). The bundled original code in `extensions/idraw_deps/` keeps its own licenses: `idraw2_0internal` and `ink_extensions` (Evil Mad Scientist Laboratories, UUNA TEK) are GPL-2.0-or-later, `drawcore_plotink` and `serial` are MIT/BSD. The Hershey font has its own license in `extensions/HersheySans1-LICENSE.txt`.
