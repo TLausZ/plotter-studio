@@ -129,57 +129,75 @@ The files in `extensions/tests/`, offered under Test drawing in step 4. A test d
 
 ### A4-landscape-line-width.svg
 
-<img src="docs/tests/A4-landscape-line-width.png" alt="Two fans of eleven lines each, starting in one point" width="420">
+<img src="docs/tests/A4-landscape-line-width.png" alt="Two fans of eleven lines each, starting in one point" width="210" align="right">
 
 Measures how wide the pen really draws, after Piter Pasma. Eleven lines start in one point and fan out, so that the gap between neighbours grows by 1 mm for every 10 mm along the fan. The right fan draws every line twice, to compare a single with a double pass. Find where the lines stop touching, measure how far that is from the starting point in millimetres and divide by 10: that is the line width. Enter it as Line width in step 4; the board then draws the lines as wide as they come out, and the title block prints the value.
 
+<br clear="all">
+
 ### A4-landscape-speed-rows.svg
 
-<img src="docs/tests/A4-landscape-speed-rows.png" alt="Six rows of zigzag lines with a small circle next to each" width="420">
+<img src="docs/tests/A4-landscape-speed-rows.png" alt="Six rows of zigzag lines with a small circle next to each" width="210" align="right">
 
 Six rows of zigzag with a circle next to each, meant to run at 1'000, 2'000, 3'000, 4'000, 6'000 and 8'000 mm/min, one speed per row, to see up to which speed corners and circles stay clean. An SVG cannot carry a feed rate per path, so from the list every row plots at the drawing feed of the profile. To compare speeds, plot it once per speed and change Drawing in step 4 in between.
 
+<br clear="all">
+
 ### A4-landscape-accuracy.svg
 
-<img src="docs/tests/A4-landscape-accuracy.png" alt="A square with diagonals and an inscribed circle, a star of eight lines, and a millimetre ruler under and beside the square" width="420">
+<img src="docs/tests/A4-landscape-accuracy.png" alt="A square with diagonals and an inscribed circle, a star of eight lines, and a millimetre ruler under and beside the square" width="210" align="right">
 
 A 100 mm square with its diagonals and a circle, a star of eight lines and a millimetre ruler along each axis. Square and circle are drawn twice, once in each direction: if the two contours do not lie on top of each other, a belt has play. Star lines that miss the centre point to backlash when an axis changes direction. Measure the rulers with a steel rule: if 100 mm on the paper are not 100 mm, the scale of that axis is off.
 
+<br clear="all">
+
 ### A4-landscape-pen-height.svg
 
-<img src="docs/tests/A4-landscape-pen-height.png" alt="Eight short horizontal lines, one under the other" width="420">
+<img src="docs/tests/A4-landscape-pen-height.png" alt="Eight short horizontal lines, one under the other" width="210" align="right">
 
 Eight short lines, one under the other, meant to be drawn at pen heights from 3 to 6.5 mm in 0.5 mm steps, to find the height at which the pen draws a clean line without pressing too hard. An SVG cannot carry a pen height per path, so from the list every line plots at the Down height of the profile. To compare heights, use the ±0.5 buttons and Test stroke in step 3.
 
+<br clear="all">
+
 ### A4-landscape-hidden-lines.svg
 
-<img src="docs/tests/A4-landscape-hidden-lines.png" alt="Two long lines; the upper one passes a grey filled square and an empty square, the lower one a grey ring" width="420">
+<img src="docs/tests/A4-landscape-hidden-lines.png" alt="Two long lines; the upper one passes a grey filled square and an empty square, the lower one a grey ring" width="210" align="right">
 
 Two lines behind three shapes: a grey filled square, an empty square and a grey ring. With "Hide lines behind filled shapes" ticked in step 5, the upper line breaks off at the filled square and runs through the empty one, and the lower line breaks off in the grey band of the ring but shows in its hole. Untick the box and both lines run through everything. The fills themselves are not plotted, only the outlines.
 
+<br clear="all">
+
 ### A3-landscape-line-width.svg
 
-<img src="docs/tests/A3-landscape-line-width.png" alt="An A3 sheet, almost empty, with two small fans of lines in the top left corner" width="420">
+<img src="docs/tests/A3-landscape-line-width.png" alt="An A3 sheet, almost empty, with two small fans of lines in the top left corner" width="210" align="right">
 
 Piter Pasma's line test in its original form: two small fans of lines that meet in a point, in the top left corner of an A3 sheet. Where the lines run together shows how wide the pen draws. The A4 line width file above is built after it, larger and with a known spacing, so it is easier to measure.
 
+<br clear="all">
+
 ### A3-portrait-iDraw-test-sheet.svg
 
-<img src="docs/tests/A3-portrait-iDraw-test-sheet.png" alt="An A3 portrait sheet with long diagonal lines crossing in an X pattern, short horizontal lines and a faint grid of dots" width="300">
+<img src="docs/tests/A3-portrait-iDraw-test-sheet.png" alt="An A3 portrait sheet with long diagonal lines crossing in an X pattern, short horizontal lines and a faint grid of dots" width="150" align="right">
 
 The A3 test sheet UUNA TEK ships with the iDraw, in three layers: a grid of dots, short lines and long diagonals across the whole sheet. A good first plot on a new machine, and the drawing in the README screenshot. The file has more layers that are hidden in Inkscape; Plotter Studio leaves them out, as it does with every hidden layer.
 
+<br clear="all">
+
 ### A3-portrait-pen-calibration.svg
 
-<img src="docs/tests/A3-portrait-pen-calibration.png" alt="An A3 portrait sheet with ten fields of straight lines and ten fields of concentric circles, labelled 0.5 to 5.0" width="300">
+<img src="docs/tests/A3-portrait-pen-calibration.png" alt="An A3 portrait sheet with ten fields of straight lines and ten fields of concentric circles, labelled 0.5 to 5.0" width="150" align="right">
 
 The pen calibration sheet from DrawingBotV3: ten fields of straight lines and ten of concentric circles, with 0.5 to 5.0 mm between the lines. Plot it with the pen you want to use and look for the field where the lines just stop running together. That spacing is the narrowest hatching the pen draws cleanly, a useful value for the hatch settings in DrawingBotV3 or another generator.
 
+<br clear="all">
+
 ### A4-portrait-migrant-mother-engraved.svg
 
-<img src="docs/tests/A4-portrait-migrant-mother-engraved.png" alt="An engraving of Dorothea Lange's Migrant Mother, made of thousands of short curved strokes" width="300">
+<img src="docs/tests/A4-portrait-migrant-mother-engraved.png" alt="An engraving of Dorothea Lange's Migrant Mother, made of thousands of short curved strokes" width="150" align="right">
 
 An engraving after Dorothea Lange's photograph Migrant Mother (1936), made by the author of Plotter Studio: 31'550 short paths on an A4 portrait sheet. It is the stress test: loading, the board and the path picker have to stay quick with it, which the e2e check large_drawing watches. With the default profile the estimate in step 5 is about 3 h 50 min. Set the paper to A4 portrait before plotting it.
+
+<br clear="all">
 
 ## The board
 
