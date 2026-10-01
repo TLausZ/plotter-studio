@@ -445,7 +445,7 @@ function progressText() {
   const p = S.progress; if (!p) return '';
   const pct = p.total ? Math.round(100 * p.done / p.total) : 0;
   const eta = (p.eta == null || p.i >= p.n) ? '' : '   remaining ~' + Math.floor(p.eta / 60) + ':' + String(Math.round(p.eta % 60)).padStart(2, '0') + ' min';
-  return `path ${p.i} / ${p.n}   ${pct} %${eta}`;
+  return `path ${p.i} / ${p.n}   ${pct}%${eta}`;
 }
 function outsideMsg() {
   if (!S.outside && !S.beyond) return '';
@@ -614,7 +614,7 @@ const REF = [
   ['G1 Z5 F5000', 'Pen to 5 mm (down); Z0.5 raises it', 'ok'],
   ['G4 P0.5', 'Dwell 0.5 s', 'ok'],
   ['G92 X0 Y0', 'Declare the current position as (0, 0)', 'ok'],
-  ['M3 S500', 'Laser/PWM on at 50 % (S0…1000)', 'ok'],
+  ['M3 S500', 'Laser/PWM on at 50% (S0…1000)', 'ok'],
   ['M5', 'Laser/PWM off *', 'ok'],
 ];
 { const tb = document.querySelector('#ref tbody');
