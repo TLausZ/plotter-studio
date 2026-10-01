@@ -360,6 +360,7 @@ def check_test_drawing_dropdown(page):
     tab(page, 3)
     files = page.locator("#testFile option").all_text_contents()
     assert files[0] == "idraw_demo.svg" and "A4-landscape-accuracy.svg" in files, files
+    assert [f for f in files if "(long load)" in f] == ["A4-portrait-mother.svg (long load)"], files   # over 1 MB
     groups = page.evaluate("() => [...document.querySelectorAll('#testFile optgroup')].map(g => [g.label, g.children.length])")
     assert groups == [["Document", 1], ["Test drawings", len(files) - 1]], groups
     select_cmd(page, "#testFile", "A4-landscape-accuracy.svg")
@@ -573,8 +574,8 @@ def check_large_drawing(page):
     No plot: at 40x the simulator sends progress faster than the page draws it."""
     tab(page, 3)
     t0 = time.time()
-    select_cmd(page, "#testFile", "A4-portrait-migrant-mother-engraved.svg")
-    page.wait_for_function("() => S.svg_name === 'A4-portrait-migrant-mother-engraved.svg'", timeout=20000)
+    select_cmd(page, "#testFile", "A4-portrait-mother.svg")
+    page.wait_for_function("() => S.svg_name === 'A4-portrait-mother.svg'", timeout=20000)
     assert page.evaluate("() => S.layers[0].n") == 31550
     expect(page.locator("#strokes path:not(.tb)")).to_have_count(31550, timeout=20000)
     loaded = time.time() - t0

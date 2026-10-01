@@ -81,7 +81,7 @@ Heights, feed rates and line width form a profile. Type a name under "Save as" a
 
 Feed rates for drawing and travel, in mm/min. Line width is the width you measured on paper; it is printed in the title block. Save profile stores the values in the current profile.
 
-Test drawing replaces your document with a calibration sheet from the `tests/` folder; [Test drawings](#test-drawings) below shows each one and what it is for. The first entry, under Document, brings your document back. Plot it from step 5. Your own SVGs dropped into `tests/` appear in the list too.
+Test drawing replaces your document with a calibration sheet from the `tests/` folder; [Test drawings](#test-drawings) below shows each one and what it is for. The first entry, under Document, brings your document back. Plot it from step 5. Your own SVGs dropped into `tests/` appear in the list too; files over 1 MB carry "(long load)", because loading them takes a few seconds.
 
 <img src="docs/ui/test-drawing-dropdown.png" alt="Test drawing list opened: under Document idraw_demo.svg, under Test drawings the nine files from the tests folder" width="420">
 
@@ -197,9 +197,9 @@ The pen calibration sheet from DrawingBotV3: ten fields of straight lines and te
 
 <br clear="all">
 
-### A4-portrait-migrant-mother-engraved.svg
+### A4-portrait-mother.svg
 
-<img src="docs/tests/A4-portrait-migrant-mother-engraved.png" alt="An engraving of Dorothea Lange's Migrant Mother, made of thousands of short curved strokes" width="150" align="right">
+<img src="docs/tests/A4-portrait-mother.png" alt="An engraving of Dorothea Lange's Migrant Mother, made of thousands of short curved strokes" width="150" align="right">
 
 An engraving after Dorothea Lange's photograph Migrant Mother (1936), made by the author of Plotter Studio: 31'550 short paths on an A4 portrait sheet. It is the stress test: loading, the board and the path picker have to stay quick with it, which the e2e check large_drawing watches. With the default profile the estimate in step 5 is about 3 h 50 min. Set the paper to A4 portrait before plotting it.
 

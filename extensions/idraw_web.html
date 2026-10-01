@@ -384,7 +384,7 @@ function renderPanel() {
     h = hdr('Speed', '')
       + grp('Feed rates', `<div class="row">${tf('feed_draw', 'Drawing', pr.feed_draw, {cls: 'grow', suffix: 'mm/min'})}${tf('feed_travel', 'Travel', pr.feed_travel, {cls: 'grow', suffix: 'mm/min'})}</div>
         <div class="row">${tf('line_width', 'Line width, measured', pr.line_width, {cls: 'grow', suffix: 'mm'})}<button class="btn outlined" id="profSave2">Save profile</button></div>`)
-      + grp('Test drawing', `<div class="row">${sel('testFile', 'Drawing', [{group: 'Document', options: [['', S.doc_name || '(none)']]}, {group: 'Test drawings', options: S.test_files}], S.test_file)}</div>
+      + grp('Test drawing', `<div class="row">${sel('testFile', 'Drawing', [{group: 'Document', options: [['', S.doc_name || '(none)']]}, {group: 'Test drawings', options: S.test_files.map(f => [f, S.test_long.includes(f) ? f + ' (long load)' : f])}], S.test_file)}</div>
         <p>Pick a calibration sheet from the tests folder to plot it instead of your document; the first entry brings the document back. Plot it from step 5.</p>`)
       + grp('Move carriage', jogHtml(), 'wide');
   } else {

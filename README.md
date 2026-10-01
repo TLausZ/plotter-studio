@@ -39,7 +39,7 @@ plotter-studio/
                                      A4-landscape-hidden-lines.svg (hidden-line removal), A3-landscape-line-width.svg (Piter Pasma's
                                      line test), A3-portrait-iDraw-test-sheet.svg (the manufacturer's A3 test sheet),
                                      A3-portrait-pen-calibration.svg (DrawingBotV3 calibration sheet) and
-                                     A4-portrait-migrant-mother-engraved.svg (an engraving after Dorothea Lange's
+                                     A4-portrait-mother.svg (an engraving after Dorothea Lange's
                                      photograph of 1936, 31'550 paths, the stress test)
     HersheySans1.svg                 single-stroke font for the plotted title block (Hershey Fonts, see HersheySans1-LICENSE.txt)
     test_idraw_core.py               self-test for idraw_core
