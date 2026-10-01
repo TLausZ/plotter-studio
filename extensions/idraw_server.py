@@ -467,7 +467,7 @@ def serve(svg_path=None, sim=False, port=8765, lan=False, open_browser=True):
     Handler.session = Session(svg_path, sim)
     httpd = ThreadingHTTPServer(("0.0.0.0" if lan else "127.0.0.1", port), Handler)
     url = "http://127.0.0.1:%d/" % httpd.server_address[1]
-    print("iDraw Interactive at %s" % url)
+    print("Plotter Studio at %s" % url)
     if lan:
         import socket
         try:

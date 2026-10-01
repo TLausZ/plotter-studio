@@ -73,7 +73,7 @@ def reset(page):
 
 
 def check_connect_and_home(page):
-    expect(page).to_have_title("iDraw Interactive")
+    expect(page).to_have_title("Plotter Studio")
     page.click("#connBtn")                        # Disconnect
     expect(page.locator("#status")).to_have_text("disconnected")
     expect(page.locator("#penlbl")).to_have_text("pen ?")
