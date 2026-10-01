@@ -42,8 +42,6 @@ plotter-studio/
                                      (idraw2_0internal, ink_extensions, drawcore_plotink) and pyserial as a fallback
 ```
 
-The folder `archive/` was removed before publishing. It is still in the git history (commit 5256766): the complete original extension folder by UUNA TEK, the parts not needed here (AxiDraw, iDraw 1.0, laser, merge, naming, hatch, Hershey, process_ai) and the first UI as a tkinter window (`archive/tk-ui/`, replaced by the web UI because Inkscape's Tk 8.5 draws nothing on macOS 26).
-
 ## Running
 
 Demo without a device, from the terminal:
