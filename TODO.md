@@ -19,6 +19,7 @@ Tasks and ideas for Plotter Studio. Move a line to Done when it is finished.
 
 ## Done
 
+- 1 Oct 2026: stress test drawing A4-portrait-migrant-mother-engraved.svg (31'550 paths) in tests/ with the e2e check large_drawing; e2e suite at 25 checks.
 - 1 Oct 2026: path picker layout: slider over the full width, below it ‹ number › with Resume from path N and Plot only; the arrows step one path and run on while held; e2e suite at 24 checks.
 - 1 Oct 2026: path picker in the Plot step: click a path on the board (crosshair over a path) or use the slider, Resume from path N or Plot only path N, available without a stop first; Trace drawing frame fixed; server and e2e tests use their own settings file; e2e suite at 23 checks.
 

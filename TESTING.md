@@ -31,6 +31,7 @@ Browser, `python3 test_idraw_e2e.py`: starts the server with the simulator (40×
 | resume_from_path | After a stop the Run group shows a slider and Resume from path N; the plot continues from there and finishes. |
 | path_picker | Without a stop first the Run group offers the picker at path 1; over a path the board shows the crosshair, a click picks it (thick, the paths before done), a click on the empty mat keeps the pick and drops the crosshair, Plot only draws just that path and the picker moves on to the next. |
 | path_stepping | The number field picks a path (Enter; beyond the last means the last), ‹ and › step one path per click and stop at the first, held down they run on and stop when released; Resume from path N follows. |
+| large_drawing | Stress test: the engraving with 31'550 paths from tests/ loads and is drawn within 10 s, a click on the board picks a path; no plot (the 40× simulator outruns the page). |
 | hidden_lines | The checkbox in the Plot step reloads the drawing with lines behind fills split; the setting survives a reload. |
 | placement_adjust | Position, scale, rotation: rotate by 90°, a preset keeps the rotation, 15° steps and the angle field (rounded to 15°), align right to a 10 mm margin, X field, scale 50 % halves the width, back to 1:1. |
 | drag_drawing | With Position, scale, rotation open, dragging the drawing on the board moves it by the dragged distance; 1:1 brings it back. |

@@ -523,6 +523,29 @@ def check_path_stepping(page):
     expect(page.locator("#resumeAt")).to_have_value(str(n - 1))
 
 
+def check_large_drawing(page):
+    """Stress test: the engraving with 31'550 paths loads, is drawn on the board and a click picks a path, in a few seconds.
+    No plot: at 40x the simulator sends progress faster than the page draws it."""
+    tab(page, 3)
+    t0 = time.time()
+    select_cmd(page, "#testFile", "A4-portrait-migrant-mother-engraved.svg")
+    page.wait_for_function("() => S.svg_name === 'A4-portrait-migrant-mother-engraved.svg'", timeout=20000)
+    assert page.evaluate("() => S.layers[0].n") == 31550
+    expect(page.locator("#strokes path:not(.tb)")).to_have_count(31550, timeout=20000)
+    loaded = time.time() - t0
+    assert loaded < 10, "loading took %.1f s" % loaded
+    tab(page, 4)
+    x, y = page.evaluate("""() => { const el = document.querySelectorAll('#strokes path')[15000];
+        const p = el.getPointAtLength(el.getTotalLength() / 2).matrixTransform(el.getScreenCTM()); return [p.x, p.y]; }""")
+    page.mouse.click(x, y)                                    # dense lines: the nearest path may be a neighbour
+    expect(page.locator("#strokes path.sel")).to_have_count(1)
+    i = page.evaluate("() => [...document.querySelectorAll('#strokes path')].findIndex(p => p.classList.contains('sel'))")
+    expect(page.locator("#pickN")).to_have_value(str(i + 1))
+    tab(page, 3)
+    select_cmd(page, "#testFile", "")
+    page.wait_for_function("() => S.svg_name === 'idraw_demo.svg'", timeout=20000)
+
+
 def check_hidden_lines(page):
     """Plot step: the checkbox reloads the drawing with lines behind fills removed."""
     tab(page, 3)
@@ -604,7 +627,7 @@ CHECKS = [check_connect_and_home, check_steps_fit_without_scrolling, check_keybo
           check_splitter, check_zoom_and_pan, check_title_block_corner, check_reset_button,
           check_plot_with_pause, check_stop_with_escape, check_stop_button, check_test_drawing_dropdown,
           check_outside_sheet_warning, check_travel_trace_during_plot, check_model_dropdown,
-          check_resume_from_path, check_path_picker, check_path_stepping, check_hidden_lines, check_placement_adjust, check_drag_drawing]
+          check_resume_from_path, check_path_picker, check_path_stepping, check_large_drawing, check_hidden_lines, check_placement_adjust, check_drag_drawing]
 
 
 def main():

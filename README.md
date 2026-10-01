@@ -35,8 +35,10 @@ plotter-studio/
     tests/                           test drawings, offered in the Speed step as a dropdown: the four built-in patterns as SVG
                                      (A4-landscape-line-width, -speed-rows, -accuracy, -pen-height; make_test_svgs.py writes them),
                                      A4-landscape-hidden-lines.svg (hidden-line removal), A3-landscape-line-width.svg (Piter Pasma's
-                                     line test), A3-portrait-iDraw-test-sheet.svg (the manufacturer's A3 test sheet) and
-                                     A3-portrait-pen-calibration.svg (DrawingBotV3 calibration sheet)
+                                     line test), A3-portrait-iDraw-test-sheet.svg (the manufacturer's A3 test sheet),
+                                     A3-portrait-pen-calibration.svg (DrawingBotV3 calibration sheet) and
+                                     A4-portrait-migrant-mother-engraved.svg (an engraving after Dorothea Lange's
+                                     photograph of 1936, 31'550 paths, the stress test)
     HersheySans1.svg                 single-stroke font for the plotted title block (Hershey Fonts, see HersheySans1-LICENSE.txt)
     test_idraw_core.py               self-test for idraw_core
     test_idraw_server.py             self-test for the server (simulator, no browser)
@@ -104,7 +106,7 @@ DrawCore enumerates as CH340 (USB VID:PID 1A86:7523), 115200 baud, `rts`/`dtr` o
 
 ## Status
 
-As of 1 October 2026. Built and exercised in the simulator: all five steps, jog, pen, profiles, unit switch, test drawings, plot with layer pause, stop, free placement (position, scale, rotation, align, drag on the board), path picker (click a path on the board, resume from path N or plot only that path), progress, preview with rulers and title block, hidden-line removal, transport timeouts, LAN access. The e2e suite has 24 checks.
+As of 1 October 2026. Built and exercised in the simulator: all five steps, jog, pen, profiles, unit switch, test drawings, plot with layer pause, stop, free placement (position, scale, rotation, align, drag on the board), path picker (click a path on the board, resume from path N or plot only that path), progress, preview with rulers and title block, hidden-line removal, transport timeouts, LAN access. The e2e suite has 25 checks.
 
 Not verified on the device yet:
 
