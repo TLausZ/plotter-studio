@@ -434,7 +434,7 @@ function estimate() {
   t.total = t.draw + t.travel + t.pen;
   return t;
 }
-const dur = s => { const m = Math.round(s / 60); return s < 60 ? '< 1 min' : m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`; };
+const dur = s => { const m = Math.round(s / 60); return s < 59.5 ? `${Math.round(s)} s` : m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`; };   // 48 s, 12 min, 3 h 48 min
 function estimateHtml() {
   if (!S.strokes.length) return '';
   const t = estimate(), f = S.time_factor || 1;

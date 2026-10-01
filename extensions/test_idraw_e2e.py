@@ -600,9 +600,12 @@ def check_plot_estimate(page):
     assert abs(page.evaluate("() => estimate().total") - want) < 1e-6, (page.evaluate("() => estimate()"), want)
     def dur(sec):                                             # as dur() in the page
         m = math.floor(sec / 60 + 0.5)
-        return "< 1 min" if sec < 60 else "%d min" % m if m < 60 else "%d h %d min" % (m // 60, m % 60)
+        return "%d s" % math.floor(sec + 0.5) if sec < 59.5 else "%d min" % m if m < 60 else "%d h %d min" % (m // 60, m % 60)
     expect(page.locator("#est")).to_have_text("≈ " + dur(want))
     expect(page.locator("#est")).to_have_attribute("title", re.compile("not yet measured on iDraw A4"))
+    t = page.evaluate("() => estimate()")                     # parts under a minute show in seconds (the demo's travel and pen)
+    assert dur(t["travel"]).endswith(" s") and dur(t["pen"]).endswith(" s"), t
+    expect(page.locator("#est")).to_have_attribute("title", re.compile(r"^draw %s · travel %s · pen %s;" % (dur(t["draw"]), dur(t["travel"]), dur(t["pen"]))))
     session = idraw_server.Handler.session
     session.calibrate({"seconds": 2 * max(want, 60), "estimate": max(want, 60), "sim": False})
     expect(page.locator("#est")).to_have_text("≈ " + dur(2 * want))
