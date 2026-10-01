@@ -332,7 +332,8 @@ class Session:
                 p.log("Plotting only path %d of %d." % (start + 1, len(strokes)))
             elif start:
                 p.log("Resuming from path %d of %d." % (start + 1, len(strokes)))
-            return self.run(p.plot_strokes, strokes, pauses, True, start, end)
+            # one path (a line the pen skipped): stay at its end, the next one is usually close by
+            return self.run(p.plot_strokes, strokes, pauses, end != start + 1, start, end)
 
         # settings; these do not move the machine except a live pen height change
         if cmd == "set_profile":

@@ -298,7 +298,8 @@ function connectEvents() {
   es.addEventListener('log', e => logLine(JSON.parse(e.data)));
   es.addEventListener('progress', e => { const p = JSON.parse(e.data); done = p.i; S.progress = p; renderProgress(); markDone(); });
   es.addEventListener('pause', e => { $('pauseName').textContent = JSON.parse(e.data); $('overlay').classList.add('show'); });
-  es.addEventListener('done', e => { $('overlay').classList.remove('show'); logLine('Plot ' + JSON.parse(e.data) + '.'); });
+  es.addEventListener('done', e => { $('overlay').classList.remove('show'); logLine('Plot ' + JSON.parse(e.data) + '.');
+    if (step === 4) renderPanel(); });   // a short plot can begin and end between two state events, so the picker would keep the old path
   es.addEventListener('error', e => { if (e.data) logLine('! ' + JSON.parse(e.data)); });
   es.onerror = () => { $('status').textContent = 'no server'; $('status').className = 'chip error'; };
 }
