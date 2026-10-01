@@ -8,6 +8,8 @@ Have a pen plotter? You can help. Try Plotter Studio on your machine and tell us
 
 Manual: how to use Plotter Studio step by step, with keys, console and troubleshooting, in [MANUAL.md](MANUAL.md).
 
+Online: [tlausz.github.io/plotter-studio/MANUAL.html](https://tlausz.github.io/plotter-studio/MANUAL.html)
+
 ![Plotter Studio: web UI plotting the iDraw A3 test sheet in the simulator](docs/screenshot.png)
 
 ## Folders
