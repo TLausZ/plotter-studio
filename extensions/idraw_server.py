@@ -20,7 +20,8 @@ motors_off, frame(kind=paper|drawing), test(name), test_stroke, cycle, plot, sto
 resume, set_profile(fields), load_profile(name), save_profile(name), set_paper(w,h,
 name,orient), set_pos_mode(mode), set_placement(mode: 1:1|center|fit), set_layer(index,enabled,pause),
 set_model(name), set_unit(unit), set_title_block(corner: tl|tr|br|bl|off), load_test(name from tests/, "" = the document), reset.
-    plot takes an optional "start" (stroke index) to resume or replot from that path.
+    plot takes an optional "start" (stroke index) to resume or replot from that path, and an
+    optional "end" (stroke index to stop before; start + 1 plots only that path, without layer pauses).
     set_hiding(on): hidden-line removal, lines behind filled shapes are dropped on load.
     Free placement (switches the placement to "custom"): set_transform(x, y: top-left of the drawing
     in mm; scale: factor, kept about the drawing's centre; rot: angle in degrees, rounded to 15),
@@ -303,9 +304,17 @@ class Session:
             if not strokes:
                 return {"error": "No paths selected."}
             start = int(a.get("start", 0))          # resume/replot from this stroke index
-            if start:
+            end = a.get("end")
+            if end is not None:
+                end = int(end)
+                if not 0 <= start < end <= len(strokes):
+                    return {"error": "Paths %d to %d do not exist." % (start + 1, end)}
+                pauses = {}     # ponytail: no layer pauses in a part plot, add when a range UI needs them
+            if end == start + 1:
+                p.log("Plotting only path %d of %d." % (start + 1, len(strokes)))
+            elif start:
                 p.log("Resuming from path %d of %d." % (start + 1, len(strokes)))
-            return self.run(p.plot_strokes, strokes, pauses, True, start)
+            return self.run(p.plot_strokes, strokes, pauses, True, start, end)
 
         # settings; these do not move the machine except a live pen height change
         if cmd == "set_profile":

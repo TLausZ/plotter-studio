@@ -453,6 +453,34 @@ def check_resume_from_path(page):
     expect(page.locator("#strokes path.done")).to_have_count(n)
 
 
+def check_path_picker(page):
+    """Plot step without a stop first: a click on a path on the board picks it, Plot only draws just that path."""
+    tab(page, 4)
+    expect(page.locator("#onlyBtn")).to_have_text("Plot only path 1")
+    n = page.evaluate("() => S.strokes.length")
+    x, y = page.evaluate("""() => { const el = document.querySelectorAll('#strokes path')[5];
+        const p = el.getPointAtLength(el.getTotalLength() / 2).matrixTransform(el.getScreenCTM()); return [p.x, p.y]; }""")
+    page.mouse.move(x, y)
+    expect(page.locator("#preview")).to_have_class(re.compile(r"\bpick\b"))   # crosshair over a path
+    page.mouse.click(x, y)
+    expect(page.locator("#onlyBtn")).to_have_text("Plot only path 6")
+    expect(page.locator("#resumeBtn")).to_have_text("Resume from path 6")
+    expect(page.locator("#strokes path.sel")).to_have_count(1)
+    assert page.evaluate("() => [...document.querySelectorAll('#strokes path')].findIndex(p => p.classList.contains('sel'))") == 5
+    expect(page.locator("#strokes path.done")).to_have_count(5)
+    box = page.locator("#preview").bounding_box()
+    page.mouse.click(box["x"] + 5, box["y"] + 5)              # empty mat, far from any path: the pick stays
+    expect(page.locator("#preview")).not_to_have_class(re.compile(r"\bpick\b"))
+    expect(page.locator("#onlyBtn")).to_have_text("Plot only path 6")
+    click_cmd(page, "#onlyBtn")
+    expect(page.locator("#log")).to_contain_text("Plotting only path 6 of %d." % n, timeout=10000)
+    expect(page.locator("#log")).to_contain_text("Plot finished.", timeout=60000)
+    expect(page.locator("#status")).to_have_text("ready", timeout=15000)
+    assert page.evaluate("() => S.progress.i") == 6           # stopped after path 6, not at the end
+    expect(page.locator("#strokes path.sel")).to_have_count(0)
+    expect(page.locator("#onlyBtn")).to_have_text("Plot only path 7")
+
+
 def check_hidden_lines(page):
     """Plot step: the checkbox reloads the drawing with lines behind fills removed."""
     tab(page, 3)
@@ -534,7 +562,7 @@ CHECKS = [check_connect_and_home, check_steps_fit_without_scrolling, check_keybo
           check_splitter, check_zoom_and_pan, check_title_block_corner, check_reset_button,
           check_plot_with_pause, check_stop_with_escape, check_stop_button, check_test_drawing_dropdown,
           check_outside_sheet_warning, check_travel_trace_during_plot, check_model_dropdown,
-          check_resume_from_path, check_hidden_lines, check_placement_adjust, check_drag_drawing]
+          check_resume_from_path, check_path_picker, check_hidden_lines, check_placement_adjust, check_drag_drawing]
 
 
 def main():

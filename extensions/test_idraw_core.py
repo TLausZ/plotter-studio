@@ -95,6 +95,20 @@ def test_resume_from():
     assert prog[0]["i"] == 2 and prog[0]["done"] == 20 and prog[-1]["i"] == 3 and prog[-1]["done"] == 30, prog
 
 
+def test_only_one_path():
+    t = Capture()
+    p = core.Plotter()
+    p.connect(t)
+    p.home()
+    t.lines.clear()
+    strokes = [([(0, 0), (10, 0)], None, None, 0), ([(20, 0), (30, 0)], None, None, 0), ([(40, 0), (50, 0)], None, None, 0)]
+    p.plot_strokes(strokes, finish_home=False, start=1, end=2)
+    moves = [l for l in t.lines if l.startswith("G1 X")]
+    assert len(moves) == 2 and moves[0].startswith("G1 X0.000 Y-20.000") and moves[1].startswith("G1 X0.000 Y-30.000"), moves
+    prog = [d for k, d in list(p.events.queue) if k == "progress"]
+    assert prog[-1]["i"] == 2 and prog[-1]["n"] == 3, prog
+
+
 def test_hide_lines():
     line = [[(0, 5), (20, 5)]]
     square = [[(5, 0), (15, 0), (15, 10), (5, 10)]]
@@ -217,6 +231,7 @@ if __name__ == "__main__":
     test_dialects()
     test_link_lost()
     test_resume_from()
+    test_only_one_path()
     test_hide_lines()
     test_origin_and_stop()
     test_raw_tracking()

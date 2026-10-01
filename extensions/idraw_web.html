@@ -118,7 +118,7 @@ header{flex:0 0 56px}
 #zoom{display:block;margin:8px auto 4px;writing-mode:vertical-lr;direction:rtl;height:140px;width:18px;accent-color:var(--md-surface-container-lowest);cursor:pointer}
 #zoomlbl{display:block;text-align:center;font:500 12px/18px var(--f-mono);color:#fff;pointer-events:none}
 .tools{position:absolute;top:8px;left:8px;z-index:1;width:48px;padding:4px;background:rgba(0,0,0,.5);border-radius:28px;text-align:center}
-.board svg.pan{cursor:grab} .board svg.pan:active{cursor:grabbing} .board svg.movable{cursor:move}
+.board svg.pan{cursor:grab} .board svg.pan:active{cursor:grabbing} .board svg.movable{cursor:move} .board svg.pick{cursor:crosshair}   /* pick: over a path a click would pick */
 details#adj{margin:2px 0 6px} details#adj summary{cursor:pointer;color:var(--md-on-surface-variant);margin-bottom:8px} details#adj .seg .btn{padding:0 12px} .tf.ang{width:96px}
 #tbpos{font-size:20px;background:var(--md-surface-container-lowest);border-color:var(--md-outline)}
 .split{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(440px,520px)}
@@ -158,6 +158,7 @@ details#adj{margin:2px 0 6px} details#adj summary{cursor:pointer;color:var(--md-
 .stroke{fill:none;stroke:var(--ink-faint);stroke-linecap:round;stroke-linejoin:round}
 .stroke.done{stroke:var(--ink)}
 .stroke.out{stroke:var(--md-amber)}     /* leaves the sheet or the machine travel */
+.stroke.sel{stroke:var(--ink);stroke-width:var(--sel-w)}   /* picked for Resume or Plot only */
 .penmark.up,#trace .up,#trace .travel{stroke:var(--pen-up)} .penmark.down,#trace .down{stroke:var(--pen-down)}
 .ruler text{font-family:var(--f-draft-mono);fill:rgba(255,255,255,.75)}
 .ruler line{stroke:rgba(255,255,255,.55)}
@@ -260,6 +261,7 @@ let S = null;            // snapshot from the server
 let step = 0;
 let jogIdx = 1;
 let done = 0;            // strokes plotted so far
+let pick = null;         // path picked on the board or with the slider (index) for Resume and Plot only; null = follow the progress
 let adjOpen = false, alignRef = 'sheet', alignMargin = 10, rotStep = 90;   // placement details: open, align to sheet or margin, margin in mm, rotation step
 const $ = id => document.getElementById(id);
 
@@ -280,7 +282,7 @@ async function cmd(name, args) {
 function connectEvents() {
   const es = new EventSource('/api/events');
   es.addEventListener('snapshot', e => {
-    const prev = S; S = JSON.parse(e.data); done = S.progress ? S.progress.i : 0;
+    const prev = S; S = JSON.parse(e.data); done = S.progress ? S.progress.i : 0; pick = null;
     if (prev && (prev.svg_name !== S.svg_name || prev.test_file !== S.test_file)) trace.length = 0;   // another drawing: old journey is meaningless
     renderAll();
   });
@@ -386,9 +388,8 @@ function renderPanel() {
       + grp('Layers', `<label class="row"><input type="checkbox" id="hiding" ${S.hiding ? 'checked' : ''}> Hide lines behind filled shapes</label>
         <table class="layers"><tr><th>Plot</th><th>Pause before</th><th>Layer · paths</th></tr>${rows || '<tr><td colspan="3">No layers. Open an SVG with paths.</td></tr>'}</table>`)
       + grp('Run', `<div class="row"><button class="btn filled" data-cmd="plot">Start plot</button><button class="btn danger" data-cmd="stop">Stop</button><button class="btn outlined" data-cmd="frame" data-args='{"kind":"drawing"}'>Trace drawing frame</button></div>
-        <div class="progress"><i id="pbar" style="width:${pct}%"></i></div><div class="mono body-small" id="ptxt">${progressText()}</div>
-        ${p && st.status !== 'plotting' && st.status !== 'paused' ? `<div class="row"><input type="range" id="resumeAt" min="0" max="${S.strokes.length}" value="${Math.min(done, S.strokes.length)}" aria-label="Resume from path"><button class="btn outlined" id="resumeBtn">Resume from path ${Math.min(done, S.strokes.length) + 1}</button></div>
-        <p>Drag to pick the path to continue from; the board shows the paths still to plot. Paths before it count as done. Use it after a stop, or to replot from where the pen ran dry.</p>` : ''}`);
+        ${p ? `<div class="progress"><i id="pbar" style="width:${pct}%"></i></div><div class="mono body-small" id="ptxt">${progressText()}</div>` : ''}
+        ${S.strokes.length && st.status !== 'plotting' && st.status !== 'paused' ? `<div class="row"><input type="range" id="resumeAt" min="0" max="${S.strokes.length - 1}" value="${pickIdx()}" aria-label="Path" title="Click a path on the board or drag the slider"><button class="btn outlined" id="resumeBtn" title="Plot from this path to the end; the paths before count as done">Resume from path ${pickIdx() + 1}</button><button class="btn outlined" id="onlyBtn" title="Plot just this path, for a line the pen skipped">Plot only path ${pickIdx() + 1}</button></div>` : ''}`);
   }
   $('panel').innerHTML = h;
   wirePanel();
@@ -424,10 +425,26 @@ function outsideMsg() {
 function wireResume() {
   const hb = $('hiding'); if (hb) hb.onchange = () => cmd('set_hiding', {on: hb.checked});
   const r = $('resumeAt'); if (!r) return;
-  r.oninput = () => { done = +r.value; markDone(); $('resumeBtn').textContent = `Resume from path ${done + 1}`; };
-  $('resumeBtn').onclick = () => cmd('plot', {start: +r.value});
+  r.oninput = () => setPick(+r.value);
+  $('resumeBtn').onclick = () => { pick = null; cmd('plot', {start: +r.value}); };
+  $('onlyBtn').onclick = () => { pick = null; cmd('plot', {start: +r.value, end: +r.value + 1}); };
 }
-function renderProgress() { if (step !== 4) return; const p = S.progress; $('pbar').style.width = (p.total ? 100 * p.done / p.total : 0) + '%'; $('ptxt').textContent = progressText(); }
+const pickIdx = () => pick != null ? pick : (done < S.strokes.length ? done : 0);   // after a finished plot: the first path
+function setPick(i) {   // the board marks the paths before i as done and path i as picked
+  pick = i; done = i; markDone();
+  const r = $('resumeAt'); if (!r) return;
+  r.value = i; $('resumeBtn').textContent = `Resume from path ${i + 1}`; $('onlyBtn').textContent = `Plot only path ${i + 1}`;
+}
+// index of the stroke nearest to x/y (mm) within tol mm, or -1
+function nearestStroke(x, y, tol) {
+  let best = -1, bd = tol * tol;
+  S.strokes.forEach((s, i) => { for (let j = 1; j < s.pts.length; j++) {
+    const [ax, ay] = s.pts[j - 1], dx = s.pts[j][0] - ax, dy = s.pts[j][1] - ay, l = dx * dx + dy * dy;
+    const t = l ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / l)) : 0, d = (ax + t * dx - x) ** 2 + (ay + t * dy - y) ** 2;
+    if (d < bd) { bd = d; best = i; } } });
+  return best;
+}
+function renderProgress() { if (step !== 4) return; if (!$('pbar')) return renderPanel(); const p = S.progress; $('pbar').style.width = (p.total ? 100 * p.done / p.total : 0) + '%'; $('ptxt').textContent = progressText(); }
 function syncPenFields() { const pr = S.state.profile; ['pen_up', 'pen_down'].forEach(k => { const e = $(k); if (e && document.activeElement !== e) e.value = pr[k]; }); }
 
 function wirePanel() {
@@ -493,24 +510,34 @@ function jog(x, y) { const s = JOG[u()][jogIdx] * UNIT[u()]; cmd('jog', {dx: x *
 let fitMachine = false;   // false: view fits the paper; true: view fits the machine travel
 $('zoom').oninput = e => { zoomIdx = +e.target.value; $('zoomlbl').textContent = ZOOM[zoomIdx] + '×'; if (zoomIdx <= 2) panX = panY = 0; renderPreview(); };
 { // with Position, scale, rotation open in the Plot step a drag on the drawing moves it; otherwise a drag pans (above 1x); double-click resets zoom and pan
-  const svg = $('preview'); let drag = null, move = null;
+  const svg = $('preview'); let drag = null, move = null, down = null;
   const mm = e => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
   const onDrawing = e => { const c = S && S.content, p = mm(e);
     return c && step === 4 && adjOpen && !S.state.busy && p.x >= c[0] && p.x <= c[2] && p.y >= c[1] && p.y <= c[3]; };
   const shift = (dx, dy) => svg.querySelectorAll('#strokes path:not(.tb)').forEach(el => el.setAttribute('transform', `translate(${dx} ${dy})`));
   svg.onpointerdown = e => {
+    down = [e.clientX, e.clientY];
     if (onDrawing(e)) { const p = mm(e); move = [p.x, p.y, 0, 0]; svg.setPointerCapture(e.pointerId); }
     else if (ZOOM[zoomIdx] > 1) { drag = [e.clientX, e.clientY, panX, panY]; svg.setPointerCapture(e.pointerId); }
   };
   svg.onpointermove = e => {
     if (move) { const p = mm(e); move[2] = p.x - move[0]; move[3] = p.y - move[1]; shift(move[2], move[3]); }
     else if (drag) { panX = drag[2] - (e.clientX - drag[0]) / pxPerMm; panY = drag[3] - (e.clientY - drag[1]) / pxPerMm; renderPreview(); }
-    else svg.classList.toggle('movable', onDrawing(e));
+    else { const mv = onDrawing(e); svg.classList.toggle('movable', mv); hoverPick(mv ? null : e); }
   };
-  svg.onpointerup = svg.onpointercancel = () => {
+  svg.onpointerup = svg.onpointercancel = e => {
     if (move && (move[2] || move[3])) cmd('move_by', {dx: move[2], dy: move[3]});
-    drag = move = null;
+    else if (e.type === 'pointerup' && down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) < 4 && $('resumeAt')) {   // a click picks a path
+      const p = mm(e), i = nearestStroke(p.x, p.y, px(e.pointerType === 'touch' ? 20 : 8));
+      if (i >= 0) setPick(i);
+    }
+    drag = move = down = null;
   };
+  let hov = null, queued = false;   // one nearest-path search per frame, not per pointer event
+  const hoverPick = e => { hov = e; if (queued) return; queued = true; requestAnimationFrame(() => {
+    const p = hov && $('resumeAt') && mm(hov); queued = false;
+    svg.classList.toggle('pick', !!p && nearestStroke(p.x, p.y, px(8)) >= 0); }); };
+  svg.onpointerleave = () => svg.classList.remove('pick');
   svg.ondblclick = () => { zoomIdx = 2; panX = panY = 0; $('zoom').value = 2; $('zoomlbl').textContent = '1×'; renderPreview(); };
 }
 // command reference: [command, purpose, reply]; '*' = not verified on the DrawCore board
@@ -601,8 +628,8 @@ function renderPreview() {
     <text x="${mx + mw - px(6)}" y="${my + mh - px(6)}" font-size="${px(12)}" text-anchor="end" fill="rgba(255,255,255,.65)" font-family="var(--f-draft)">${st.model} · ${fmt(mw)} × ${fmt(mh)}</text>`;
   g += `<rect x="0" y="0" width="${pw}" height="${ph}" fill="var(--paper)" stroke="rgba(0,0,0,.35)" stroke-width="${px(1)}"/>`;
   g += rulers(pw, ph);
-  g += `<g id="strokes" stroke-width="${lw}">` + S.strokes.map((s, i) =>
-    `<path class="stroke ${i < done ? 'done' : ''} ${s.out ? 'out' : ''} ${s.layer === S.tb_index ? 'tb' : ''}" d="M${s.pts.map(p => p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join('L')}"/>`).join('') + '</g>';
+  g += `<g id="strokes" stroke-width="${lw}" style="--sel-w:${selW()}">` + S.strokes.map((s, i) =>
+    `<path class="stroke ${i < done ? 'done' : ''} ${i === pick ? 'sel' : ''} ${s.out ? 'out' : ''} ${s.layer === S.tb_index ? 'tb' : ''}" d="M${s.pts.map(p => p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join('L')}"/>`).join('') + '</g>';
   g += `<circle cx="0" cy="0" r="${px(5)}" fill="none" stroke="var(--origin)" stroke-width="${px(1.5)}"/>`;
   g += `<g id="trace" class="penmark" stroke-width="${px(1)}" stroke-dasharray="${px(3)} ${px(3)}">${traceHtml()}</g>`;
   g += `<g id="pen" class="penmark ${st.z_up === false ? 'down' : 'up'}" transform="translate(${st.x} ${st.y})" stroke-width="${px(1.5)}"><circle r="${px(8)}" fill="none"/><line x1="${-px(14)}" x2="${px(14)}"/><line y1="${-px(14)}" y2="${px(14)}"/></g>`;
@@ -650,7 +677,8 @@ function renderPen() {
   if (st.bounds_known !== renderPen.lastBounds || st.model !== renderPen.lastModel) renderPreview();
   renderPen.lastBounds = st.bounds_known; renderPen.lastModel = st.model;
 }
-function markDone() { const ps = document.querySelectorAll('#strokes path'); ps.forEach((p, i) => p.classList.toggle('done', i < done)); }
+function markDone() { const ps = document.querySelectorAll('#strokes path'); ps.forEach((p, i) => { p.classList.toggle('done', i < done); p.classList.toggle('sel', i === pick); }); }
+const selW = () => Math.max(px(4), 2 * (S.state.profile.line_width || 0.3));   // picked path: twice the line, at least 4 screen px
 
 // ---------------------------------------------------------------- global controls
 $('units').querySelectorAll('button').forEach(b => b.onclick = () => cmd('set_unit', {unit: b.dataset.unit}));

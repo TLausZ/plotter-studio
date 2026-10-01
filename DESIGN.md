@@ -165,7 +165,7 @@ The palette is the drafting palette, mapped onto M3 colour roles rather than gen
 
 Three signal colours with one meaning each: error red for pen down and Stop, blue (tertiary) for pen up, amber for paused, notices and the origin. Green is never a status; the mat is green. Single light scheme by choice; the sheet is physical and does not change with the system theme.
 
-Board colours stay outside the roles: pending strokes in `ink-faint`, strokes that leave the sheet or the machine travel in amber, plotted strokes in `ink`, pen cross red when down and blue when up. Manual moves (jog, console) leave a dashed trace in the same two colours; during a plot the pen-up travel between paths leaves a dotted blue trace, the strokes themselves show the pen-down part. The trace clears on home and at the start of a plot.
+Board colours stay outside the roles: pending strokes in `ink-faint`, strokes that leave the sheet or the machine travel in amber, plotted strokes in `ink`, the path picked for Resume or Plot only in `ink` at twice the line width (at least 4 screen px; over a pickable path the pointer is a crosshair), pen cross red when down and blue when up. Manual moves (jog, console) leave a dashed trace in the same two colours; during a plot the pen-up travel between paths leaves a dotted blue trace, the strokes themselves show the pen-down part. The trace clears on home and at the start of a plot.
 
 ## Typography
 

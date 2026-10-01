@@ -95,11 +95,11 @@ Hide lines behind filled shapes drops the parts of lines that lie behind a fille
 
 Start plot starts. If paths leave the sheet or the machine travel, they are amber on the board, the step says how many, and Start plot asks before plotting anyway. Stop (or Esc) stops after the current line and raises the pen. Trace drawing frame moves around the drawing with the pen up.
 
-The bar under the buttons shows the path number, the share of the drawn length that is done, and the estimated time left. Travel moves are not counted, so both run a little ahead on drawings with many long jumps.
+Once a plot has run, a bar under the buttons shows the path number, the share of the drawn length that is done, and the estimated time left. Travel moves are not counted, so both run a little ahead on drawings with many long jumps.
 
-After a stop or a finished plot, a slider and "Resume from path N" appear. Drag the slider to the path to continue from; the board shows the paths still to plot, the paths before count as done. Use it after a stop or when the pen ran dry.
+Below them a slider picks a path, and so does a click on a path on the board (with a finger, within about 20 px of the line). Over a path the pointer turns into a crosshair. The picked path is drawn thick, the paths before it count as done. "Resume from path N" plots from there to the end, for example after a stop or when the pen ran dry. "Plot only path N" plots just that one path and leaves out the layer pauses, for example to redraw a line the pen skipped. After a stop the slider stands on the path where the plot stopped.
 
-![After a stop: the slider in the Run group set to path 51, the board shows the paths still to plot](docs/manual-resume.png)
+![After a stop at path 65: a click on the curve picked path 5, drawn thick, with Resume from path 5 and Plot only path 5 in the Run group](docs/manual-resume.png)
 
 ## The board
 

@@ -80,6 +80,13 @@ def main():
     assert st["status"] == "ready" and abs(st["x"]) < 1e-6
     assert call(base + "/api/cmd", {"cmd": "frame", "kind": "drawing"}) == {"ok": True}
     assert wait_idle(base)["status"] == "ready"
+    assert call(base + "/api/cmd", {"cmd": "set_layer", "index": 1, "pause": True}) == {"ok": True}
+    assert call(base + "/api/cmd", {"cmd": "plot", "start": 4, "end": 5}) == {"ok": True}   # first path of the ! layer
+    assert wait_idle(base, 10)["status"] == "ready"                                        # no pause: does not wait
+    snap = call(base + "/api/snapshot")
+    assert snap["progress"]["i"] == 5 and "Plotting only path 5 of 8." in snap["log"], snap["progress"]
+    assert "error" in call(base + "/api/cmd", {"cmd": "plot", "start": 8, "end": 9})
+    assert "error" in call(base + "/api/cmd", {"cmd": "plot", "start": 3, "end": 3})
     assert "error" in call(base + "/api/cmd", {"cmd": "nonsense"})
     httpd.shutdown()
     print("ok")

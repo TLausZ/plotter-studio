@@ -968,7 +968,7 @@ class Plotter:
             w.join(0.5)     # the worker reported its final status; let it exit before answering
         return bool(w and w.is_alive())
 
-    def plot_strokes(self, strokes, layer_pauses=None, finish_home=True, start=0):
+    def plot_strokes(self, strokes, layer_pauses=None, finish_home=True, start=0, end=None):
         """Plot strokes in order.
 
         strokes: [(points, feed|None, z_down|None, layer_index)]
@@ -977,9 +977,11 @@ class Plotter:
         finish_home: move to the origin at the end (not for tests).
         start: first stroke index; strokes before it count as done (resume after a stop,
                or replot from an earlier path when the pen ran dry).
+        end: stop before this stroke index (start + 1 plots one path); None = to the last.
         """
         layer_pauses = layer_pauses or {}
         start = max(0, min(start, len(strokes)))
+        end = len(strokes) if end is None else max(start, min(end, len(strokes)))
         total = sum(path_length(s[0]) for s in strokes)
         done = sum(path_length(s[0]) for s in strokes[:start])
         done0 = done
@@ -990,6 +992,8 @@ class Plotter:
         for i, (pts, feed, z_down, layer_idx) in enumerate(strokes):
             if i < start:
                 continue
+            if i >= end:
+                break
             if self._stop.is_set():
                 break
             if layer_idx in layer_pauses and layer_idx not in seen_layers:

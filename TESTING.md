@@ -2,9 +2,9 @@
 
 Three levels, all plain scripts that print `ok` (no test framework). Run them from `extensions/`.
 
-Logic, `python3 test_idraw_core.py`: axis mapping and G-code of a plot run, origin after jog and `G92`, stop ends after the current line, placement modes, rotation and alignment, test patterns, console parser (G0/G1, G90/G91, G92, `$H`, `$1`).
+Logic, `python3 test_idraw_core.py`: axis mapping and G-code of a plot run, origin after jog and `G92`, stop ends after the current line, resume from path N, plot only one path, placement modes, rotation and alignment, test patterns, console parser (G0/G1, G90/G91, G92, `$H`, `$1`).
 
-Server, `python3 test_idraw_server.py`: starts the server with the simulator on a free port and talks HTTP: snapshot with layers and strokes, connect, home, unit, placement (presets, rotate about the centre, align with margin, move, X field, bad values), layer flags, jog, plot to the end, error on an unknown command.
+Server, `python3 test_idraw_server.py`: starts the server with the simulator on a free port and talks HTTP: snapshot with layers and strokes, connect, home, unit, placement (presets, rotate about the centre, align with margin, move, X field, bad values), layer flags, jog, plot to the end, frame around the drawing, plot only one path (no layer pause, bad ranges refused), error on an unknown command.
 
 Browser, `python3 test_idraw_e2e.py`: starts the server with the simulator (40× faster) and drives the page in headless Chromium with Playwright (once: `pip install playwright`, `playwright install chromium`; `--headed` shows the browser). `reset(page)` runs before every check: fresh page without browser storage, mm, A4 landscape, 1:1, connected to the simulator, homed, pen up. Checks are therefore independent of their order, and one or more can be run by name: `python3 test_idraw_e2e.py splitter zoom_and_pan`. One function per check:
 
@@ -29,6 +29,7 @@ Browser, `python3 test_idraw_e2e.py`: starts the server with the simulator (40×
 | travel_trace_during_plot | a plot clears the manual trace, leaves dotted travel segments only, the next plot starts with an empty trace |
 | model_dropdown | Untested models carry the label and the hint; after a reconnect an AxiDraw model sends EBB commands, no G-code. |
 | resume_from_path | After a stop the Run group shows a slider and Resume from path N; the plot continues from there and finishes. |
+| path_picker | Without a stop first the Run group offers Plot only path 1; over a path the board shows the crosshair, a click picks it (thick, the paths before done), a click on the empty mat keeps the pick and drops the crosshair, Plot only draws just that path and the slider moves on to the next. |
 | hidden_lines | The checkbox in the Plot step reloads the drawing with lines behind fills split; the setting survives a reload. |
 | placement_adjust | Position, scale, rotation: rotate by 90°, a preset keeps the rotation, 15° steps and the angle field (rounded to 15°), align right to a 10 mm margin, X field, scale 50 % halves the width, back to 1:1. |
 | drag_drawing | With Position, scale, rotation open, dragging the drawing on the board moves it by the dragged distance; 1:1 brings it back. |
