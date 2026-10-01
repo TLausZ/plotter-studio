@@ -96,7 +96,22 @@ class Session:
                 self.pause_layer = data
             elif kind == "done":
                 self.pause_layer = None
+            elif kind == "timing":
+                self.calibrate(data)
             self.broadcast(kind, data)
+
+    def calibrate(self, t):
+        """Keep the ratio of measured to estimated plot time per model (time factor); the Plot step
+        multiplies its estimate by it. Only real plots of a minute or more; the simulator sleeps exactly
+        the estimate."""
+        if t["sim"] or t["estimate"] < 60:
+            return
+        model = self.plotter.model
+        f = self.settings.setdefault("time_factor", {})[model] = round(t["seconds"] / t["estimate"], 3)
+        core.save_settings(self.settings)
+        self.plotter.log("Plot took %.0f min, estimated %.0f min: time factor for %s is now %.2f."
+                         % (t["seconds"] / 60, t["estimate"] / 60, model, f))
+        self.broadcast("snapshot", self.snapshot())
 
     def broadcast(self, kind, data):
         for q in list(self.clients):
@@ -205,6 +220,7 @@ class Session:
             "layers": [{"name": l.name, "enabled": l.enabled, "pause": l.pause, "n": len(l.paths)}
                        for l in self.all_layers()],
             "tb_corner": self.tb_corner, "hiding": self.hiding,
+            "pen_s": p.pen_seconds, "time_factor": self.settings.get("time_factor", {}).get(p.model),   # plot time estimate
             "test_files": self.test_files(), "test_file": self.test_file,
             "doc_name": os.path.basename(self.svg_path) if self.svg_path else "",
             "strokes": [{"pts": s[0], "layer": s[3], "out": o or b} for s, o, b in zip(strokes, out, beyond)],

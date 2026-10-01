@@ -83,6 +83,8 @@ def model_label(model):
 EBB_STEPS_PER_MM = 2032 / 25.4
 EBB_SERVO_MIN, EBB_SERVO_MAX = 9855, 27831
 Z_RATE = 5000  # feed rate for Z moves (mm/min), as in the original
+PEN_SECONDS = {"ebb": 0.3}   # time of one pen move by dialect (servo); GRBL dialects: Z_SECONDS
+Z_SECONDS = 0.15
 REPLY_SLACK = 15.0  # s: a reply may arrive this much later than the expected move time
 
 
@@ -549,6 +551,23 @@ def path_length(p):
     return sum(math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]) for i in range(1, len(p)))
 
 
+def estimate(strokes, profile, pen_s, start=(0.0, 0.0)):
+    """Plot time in seconds as the moves are sent, without acceleration or serial overhead:
+    {"draw", "travel", "pen", "total"}. strokes as for Plotter.plot_strokes; travel runs from start
+    through the strokes in order and back to the origin, every stroke has a pen down and a pen up.
+    idraw_web.html computes the same in estimate(); test_idraw_e2e compares the two."""
+    draw = travel = 0.0
+    x, y = start
+    for pts, feed, _z, _layer in strokes:
+        travel += math.hypot(pts[0][0] - x, pts[0][1] - y)
+        draw += path_length(pts) / (feed or profile["feed_draw"])
+        x, y = pts[-1]
+    travel += math.hypot(x, y)
+    t = {"draw": draw * 60, "travel": travel / profile["feed_travel"] * 60, "pen": 2 * pen_s * len(strokes)}
+    t["total"] = t["draw"] + t["travel"] + t["pen"]
+    return t
+
+
 def circle(cx, cy, r, n=72):
     return [(cx + r * math.cos(2 * math.pi * i / n), cy + r * math.sin(2 * math.pi * i / n))
             for i in range(n + 1)]
@@ -643,6 +662,7 @@ class Plotter:
       ("state", None)          state changed: status, x, y, z_up, profile, ...
       ("progress", dict)       i (finished strokes), n, done/total (mm), eta (s or None)
       ("pause", layer_name)    plot is waiting; UI calls resume() or stop()
+      ("timing", dict)         after a finished plot: seconds (without pauses), estimate (s), sim
       ("done", "finished"|"stopped")
       ("error", text)          exception in the worker; status is then "error"
 
@@ -690,6 +710,10 @@ class Plotter:
     @property
     def dialect(self):
         return dialect(self.model)
+
+    @property
+    def pen_seconds(self):
+        return PEN_SECONDS.get(self.dialect, Z_SECONDS)
 
     def connect(self, transport):
         version = transport.open()
@@ -751,9 +775,9 @@ class Plotter:
             pct = min(100.0, max(0.0, z_mm))
             val = round(EBB_SERVO_MIN + (EBB_SERVO_MAX - EBB_SERVO_MIN) * pct / 100)
             self._send("SC,5,%d" % val)         # the "pen down" servo position is reused for every height
-            self._send("SP,0", seconds=0.3)
+            self._send("SP,0", seconds=PEN_SECONDS["ebb"])
             return
-        self._send("G1 Z%.2f F%d" % (z_mm, Z_RATE), seconds=0.15)
+        self._send("G1 Z%.2f F%d" % (z_mm, Z_RATE), seconds=Z_SECONDS)
 
     # --- commands (blocking; call from the UI through start() on the worker thread)
     def home(self):
@@ -986,6 +1010,8 @@ class Plotter:
         done = sum(path_length(s[0]) for s in strokes[:start])
         done0 = done
         t0 = time.time()
+        paused = 0.0                    # seconds waiting in layer pauses, left out of the timing
+        x0, y0 = self.x, self.y
         self._set_status("plotting")
         self.emit("progress", {"i": start, "n": len(strokes), "done": done, "total": total, "eta": None})
         seen_layers = set(s[3] for s in strokes[:start])   # no pause for a layer already begun
@@ -1002,7 +1028,9 @@ class Plotter:
                 self._set_status("paused")
                 self._resume.clear()
                 self.emit("pause", layer_pauses[layer_idx])
+                tp = time.time()
                 self._resume.wait()
+                paused += time.time() - tp
                 if self._stop.is_set():
                     break
                 self._set_status("plotting")
@@ -1025,6 +1053,10 @@ class Plotter:
         if finish_home and not stopped:
             self._move_abs(0, 0, self.profile["feed_travel"])
         self._set_status("ready")
+        if not stopped:   # measured against the estimate; the server keeps the ratio per model (time factor)
+            est = estimate(strokes[start:end], self.profile, self.pen_seconds, (x0, y0))["total"]
+            self.emit("timing", {"seconds": time.time() - t0 - paused, "estimate": est,
+                                 "sim": isinstance(self.transport, SimTransport)})
         self.emit("done", "stopped" if stopped else "finished")
 
     def strokes_from_layers(self, layers):

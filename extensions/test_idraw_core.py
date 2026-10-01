@@ -1,4 +1,6 @@
 """Self-test for idraw_core: python3 test_idraw_core.py"""
+import threading
+
 import idraw_core as core
 
 
@@ -107,6 +109,29 @@ def test_only_one_path():
     assert len(moves) == 2 and moves[0].startswith("G1 X0.000 Y-20.000") and moves[1].startswith("G1 X0.000 Y-30.000"), moves
     prog = [d for k, d in list(p.events.queue) if k == "progress"]
     assert prog[-1]["i"] == 2 and prog[-1]["n"] == 3, prog
+
+
+def test_estimate_and_timing():
+    pr = dict(core.DEFAULT_PROFILE, feed_draw=600, feed_travel=1200)    # 10 and 20 mm/s
+    strokes = [([(10, 0), (30, 0)], None, None, 0), ([(30, 0), (30, 10)], 300, None, 1)]   # second at 5 mm/s
+    t = core.estimate(strokes, pr, 0.15)
+    # draw 20 mm at 10 mm/s + 10 mm at 5 mm/s; travel 10 out, 0 between, hypot(30, 10) back; four pen moves
+    assert abs(t["draw"] - 4) < 1e-9 and abs(t["travel"] - (10 + 10 * 10 ** 0.5) / 20) < 1e-9 and abs(t["pen"] - 0.6) < 1e-9, t
+    assert abs(t["total"] - (t["draw"] + t["travel"] + t["pen"])) < 1e-9
+    p = core.Plotter()
+    p.connect(Capture())
+    p.home()
+    p.profile = pr
+    threading.Timer(0.5, p.resume).start()        # the pause before layer 1 lasts half a second
+    p.plot_strokes(strokes, {1: "pause layer"}, finish_home=True)
+    ev = dict(list(p.events.queue))
+    assert ev["timing"]["sim"] and abs(ev["timing"]["estimate"] - t["total"]) < 1e-9, ev["timing"]
+    assert ev["timing"]["seconds"] < 0.3, ev["timing"]  # the pause is left out
+    p.events.queue.clear()
+    p._stop.set()
+    p.plot_strokes(strokes, finish_home=False)   # stopped: no timing
+    assert "timing" not in dict(list(p.events.queue))
+    p._stop.clear()
 
 
 def test_hide_lines():
@@ -232,6 +257,7 @@ if __name__ == "__main__":
     test_link_lost()
     test_resume_from()
     test_only_one_path()
+    test_estimate_and_timing()
     test_hide_lines()
     test_origin_and_stop()
     test_raw_tracking()

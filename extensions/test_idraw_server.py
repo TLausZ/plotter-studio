@@ -87,6 +87,13 @@ def main():
     assert snap["progress"]["i"] == 5 and "Plotting only path 5 of 8." in snap["log"], snap["progress"]
     assert "error" in call(base + "/api/cmd", {"cmd": "plot", "start": 8, "end": 9})
     assert "error" in call(base + "/api/cmd", {"cmd": "plot", "start": 3, "end": 3})
+    session = idraw_server.Handler.session                  # time factor from a measured plot
+    assert call(base + "/api/snapshot")["pen_s"] == 0.15
+    session.calibrate({"seconds": 120, "estimate": 100, "sim": True})     # simulator: ignored
+    session.calibrate({"seconds": 50, "estimate": 40, "sim": False})      # under a minute: ignored
+    assert call(base + "/api/snapshot")["time_factor"] is None
+    session.calibrate({"seconds": 120, "estimate": 100, "sim": False})
+    assert call(base + "/api/snapshot")["time_factor"] == 1.2
     assert "error" in call(base + "/api/cmd", {"cmd": "nonsense"})
     httpd.shutdown()
     print("ok")

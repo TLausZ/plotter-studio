@@ -391,7 +391,7 @@ function renderPanel() {
         ${st.origin_set ? '' : '<div class="msg">Origin not set. Go to step 2, or plot from the current position.</div>'}${outsideMsg()}`)
       + grp('Layers', `<label class="row"><input type="checkbox" id="hiding" ${S.hiding ? 'checked' : ''}> Hide lines behind filled shapes</label>
         <table class="layers"><tr><th>Plot</th><th>Pause before</th><th>Layer · paths</th></tr>${rows || '<tr><td colspan="3">No layers. Open an SVG with paths.</td></tr>'}</table>`)
-      + grp('Run', `<div class="row"><button class="btn filled" data-cmd="plot">Start plot</button><button class="btn danger" data-cmd="stop">Stop</button><button class="btn outlined" data-cmd="frame" data-args='{"kind":"drawing"}'>Trace drawing frame</button></div>
+      + grp('Run', `<div class="row"><button class="btn filled" data-cmd="plot">Start plot</button><button class="btn danger" data-cmd="stop">Stop</button><button class="btn outlined" data-cmd="frame" data-args='{"kind":"drawing"}'>Trace drawing frame</button>${estimateHtml()}</div>
         ${p ? `<div class="progress"><i id="pbar" style="width:${pct}%"></i></div><div class="mono body-small" id="ptxt">${progressText()}</div>` : ''}
         ${S.strokes.length && st.status !== 'plotting' && st.status !== 'paused' ? `<input type="range" id="resumeAt" min="0" max="${S.strokes.length - 1}" value="${pickIdx()}" aria-label="Path" title="Click a path on the board or drag the slider">
         <div class="row"><button class="btn icon-btn outlined" data-step="-1" aria-label="Previous path" title="Previous path; hold to run back">‹</button><input id="pickN" class="pickn mono" inputmode="numeric" value="${pickIdx() + 1}" aria-label="Path number" title="Path 1 to ${S.strokes.length}; Enter picks it"><button class="btn icon-btn outlined" data-step="1" aria-label="Next path" title="Next path; hold to run on">›</button><button class="btn outlined" id="resumeBtn" title="Plot from this path to the end; the paths before count as done">Resume from path ${pickIdx() + 1}</button><button class="btn outlined" id="onlyBtn" title="Plot just this path, for a line the pen skipped">Plot only</button></div>` : ''}`);
@@ -413,6 +413,27 @@ function adjustHtml() {
     <div class="row">${tf('plR', 'Angle', t.rot, {suffix: '°', attrs: dis, cls: 'ang'})}<button class="btn icon-btn outlined" data-rot="-1" title="Rotate ${rotStep}° left" aria-label="Rotate ${rotStep} degrees left" ${dis}>↺</button><button class="btn icon-btn outlined" data-rot="1" title="Rotate ${rotStep}° right" aria-label="Rotate ${rotStep} degrees right" ${dis}>↻</button>
     <div class="seg">${[15, 90].map(v => `<button class="btn ${rotStep === v ? 'on' : ''}" data-rstep="${v}">${v}°</button>`).join('')}</div></div>
     <p>While this is open, drag the drawing on the board to move it.</p></details>`;
+}
+// plot time as the moves are sent, the same formula as idraw_core.estimate: draw and travel at the profile's feeds,
+// two pen moves per path; times the model's factor from the last real plot (acceleration, serial overhead)
+function estimate() {
+  const pr = S.state.profile; let x = 0, y = 0, draw = 0, travel = 0;
+  S.strokes.forEach(({pts}) => {
+    travel += Math.hypot(pts[0][0] - x, pts[0][1] - y);
+    for (let j = 1; j < pts.length; j++) draw += Math.hypot(pts[j][0] - pts[j - 1][0], pts[j][1] - pts[j - 1][1]);
+    [x, y] = pts[pts.length - 1];
+  });
+  travel += Math.hypot(x, y);
+  const t = {draw: draw / pr.feed_draw * 60, travel: travel / pr.feed_travel * 60, pen: 2 * S.pen_s * S.strokes.length};
+  t.total = t.draw + t.travel + t.pen;
+  return t;
+}
+const dur = s => { const m = Math.round(s / 60); return s < 60 ? '< 1 min' : m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`; };
+function estimateHtml() {
+  if (!S.strokes.length) return '';
+  const t = estimate(), f = S.time_factor || 1;
+  const how = S.time_factor ? `× ${S.time_factor.toFixed(2)} from the last plot on ${S.state.model}` : `not yet measured on ${S.state.model}; acceleration not included`;
+  return `<span class="mono body-small" id="est" style="color:var(--md-on-surface-variant)" title="draw ${dur(t.draw)} · travel ${dur(t.travel)} · pen ${dur(t.pen)}; ${how}">≈ ${dur(t.total * f)}</span>`;
 }
 function progressText() {
   const p = S.progress; if (!p) return '';

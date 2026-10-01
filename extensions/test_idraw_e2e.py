@@ -6,6 +6,7 @@ Each check is one function; add a new check by writing check_<name>(page) and li
 reset(page) runs before every check, so checks are independent of their order and a single one
 can be run by name: python3 test_idraw_e2e.py splitter zoom_and_pan
 """
+import math
 import os
 import re
 import sys
@@ -546,6 +547,27 @@ def check_large_drawing(page):
     page.wait_for_function("() => S.svg_name === 'idraw_demo.svg'", timeout=20000)
 
 
+def check_plot_estimate(page):
+    """Plot step: the time estimate next to Trace drawing frame matches idraw_core.estimate; a measured
+    time factor for the model scales it."""
+    tab(page, 4)
+    strokes, profile, pen_s = page.evaluate("() => [S.strokes.map(s => s.pts), S.state.profile, S.pen_s]")
+    want = idraw_core.estimate([(pts, None, None, 0) for pts in strokes], profile, pen_s)["total"]
+    assert abs(page.evaluate("() => estimate().total") - want) < 1e-6, (page.evaluate("() => estimate()"), want)
+    def dur(sec):                                             # as dur() in the page
+        m = math.floor(sec / 60 + 0.5)
+        return "< 1 min" if sec < 60 else "%d min" % m if m < 60 else "%d h %d min" % (m // 60, m % 60)
+    expect(page.locator("#est")).to_have_text("≈ " + dur(want))
+    expect(page.locator("#est")).to_have_attribute("title", re.compile("not yet measured on iDraw A4"))
+    session = idraw_server.Handler.session
+    session.calibrate({"seconds": 2 * max(want, 60), "estimate": max(want, 60), "sim": False})
+    expect(page.locator("#est")).to_have_text("≈ " + dur(2 * want))
+    expect(page.locator("#est")).to_have_attribute("title", re.compile(r"× 2\.00 from the last plot on iDraw A4"))
+    del session.settings["time_factor"]                       # later checks see an unmeasured model
+    session.broadcast("snapshot", session.snapshot())
+    expect(page.locator("#est")).to_have_text("≈ " + dur(want))
+
+
 def check_hidden_lines(page):
     """Plot step: the checkbox reloads the drawing with lines behind fills removed."""
     tab(page, 3)
@@ -627,7 +649,7 @@ CHECKS = [check_connect_and_home, check_steps_fit_without_scrolling, check_keybo
           check_splitter, check_zoom_and_pan, check_title_block_corner, check_reset_button,
           check_plot_with_pause, check_stop_with_escape, check_stop_button, check_test_drawing_dropdown,
           check_outside_sheet_warning, check_travel_trace_during_plot, check_model_dropdown,
-          check_resume_from_path, check_path_picker, check_path_stepping, check_large_drawing, check_hidden_lines, check_placement_adjust, check_drag_drawing]
+          check_resume_from_path, check_path_picker, check_path_stepping, check_large_drawing, check_plot_estimate, check_hidden_lines, check_placement_adjust, check_drag_drawing]
 
 
 def main():
