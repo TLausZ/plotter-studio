@@ -273,6 +273,7 @@ const u = () => S ? S.unit : 'mm';
 const toU = mm => (mm / UNIT[u()]).toFixed(DEC[u()]);
 const fromU = v => parseFloat(v) * UNIT[u()];
 const fmt = mm => toU(mm) + ' ' + u();
+const size = ([w, h]) => `${+toU(w)} × ${+toU(h)} ${u()}`;   // 297 × 210 mm: unit once, no trailing zeros
 
 // ---------------------------------------------------------------- server
 async function cmd(name, args) {
@@ -384,7 +385,7 @@ function renderPanel() {
     const rows = S.layers.map((l, i) => `<tr><td><input type="checkbox" data-layer="${i}" data-k="enabled" ${l.enabled ? 'checked' : ''} aria-label="Plot layer ${l.name}"></td>
       <td><input type="checkbox" data-layer="${i}" data-k="pause" ${l.pause ? 'checked' : ''} aria-label="Pause before ${l.name}"></td><td>${l.name} <span class="mono" style="color:var(--md-on-surface-variant)">${l.n}</span></td></tr>`).join('');
     const p = S.progress, pct = p && p.total ? 100 * p.done / p.total : 0;
-    h = hdr('Plot', `${S.svg_name} · page ${fmt(S.page[0])} × ${fmt(S.page[1])} · paper ${fmt(S.paper[0])} × ${fmt(S.paper[1])}`)
+    h = hdr('Plot', `${S.svg_name} · page ${size(S.page)} · paper ${size(S.paper)}`)
       + grp('Placement', `<div class="row"><div class="seg">${[['1:1', '1:1'], ['center', 'Centered'], ['fit', 'Fit to paper']].map(([v, t]) => `<button class="btn ${S.placement === v ? 'on' : ''}" data-pl="${v}">${t}</button>`).join('')}</div></div>
         ${adjustHtml()}
         ${st.origin_set ? '' : '<div class="msg">Origin not set. Go to step 2, or plot from the current position.</div>'}${outsideMsg()}`)

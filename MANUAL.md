@@ -99,7 +99,7 @@ Once a plot has run, a bar under the buttons shows the path number, the share of
 
 Below them you pick a path: drag the slider across the full width, click a path on the board (the pointer turns into a crosshair over a path; with a finger, within about 20 px of the line), type its number in the field and press Enter, or step with ‹ and ›. One click on an arrow moves one path; hold it and it runs on, about 20 paths a second. The picked path is drawn thick, the paths before it count as done. "Resume from path N" next to the field plots from there to the end, for example after a stop or when the pen ran dry. "Plot only" plots just that one path and leaves out the layer pauses, for example to redraw a line the pen skipped. After a stop the picker stands on the path where the plot stopped.
 
-![After a stop at path 65: a click on the curve picked path 5, drawn thick, path number 5 next to the arrows, Resume from path 5 and Plot only in the Run group](docs/manual-resume.png)
+![After a stop: a click on the curve picked path 5, drawn thick, path number 5 next to the arrows, Resume from path 5 and Plot only in the Run group](docs/manual-resume.png)
 
 ## The board
 
