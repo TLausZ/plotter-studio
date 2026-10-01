@@ -14,10 +14,12 @@ Have a pen plotter? You can help. Try Plotter Studio on your machine and tell us
 plotter-studio/
   README.md                          this file
   DESIGN.md                          Material Design 3 components on the drafting palette; tokens and rationale of the web UI
+  MANUAL.md                          how to use Plotter Studio: the five steps, board, keys, console, troubleshooting
   TESTING.md                         the three test levels, what each check verifies, how to add one
   TODO.md                            tasks and ideas
   iDraw Extension Analysis 2026-09-02.md   how the original plugin works, firmware commands, axis mapping
   docs/screenshot.png                web UI in the simulator, plotting the A3 test sheet (picture above)
+  docs/manual-*.png                  pictures for MANUAL.md
   extensions/                        working copy; Inkscape reads ~/Library/Application Support/org.inkscape.Inkscape/config/inkscape/extensions
     idraw_core.py                    plotter logic without UI (transport, state, plot run, tests, SVG loading)
     idraw_server.py                  local HTTP server: one Session around a Plotter, JSON commands, server-sent events
@@ -65,7 +67,7 @@ cp extensions/idraw_core.py extensions/idraw_server.py extensions/idraw_web.html
 
 Restart Inkscape, open a document, Extensions > Plotter > Plotter Studio. The model defaults to iDraw A4; pick yours in step 1 (Connect), it is remembered. Tick "Simulation" for a dry run, "Allow other devices" for the iPad. The extension returns at once; Inkscape stays usable and the SVG is not modified. Run the extension again to load a changed drawing (it starts a second server on the next free port only if the first was closed; close the old browser tab first).
 
-Keyboard on the page: arrow keys move the carriage, 1/2/3 set the step, Space toggles the pen, Shift+Up/Down shifts the current pen height by 0.5 mm and writes it into the profile, Esc stops. Keys are ignored while a field has focus. The input line under the log sends a hand-typed G-code or `$` command as is; the reply appears in the log (position is not tracked after hand-typed moves, run Home to resync). The unit switch (mm, cm, in) changes the readout, the paper fields, the jog steps and the rulers; everything is stored in mm. Paths that leave the sheet or the machine travel are amber on the board, the Plot step says how many, and Start plot asks before plotting anyway. The title block (sheet, scale, pen, feed, file) is plotted as a last layer "Title block" in single-stroke text; untick it in the Plot step or switch it off with the corner button on the board. Reset in the app bar puts view, paper, placement, layers and origin back to the defaults after a confirmation; saved pen profiles and the connection stay. After a stop (or a finished plot) the Run group shows a slider and "Resume from path N": drag it to the path to continue from, the board shows the paths still to plot, and the plot starts there; use it after a stop or when the pen ran dry. "Hide lines behind filled shapes" in the Plot step drops the parts of lines that lie behind shapes with a fill drawn later in the document (hidden-line removal, pure Python, no pyclipper needed); the drawing is loaded again when toggled. If the board stops answering, the transport gives up after the expected move time plus 15 s (homing: 120 s) and the connection is dropped; reconnect and home.
+How to use the page, step by step, with keys, console and troubleshooting: [MANUAL.md](MANUAL.md).
 
 ## Architecture
 
