@@ -1,6 +1,25 @@
-# GitHub Pages: README.md is the start page, MANUAL.md the manual (links between .md files are rewritten)
+# GitHub Pages with Just the Docs. README.md is the start page; titles and navigation order are set here,
+# not as front matter, so the Markdown files stay clean on github.com.
 title: Plotter Studio
 description: Interactive pen plotter control for Inkscape with a local web UI. Alpha.
-theme: jekyll-theme-cayman
+remote_theme: just-the-docs/just-the-docs
+plugins:
+  - jekyll-remote-theme
+search_enabled: true
+aux_links:
+  GitHub: https://github.com/TLausZ/plotter-studio
 exclude:
   - extensions
+defaults:
+  - scope: {path: README.md}
+    values: {title: Home, nav_order: 1}
+  - scope: {path: MANUAL.md}
+    values: {title: Manual, nav_order: 2}
+  - scope: {path: TESTING.md}
+    values: {title: Testing, nav_order: 3}
+  - scope: {path: TODO.md}
+    values: {title: To do, nav_order: 4}
+  - scope: {path: "iDraw Extension Analysis 2026-09-02.md"}
+    values: {title: Original plugin analysis, nav_order: 5}
+  - scope: {path: DESIGN.md}
+    values: {nav_exclude: true}
