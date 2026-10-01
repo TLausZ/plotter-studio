@@ -25,9 +25,12 @@ docs/ui/<name>.png (MANUAL.md, next to the paragraph that describes the element)
     Crops of single elements at device scale 2, on the demo drawing, A4 landscape, 1:1, iDraw A4,
     connected and homed: app-bar (status to Stop), placement (Position, scale, rotation unfolded),
     layers, run (Start plot to the estimate), outside-notice and outside-dialog (sheet A5),
-    pause-dialog (before "!2 Detail red"), path-picker (path 5), board-tools (corner button and
+    pause-dialog (before "!2 Detail red"), board-tools (corner button and
     zoom), sheet-machine, title-block (its corner of the sheet), splitter, console, command-reference,
     reset-dialog. The MANUAL.md width of each is half its pixel width.
+    Made by hand, not by this script (native dropdowns and tooltips are drawn outside the page):
+    model-dropdown, test-drawing-dropdown, estimate-tooltip, path-number-tooltip. Take them again
+    with Shift-Cmd-4 on a Retina screen when these controls change.
 
 The other pictures (manual-connect, manual-paper, manual-pen, manual-steps) are cut from single
 steps of the panel and are not made by this script.
@@ -201,9 +204,6 @@ def ui_crops(page):
     page.click("#adj summary")
     shot("layers", group("Layers"))
     shot("run", group("Run").locator(".row").first)
-    page.fill("#pickN", "5")
-    page.press("#pickN", "Enter")
-    shot("path-picker", page.locator("#pickN").locator("xpath=.."))
 
     tab(page, 1)
     select(page, "#fmt", "A5")                                    # the A4 drawing at 1:1 leaves an A5 sheet

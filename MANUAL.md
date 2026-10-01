@@ -47,6 +47,8 @@ The app bar at the top shows the status (ready, moving, plotting, paused), the p
 
 Choose the port and click Connect. "Simulation" is always in the list. Choose your plotter in Model; the choice is remembered. Models other than the iDraw A1 are marked "(untested)": their commands were written from the vendors' code and have not run on a device yet.
 
+<img src="docs/ui/model-dropdown.png" alt="Model list opened: iDraw A4 to A0, iDraw V3 and MiniKit, AxiDraw models and GRBL plotters, all but iDraw A1 marked untested" width="360">
+
 Home moves the carriage to the reference corner and sets the origin there. After homing, the software knows the travel range of the machine and draws it on the board.
 
 <img src="docs/manual-connect.png" alt="Connect step: port Simulation, model iDraw A1, Home button" width="420">
@@ -80,6 +82,8 @@ Heights, feed rates and line width form a profile. Type a name under "Save as" a
 Feed rates for drawing and travel, in mm/min. Line width is the width you measured on paper; it is printed in the title block. Save profile stores the values in the current profile.
 
 Test drawing replaces your document with a calibration sheet from the `tests/` folder; [Test drawings](#test-drawings) below shows each one and what it is for. The first entry, under Document, brings your document back. Plot it from step 5. Your own SVGs dropped into `tests/` appear in the list too.
+
+<img src="docs/ui/test-drawing-dropdown.png" alt="Test drawing list opened: under Document idraw_demo.svg, under Test drawings the nine files from the tests folder" width="420">
 
 ### Plot
 
@@ -115,11 +119,13 @@ The notice in the step and the question of Start plot when paths leave the sheet
 
 Next to the buttons, ≈ shows how long the plot will take: the drawn length at the drawing feed, the travel between the paths at the travel feed, and a pen down and up per path. Hover over it for the three parts. Acceleration and the time the plotter takes to answer each line are not in the formula, so on a real plotter the first estimate is probably too short; by how much is not measured yet and depends on the drawing. After the first finished plot of at least a minute, Plotter Studio knows the ratio of the measured to the estimated time for this model and multiplies every later estimate by it; the hover text shows the factor. Time spent in layer pauses does not count, plots in the simulator do not change the factor, and Reset keeps it.
 
+<img src="docs/ui/estimate-tooltip.png" alt="Hover text of the estimate: draw, travel and pen time, not yet measured on iDraw A1, acceleration not included" width="480">
+
 Once a plot has run, a bar under the buttons shows the path number, the share of the drawn length that is done, and the estimated time left. Travel moves are not counted, so both run a little ahead on drawings with many long jumps.
 
 Below them you pick a path: drag the slider across the full width, click a path on the board (the pointer turns into a crosshair over a path; with a finger, within about 20 px of the line), type its number in the field and press Enter, or step with ‹ and ›. One click on an arrow moves one path; hold it and it runs on, about 20 paths a second. The picked path is drawn thick, the paths before it count as done. "Resume from path N" next to the field plots from there to the end, for example after a stop or when the pen ran dry. "Plot only" plots just that one path and leaves out the layer pauses, for example to redraw a line the pen skipped. After a stop the picker stands on the path where the plot stopped.
 
-<img src="docs/ui/path-picker.png" alt="Path picker row: previous and next arrows around the path number 5, Resume from path 5, Plot only" width="479">
+<img src="docs/ui/path-number-tooltip.png" alt="Path picker after a stop: slider, arrows around the path number 56, Resume from path 56, Plot only, and the hover text Path 1 to 185; Enter picks it" width="489">
 
 ![After a stop: a click on the curve picked path 5, drawn thick, path number 5 next to the arrows, Resume from path 5 and Plot only in the Run group](docs/manual-resume.png)
 
