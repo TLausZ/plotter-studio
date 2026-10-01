@@ -1,13 +1,15 @@
-# iDraw Interactive
+# Plotter Studio
 
-Interactive control for the UUNA TEK iDraw H A1 (DrawCore V2.0 board, GRBL dialect) as an Inkscape extension with a local web UI. Wizard flow: Connect, Paper, Pen, Speed, Plot. Runs without a device in simulation mode, and on an iPad in the same network.
+Interactive pen plotter control as an Inkscape extension with a local web UI. Built for the UUNA TEK iDraw (DrawCore board, GRBL dialect); AxiDraw (EBB) and plain GRBL plotters are supported but untested. Wizard flow: Connect, Paper, Pen, Speed, Plot. Runs without a device in simulation mode, and on an iPad in the same network.
+
+**Alpha.** This is an early version. Everything runs in the simulator, but nothing has been tested on a real plotter yet, so expect bugs and changes. Help is very welcome: test reports from an iDraw, AxiDraw or other GRBL plotter, bug reports and pull requests. Open an issue to get in touch.
 
 This document is for people and agents building on it: other features, other platforms, other plotters.
 
 ## Folders
 
 ```
-inkscape-extension/
+plotter-studio/
   README.md                          this file
   DESIGN.md                          Material Design 3 components on the drafting palette; tokens and rationale of the web UI
   TESTING.md                         the three test levels, what each check verifies, how to add one
