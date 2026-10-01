@@ -14,7 +14,7 @@ docs/manual-resume.png (MANUAL.md, end of "Plot"):
     The path picker after a stop. Demo drawing idraw_demo.svg, paper A4 landscape, placement 1:1,
     pause before "!2 Detail red" switched off. The plot is stopped at about path 60, then the
     curve (path 5) is clicked on the board: drawn thick, paths 1 to 4 done, the field shows 5,
-    the buttons read "Resume from path 5" and "Plot only".
+    the buttons read "Resume from 5" and "Plot this path".
 
 docs/tests/<name>.png (MANUAL.md, "Test drawings"):
     Each SVG in extensions/tests/ on a white sheet with a thin grey edge, 500 px on its long side at

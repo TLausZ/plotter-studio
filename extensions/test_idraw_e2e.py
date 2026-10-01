@@ -508,7 +508,7 @@ def check_resume_from_path(page):
 
 
 def check_path_picker(page):
-    """Plot step without a stop first: a click on a path on the board picks it, Plot only draws just that path."""
+    """Plot step without a stop first: a click on a path on the board picks it, Plot this path draws just that path."""
     tab(page, 4)
     expect(page.locator("#pickN")).to_have_value("1")
     n = page.evaluate("() => S.strokes.length")
@@ -518,7 +518,7 @@ def check_path_picker(page):
     expect(page.locator("#preview")).to_have_class(re.compile(r"\bpick\b"))   # crosshair over a path
     page.mouse.click(x, y)
     expect(page.locator("#pickN")).to_have_value("6")
-    expect(page.locator("#resumeBtn")).to_have_text("Resume from path 6")
+    expect(page.locator("#resumeBtn")).to_have_text("Resume from 6")
     expect(page.locator("#resumeAt")).to_have_value("5")
     expect(page.locator("#strokes path.sel")).to_have_count(1)
     assert page.evaluate("() => [...document.querySelectorAll('#strokes path')].findIndex(p => p.classList.contains('sel'))") == 5
@@ -542,10 +542,10 @@ def check_path_stepping(page):
     n = page.evaluate("() => S.strokes.length")
     page.fill("#pickN", "1")                                  # an earlier plot may have moved the pick on
     page.press("#pickN", "Enter")
-    expect(page.locator("#resumeBtn")).to_have_text("Resume from path 1")
+    expect(page.locator("#resumeBtn")).to_have_text("Resume from 1")
     page.click("button[data-step='1']")
     expect(page.locator("#pickN")).to_have_value("2")
-    expect(page.locator("#resumeBtn")).to_have_text("Resume from path 2")
+    expect(page.locator("#resumeBtn")).to_have_text("Resume from 2")
     expect(page.locator("#strokes path.sel")).to_have_count(1)
     page.click("button[data-step='-1']")
     expect(page.locator("#pickN")).to_have_value("1")

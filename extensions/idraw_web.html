@@ -161,7 +161,7 @@ details#adj{margin:2px 0 6px} details#adj summary{cursor:pointer;color:var(--md-
 .stroke{fill:none;stroke:var(--ink-faint);stroke-linecap:round;stroke-linejoin:round}
 .stroke.done{stroke:var(--ink)}
 .stroke.out{stroke:var(--md-amber)}     /* leaves the sheet or the machine travel */
-.stroke.sel{stroke:var(--ink);stroke-width:var(--sel-w)}   /* picked for Resume or Plot only */
+.stroke.sel{stroke:var(--ink);stroke-width:var(--sel-w)}   /* picked for Resume or Plot this path */
 .penmark.up,#trace .up,#trace .travel{stroke:var(--pen-up)} .penmark.down,#trace .down{stroke:var(--pen-down)}
 .ruler text{font-family:var(--f-draft-mono);fill:rgba(255,255,255,.75)}
 .ruler line{stroke:rgba(255,255,255,.55)}
@@ -264,7 +264,7 @@ let S = null;            // snapshot from the server
 let step = 0;
 let jogIdx = 1;
 let done = 0;            // strokes plotted so far
-let pick = null;         // path picked on the board or with the slider (index) for Resume and Plot only; null = follow the progress
+let pick = null;         // path picked on the board or with the slider (index) for Resume and Plot this path; null = follow the progress
 let adjOpen = false, alignRef = 'sheet', alignMargin = 10, rotStep = 90;   // placement details: open, align to sheet or margin, margin in mm, rotation step
 // the view survives a reload (step, zoom and pan, sheet or machine, placement details open), restored at the end of this script
 let keepView = true;   // false from Reset on, so a late snapshot cannot write the old view back
@@ -400,7 +400,7 @@ function renderPanel() {
       + grp('Run', `<div class="row"><button class="btn filled" data-cmd="plot">Start plot</button><button class="btn danger" data-cmd="stop">Stop</button><button class="btn outlined" data-cmd="frame" data-args='{"kind":"drawing"}'>Trace drawing frame</button>${estimateHtml()}</div>
         ${p ? `<div class="progress"><i id="pbar" style="width:${pct}%"></i></div><div class="mono body-small" id="ptxt">${progressText()}</div>` : ''}
         ${S.strokes.length && st.status !== 'plotting' && st.status !== 'paused' ? `<input type="range" id="resumeAt" min="0" max="${S.strokes.length - 1}" value="${pickIdx()}" aria-label="Path" title="Click a path on the board or drag the slider">
-        <div class="row"><button class="btn icon-btn outlined" data-step="-1" aria-label="Previous path" title="Previous path; hold to run back">‹</button><input id="pickN" class="pickn mono" inputmode="numeric" value="${pickIdx() + 1}" aria-label="Path number" title="Path 1 to ${S.strokes.length}; Enter picks it"><button class="btn icon-btn outlined" data-step="1" aria-label="Next path" title="Next path; hold to run on">›</button><button class="btn outlined" id="resumeBtn" title="Plot from this path to the end; the paths before count as done">Resume from path ${pickIdx() + 1}</button><button class="btn outlined" id="onlyBtn" title="Plot just this path, for a line the pen skipped">Plot only</button></div>` : ''}`);
+        <div class="row"><button class="btn icon-btn outlined" data-step="-1" aria-label="Previous path" title="Previous path; hold to run back">‹</button><input id="pickN" class="pickn mono" inputmode="numeric" value="${pickIdx() + 1}" aria-label="Path number" title="Path 1 to ${S.strokes.length}; Enter picks it"><button class="btn icon-btn outlined" data-step="1" aria-label="Next path" title="Next path; hold to run on">›</button><button class="btn outlined" id="resumeBtn" title="Plot from this path to the end; the paths before count as done">Resume from ${pickIdx() + 1}</button><button class="btn outlined" id="onlyBtn" title="Plot just this path, for a line the pen skipped">Plot this path</button></div>` : ''}`);
   }
   $('panel').innerHTML = h;
   wirePanel();
@@ -469,7 +469,7 @@ function setPick(i) {   // the board marks the paths before i as done and path i
   pick = i; done = i; markDone();
   const r = $('resumeAt'); if (!r) return;
   const nf = $('pickN'); if (nf) nf.value = i + 1;   // typing only picks on change, so this never overwrites a half-typed number
-  r.value = i; $('resumeBtn').textContent = `Resume from path ${i + 1}`;
+  r.value = i; $('resumeBtn').textContent = `Resume from ${i + 1}`;
 }
 // one step per press; held down, one step every 50 ms after 400 ms
 function holdRepeat(b, fn) {
