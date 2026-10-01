@@ -404,15 +404,6 @@ def load_svg(path, hiding=False):
 
 # ---------------------------------------------------------------- Geometry
 
-def bbox(paths):
-    """(x0, y0, x1, y1) over all points of all polylines."""
-    xs = [x for p in paths for x, _ in p]
-    ys = [y for p in paths for _, y in p]
-    if not xs:
-        return 0, 0, 0, 0
-    return min(xs), min(ys), max(xs), max(ys)
-
-
 # --- single-stroke text (Hershey Sans 1-stroke, SVG font in this folder; see HersheySans1-LICENSE.txt)
 _FONT = None
 FONT_CAP = 662.0    # cap height in font units (top of "A")

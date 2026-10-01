@@ -276,10 +276,10 @@ class Session:
             return self.run(p.nudge_z, f("delta"))
         if cmd == "frame":
             if a.get("kind") == "drawing":
-                pts = [path for l in self.placed() if l.enabled for path in l.paths]
-                if not pts:
+                box = core.bbox([l for l in self.placed() if l.enabled])
+                if box is None:
                     return {"error": "No paths selected."}
-                return self.run(p.frame, *core.bbox(pts))
+                return self.run(p.frame, *box)
             return self.run(p.frame, 0, 0, self.paper[0], self.paper[1])
         if cmd == "test":
             name = a.get("name")

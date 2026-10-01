@@ -77,6 +77,8 @@ def main():
     snap = call(base + "/api/snapshot")
     assert snap["progress"]["i"] == 8 and snap["unit"] == "cm", snap["progress"]   # title block off
     assert st["status"] == "ready" and abs(st["x"]) < 1e-6
+    assert call(base + "/api/cmd", {"cmd": "frame", "kind": "drawing"}) == {"ok": True}
+    assert wait_idle(base)["status"] == "ready"
     assert "error" in call(base + "/api/cmd", {"cmd": "nonsense"})
     httpd.shutdown()
     if keep is not None:              # the run changes unit and title block; restore the user's settings
