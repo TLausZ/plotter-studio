@@ -4,7 +4,7 @@ Analysis of the folder `extensions/` as shipped by UUNA TEK (state 2 September 2
 
 ## Environment
 
-Inkscape 1.4.2 on macOS, with its own Python 3.10.13 in `/Applications/Inkscape.app/Contents/Resources/bin/python3`. That Python has `tkinter` (8.5) and `pyserial` 3.5. The system Python 3.14 has no pyserial. The extensions were installed identically in `~/Library/Application Support/org.inkscape.Inkscape/config/inkscape/extensions/` and in the project folder (the latter has since been cleaned up, see `archive/`).
+Inkscape 1.4.2 on macOS, with its own Python 3.10.13 in `/Applications/Inkscape.app/Contents/Resources/bin/python3`. That Python has `tkinter` (8.5) and `pyserial` 3.5. The system Python 3.14 has no pyserial. The extensions were installed identically in `~/Library/Application Support/org.inkscape.Inkscape/config/inkscape/extensions/` and in the project folder (the latter has since been cleaned up; the copy is in `archive/` in the git history, commit 5256766).
 
 ## Which files belong together
 

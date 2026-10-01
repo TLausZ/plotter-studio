@@ -35,11 +35,9 @@ inkscape-extension/
                                      original "iDraw 2.0 Control" by UUNA TEK, unchanged, as fallback and reference
     idraw_deps/                      dependencies of the original; the new plugin uses its SVG digest
                                      (idraw2_0internal, ink_extensions, drawcore_plotink) and pyserial as a fallback
-  archive/
-    extensions-original-2026-09-02/  complete copy of the shipped extension folder before cleanup
-    nicht-gebraucht/                 unused: AxiDraw, iDraw 1.0, HSE, laser, merge, naming, hatch, Hershey, process_ai
-    tk-ui/                           first UI as a tkinter window; replaced by the web UI (Inkscape's Tk 8.5 draws nothing on macOS 26)
 ```
+
+The folder `archive/` was removed before publishing. It is still in the git history (commit 5256766): the complete original extension folder by UUNA TEK, the parts not needed here (AxiDraw, iDraw 1.0, laser, merge, naming, hatch, Hershey, process_ai) and the first UI as a tkinter window (`archive/tk-ui/`, replaced by the web UI because Inkscape's Tk 8.5 draws nothing on macOS 26).
 
 ## Running
 
@@ -82,7 +80,7 @@ browser (idraw_web.html)  <-- HTTP/SSE -->  idraw_server.Session  -->  idraw_cor
 
 ### Building another UI
 
-Any client that speaks the three routes works: a native app, a CLI, a different web page. Nothing in `idraw_core` or `idraw_server` knows about the HTML. For a very different interaction (for example a Tk window) use `idraw_core.Plotter` directly, as the archived Tk UI did.
+Any client that speaks the three routes works: a native app, a CLI, a different web page. Nothing in `idraw_core` or `idraw_server` knows about the HTML. For a very different interaction (for example a Tk window) use `idraw_core.Plotter` directly, as the archived Tk UI did (see `archive/tk-ui/` in commit 5256766).
 
 ### Other plotters
 
