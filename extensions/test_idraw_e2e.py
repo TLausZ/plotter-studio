@@ -33,6 +33,14 @@ def click_cmd(page, selector):
         page.click(selector)
 
 
+def select_cmd(page, selector, value):
+    """Pick an option whose change handler sends a command and wait for the server's reply. Two selects
+    in a row otherwise race: the threaded server may finish the second request first (format, then
+    orientation left the sheet in the old orientation)."""
+    with page.expect_response(lambda r: "/api/cmd" in r.url):
+        page.select_option(selector, value)
+
+
 def wait_paper(page, name, w, h):
     """Wait until the page's snapshot shows this paper (name and size in mm)."""
     page.wait_for_function("([n, w, h]) => S && S.paper_name === n && Math.abs(S.paper[0] - w) < 1e-6 && Math.abs(S.paper[1] - h) < 1e-6",
@@ -65,8 +73,8 @@ def reset(page):
     page.click("button[data-cmd=pen_up]")
     expect(page.locator("#penlbl")).to_have_text("pen up", timeout=10000)
     tab(page, 1)
-    page.select_option("#fmt", "A4")
-    page.select_option("#orient", "landscape")
+    select_cmd(page, "#fmt", "A4")
+    select_cmd(page, "#orient", "landscape")
     wait_paper(page, "A4", 297, 210)
     tab(page, 4)
     page.click("button[data-pl='1:1']")
@@ -133,12 +141,12 @@ def check_console(page):
 
 def check_paper_and_title_block(page):
     tab(page, 1)
-    page.select_option("#fmt", "A3")
+    select_cmd(page, "#fmt", "A3")
     wait_paper(page, "A3", 420, 297)
-    page.select_option("#orient", "portrait")
+    select_cmd(page, "#orient", "portrait")
     wait_paper(page, "A3", 297, 420)
-    page.select_option("#fmt", "A4")
-    page.select_option("#orient", "landscape")
+    select_cmd(page, "#fmt", "A4")
+    select_cmd(page, "#orient", "landscape")
     wait_paper(page, "A4", 297, 210)
 
 
@@ -228,21 +236,21 @@ def check_title_block_corner(page):
 
 def check_paper_fields_and_orientation(page):
     tab(page, 1)
-    page.select_option("#fmt", "A5")
+    select_cmd(page, "#fmt", "A5")
     expect(page.locator("#pw")).to_have_value("210.0")
     expect(page.locator("#ph")).to_have_value("148.0")
     expect(page.locator("#preview rect[fill='var(--paper)']").first).to_have_attribute("width", "210")
-    page.select_option("#orient", "portrait")
+    select_cmd(page, "#orient", "portrait")
     expect(page.locator("#pw")).to_have_value("148.0")
     expect(page.locator("#ph")).to_have_value("210.0")
     expect(page.locator("#preview rect[fill='var(--paper)']").first).to_have_attribute("height", "210")
-    page.select_option("#fmt", "Custom")
+    select_cmd(page, "#fmt", "Custom")
     wait_paper(page, "Custom", 148, 210)   # panel re-rendered
     page.fill("#pw", "300")
     page.fill("#ph", "200")
     page.click("#paperApply")
     wait_paper(page, "Custom", 300, 200)
-    page.select_option("#orient", "portrait")     # Custom: the fields rule, orientation does not swap them
+    select_cmd(page, "#orient", "portrait")     # Custom: the fields rule, orientation does not swap them
     wait_paper(page, "Custom", 300, 200)
 
 
@@ -272,7 +280,7 @@ def check_reset_button(page):
     page.locator("#zoom").fill("6")
     page.locator("#tbpos").click()
     tab(page, 1)
-    page.select_option("#fmt", "A3")
+    select_cmd(page, "#fmt", "A3")
     tab(page, 4)
     page.click("button[data-pl=fit]")
     page.locator("#panel input[data-k=enabled]").first.uncheck()
@@ -309,7 +317,7 @@ def check_test_drawing_dropdown(page):
     tab(page, 3)
     files = page.locator("#testFile option").all_text_contents()
     assert files[0].startswith("Document: idraw_demo.svg") and "A4-landscape-accuracy.svg" in files, files
-    page.select_option("#testFile", "A4-landscape-accuracy.svg")
+    select_cmd(page, "#testFile", "A4-landscape-accuracy.svg")
     page.wait_for_function("() => S.svg_name === 'A4-landscape-accuracy.svg' && S.test_file === 'A4-landscape-accuracy.svg'")
     expect(page.locator("#trace line")).to_have_count(0)
     expect(page.locator("#strokes path.done")).to_have_count(0)
@@ -317,7 +325,7 @@ def check_test_drawing_dropdown(page):
     tab(page, 4)
     expect(page.locator("#panel tr", has_text="Accuracy")).to_have_count(1)
     tab(page, 3)
-    page.select_option("#testFile", "")
+    select_cmd(page, "#testFile", "")
     page.wait_for_function("() => S.svg_name === 'idraw_demo.svg' && S.test_file === ''")
     tab(page, 4)
     expect(page.locator("#panel tr", has_text="1 Frame")).to_have_count(1)
@@ -326,7 +334,7 @@ def check_test_drawing_dropdown(page):
 def check_outside_sheet_warning(page):
     """A4 drawing at 1:1 on A6: amber paths, a notice in the Plot step, Start plot asks first."""
     tab(page, 1)
-    page.select_option("#fmt", "Custom")
+    select_cmd(page, "#fmt", "Custom")
     wait_paper(page, "Custom", 297, 210)
     page.fill("#pw", "148")
     page.fill("#ph", "105")
@@ -349,7 +357,7 @@ def check_outside_sheet_warning(page):
     expect(page.locator("#log")).to_contain_text("Plot stopped.", timeout=30000)
     wait_idle(page)
     tab(page, 1)
-    page.select_option("#fmt", "A4")
+    select_cmd(page, "#fmt", "A4")
     wait_paper(page, "A4", 297, 210)
     page.wait_for_function("() => S.outside === 0")
     expect(page.locator("#strokes path.out")).to_have_count(0)
@@ -412,7 +420,7 @@ def check_model_dropdown(page):
     before = page.locator("#model").input_value()
     expect(page.locator("#model option[value='iDraw A1']")).to_have_text("iDraw A1")
     expect(page.locator("#model option[value='AxiDraw V3/A4']")).to_have_text("AxiDraw V3/A4 (untested)")
-    page.select_option("#model", "AxiDraw V3/A4")
+    select_cmd(page, "#model", "AxiDraw V3/A4")
     expect(page.locator("#panel")).to_contain_text("Only the iDraw A1 has been tested")
     page.click("#connBtn")                    # reconnect: the dialect is set up on connect
     expect(page.locator("#connBtn")).to_have_text("Connect")
@@ -427,9 +435,9 @@ def check_model_dropdown(page):
     after = page.locator("#log").text_content().split("> EM,1,1", 1)[1]
     assert "$H" not in after and "G1 " not in after, after
     tab(page, 0)
-    page.select_option("#model", "iDraw A1")
+    select_cmd(page, "#model", "iDraw A1")
     expect(page.locator("#panel")).not_to_contain_text("Only the iDraw A1 has been tested")
-    page.select_option("#model", before)
+    select_cmd(page, "#model", before)
 
 
 def check_resume_from_path(page):
@@ -484,7 +492,7 @@ def check_path_picker(page):
 def check_hidden_lines(page):
     """Plot step: the checkbox reloads the drawing with lines behind fills removed."""
     tab(page, 3)
-    page.select_option("#testFile", "A4-landscape-hidden-lines.svg")
+    select_cmd(page, "#testFile", "A4-landscape-hidden-lines.svg")
     page.wait_for_function("() => S.svg_name === 'A4-landscape-hidden-lines.svg'")
     n = page.evaluate("() => S.strokes.length")
     tab(page, 4)
@@ -498,7 +506,7 @@ def check_hidden_lines(page):
     page.uncheck("#hiding")
     page.wait_for_function("(n) => !S.hiding && S.strokes.length === n", arg=n)
     tab(page, 3)
-    page.select_option("#testFile", "")
+    select_cmd(page, "#testFile", "")
 
 
 
