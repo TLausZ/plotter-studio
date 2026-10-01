@@ -222,15 +222,22 @@ def check_title_block_corner(page):
         btn.click()
         expect(btn).to_have_text(icon)
         assert corner() == want, (want, corner())
-    btn.click()                                            # off: no layer, no strokes
+    btn.click()                                            # off: the row stays with both boxes empty and disabled, no strokes
     expect(btn).to_have_text("▢")
-    expect(tb_layer).to_have_count(0)
+    expect(tb_layer).to_have_count(1)
+    expect(tb_layer).to_contain_text("off")
+    for box in tb_layer.locator("input").all():
+        expect(box).to_be_disabled()
+        expect(box).not_to_be_checked()
+    expect(page.locator("#strokes path.tb")).to_have_count(0)
     assert page.evaluate("() => S.tb_corner") == "off"
     page.reload()
     expect(page.locator("#tbpos")).to_have_text("▢")     # remembered on the server
     page.locator("#tbpos").click()
     expect(page.locator("#tbpos")).to_have_text("◲")
     tab(page, 4)
+    expect(tb_layer.locator("input[data-k=enabled]")).to_be_enabled()          # on again: the box is back, as it was
+    expect(tb_layer.locator("input[data-k=enabled]")).to_be_checked()
     page.locator("#panel tr", has_text="Title block").locator("input[data-k=enabled]").uncheck()
     page.wait_for_function("() => !S.strokes.some(s => s.layer === S.layers.length - 1)")   # unticked: not in the strokes, so neither plotted nor drawn
 

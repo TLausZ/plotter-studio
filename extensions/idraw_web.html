@@ -385,7 +385,9 @@ function renderPanel() {
         <p>Pick a calibration sheet from the tests folder to plot it instead of your document; the first entry brings the document back. Plot it from step 5.</p>`)
       + grp('Move carriage', jogHtml(), 'wide');
   } else {
-    const rows = S.layers.map((l, i) => `<tr><td><input type="checkbox" data-layer="${i}" data-k="enabled" ${l.enabled ? 'checked' : ''} aria-label="Plot layer ${l.name}"></td>
+    const rows = S.layers.map((l, i) => l.off   // the title block turned off with the corner button: the row stays, greyed
+      ? `<tr title="Off; the corner button on the board turns it on"><td><input type="checkbox" disabled aria-label="Plot layer ${l.name}"></td><td><input type="checkbox" disabled aria-label="Pause before ${l.name}"></td><td style="color:var(--md-on-surface-variant)">${l.name} <span class="mono">off</span></td></tr>`
+      : `<tr><td><input type="checkbox" data-layer="${i}" data-k="enabled" ${l.enabled ? 'checked' : ''} aria-label="Plot layer ${l.name}"></td>
       <td><input type="checkbox" data-layer="${i}" data-k="pause" ${l.pause ? 'checked' : ''} aria-label="Pause before ${l.name}"></td><td>${l.name} <span class="mono" style="color:var(--md-on-surface-variant)">${l.n}</span></td></tr>`).join('');
     const p = S.progress, pct = p && p.total ? 100 * p.done / p.total : 0;
     h = hdr('Plot', `${S.svg_name} · page ${size(S.page)} · paper ${size(S.paper)}`)

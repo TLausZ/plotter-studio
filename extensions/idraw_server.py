@@ -218,7 +218,8 @@ class Session:
             "tb_index": len(self.layers) if self.tb_corner != "off" else None,   # stroke layer index of the title block
             "page": self.page, "svg_name": self.svg_name, "svg_error": self.svg_error,
             "layers": [{"name": l.name, "enabled": l.enabled, "pause": l.pause, "n": len(l.paths)}
-                       for l in self.all_layers()],
+                       for l in self.all_layers()]
+                      + ([{"name": self.tb_layer.name, "off": True}] if self.tb_corner == "off" else []),   # row stays, greyed
             "tb_corner": self.tb_corner, "hiding": self.hiding,
             "pen_s": p.pen_seconds, "time_factor": self.settings.get("time_factor", {}).get(p.model),   # plot time estimate
             "test_files": self.test_files(), "test_file": self.test_file,
