@@ -325,7 +325,9 @@ def check_test_drawing_dropdown(page):
     expect(page.locator("#trace line")).to_have_count(1)
     tab(page, 3)
     files = page.locator("#testFile option").all_text_contents()
-    assert files[0].startswith("Document: idraw_demo.svg") and "A4-landscape-accuracy.svg" in files, files
+    assert files[0] == "idraw_demo.svg" and "A4-landscape-accuracy.svg" in files, files
+    groups = page.evaluate("() => [...document.querySelectorAll('#testFile optgroup')].map(g => [g.label, g.children.length])")
+    assert groups == [["Document", 1], ["Test drawings", len(files) - 1]], groups
     select_cmd(page, "#testFile", "A4-landscape-accuracy.svg")
     page.wait_for_function("() => S.svg_name === 'A4-landscape-accuracy.svg' && S.test_file === 'A4-landscape-accuracy.svg'")
     expect(page.locator("#trace line")).to_have_count(0)

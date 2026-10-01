@@ -24,7 +24,7 @@ Browser, `python3 test_idraw_e2e.py`: starts the server with the simulator (40×
 | plot_with_pause | plot runs, pause dialog before the `!` layer, continue, finished with all strokes done (drawing plus title block) |
 | stop_with_escape | Esc stops a running plot, pen up, status ready |
 | stop_button | the red Stop in the app bar stops a running plot like Esc |
-| test_drawing_dropdown | Speed step: a file from tests/ replaces the document and clears trace, done marks and progress; the first entry brings the document back |
+| test_drawing_dropdown | Speed step: the dropdown has the groups Document (the document) and Test drawings; a file from tests/ replaces the document and clears trace, done marks and progress; the first entry brings the document back |
 | outside_sheet_warning | A4 drawing at 1:1 on a 148 × 105 sheet: amber paths, notice in the Plot step, Start plot opens the confirm dialog, Cancel starts nothing, Plot anyway starts |
 | travel_trace_during_plot | a plot clears the manual trace, leaves dotted travel segments only, the next plot starts with an empty trace |
 | model_dropdown | Untested models carry the label and the hint; after a reconnect an AxiDraw model sends EBB commands, no G-code. |

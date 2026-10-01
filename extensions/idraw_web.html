@@ -335,8 +335,11 @@ function showStep(i) { step = Math.max(0, Math.min(4, i)); renderSteps(); render
 // ---------------------------------------------------------------- panel
 const tf = (id, label, value, opts = {}) =>
   `<div class="tf ${opts.cls || 'w'}"><label for="${id}">${label}${opts.suffix ? ' (' + opts.suffix + ')' : ''}</label><input id="${id}" class="${opts.mono === false ? '' : 'mono'}" value="${value}" ${opts.attrs || ''}></div>`;
+const opt = (o, current) => { const [v, t] = Array.isArray(o) ? o : [o, o]; return `<option value="${v}" ${v === current ? 'selected' : ''}>${t}</option>`; };
+// options: values, [value, text] pairs, or {group, options} for an <optgroup>
 const sel = (id, label, options, current, cls = 'grow', attrs = '') =>
-  `<div class="tf ${cls}"><label for="${id}">${label}</label><select id="${id}" ${attrs}>${options.map(o => { const [v, t] = Array.isArray(o) ? o : [o, o]; return `<option value="${v}" ${v === current ? 'selected' : ''}>${t}</option>`; }).join('')}</select></div>`;
+  `<div class="tf ${cls}"><label for="${id}">${label}</label><select id="${id}" ${attrs}>${options.map(o => o.group
+    ? `<optgroup label="${o.group}">${o.options.map(x => opt(x, current)).join('')}</optgroup>` : opt(o, current)).join('')}</select></div>`;
 function jogHtml(extra = '') {
   const sizes = JOG[u()].map((v, i) => `<button class="btn ${i === jogIdx ? 'on' : ''}" data-jog="${i}">${v} ${u()}</button>`).join('');
   return `<div class="jog">
@@ -381,7 +384,7 @@ function renderPanel() {
     h = hdr('Speed', '')
       + grp('Feed rates', `<div class="row">${tf('feed_draw', 'Drawing', pr.feed_draw, {cls: 'grow', suffix: 'mm/min'})}${tf('feed_travel', 'Travel', pr.feed_travel, {cls: 'grow', suffix: 'mm/min'})}</div>
         <div class="row">${tf('line_width', 'Line width, measured', pr.line_width, {cls: 'grow', suffix: 'mm'})}<button class="btn outlined" id="profSave2">Save profile</button></div>`)
-      + grp('Test drawing', `<div class="row">${sel('testFile', 'Drawing', [['', S.doc_name ? 'Document: ' + S.doc_name : '(no document)']].concat(S.test_files.map(f => [f, f])), S.test_file)}</div>
+      + grp('Test drawing', `<div class="row">${sel('testFile', 'Drawing', [{group: 'Document', options: [['', S.doc_name || '(none)']]}, {group: 'Test drawings', options: S.test_files}], S.test_file)}</div>
         <p>Pick a calibration sheet from the tests folder to plot it instead of your document; the first entry brings the document back. Plot it from step 5.</p>`)
       + grp('Move carriage', jogHtml(), 'wide');
   } else {
