@@ -204,16 +204,20 @@ def check_zoom_and_pan(page):
     assert [float(v) for v in svg.get_attribute("viewBox").split()] == vb0
 
 
+def tb_corner(page):
+    """Corner of the sheet the title block strokes are in: tl, tr, bl or br."""
+    pw, ph = page.evaluate("() => S.paper")
+    pts = page.evaluate("() => S.strokes.filter(s => s.layer === S.layers.length - 1).flatMap(s => s.pts)")
+    xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+    assert min(xs) >= 0 and max(xs) <= pw and min(ys) >= 0 and max(ys) <= ph
+    return ("t" if max(ys) < ph / 2 else "b") + ("l" if max(xs) < pw / 2 else "r")
+
+
 def check_title_block_corner(page):
     """The title block is a server setting and a virtual last layer whose Plot box turns it on and off; the board shows it as strokes."""
     btn = page.locator("#tbpos")
     tb_layer = page.locator("#panel tr", has_text="Title block")
-    def corner():
-        pw, ph = page.evaluate("() => S.paper")
-        pts = page.evaluate("() => S.strokes.filter(s => s.layer === S.layers.length - 1).flatMap(s => s.pts)")
-        xs, ys = [p[0] for p in pts], [p[1] for p in pts]
-        assert min(xs) >= 0 and max(xs) <= pw and min(ys) >= 0 and max(ys) <= ph
-        return ("t" if max(ys) < ph / 2 else "b") + ("l" if max(xs) < pw / 2 else "r")
+    corner = lambda: tb_corner(page)
     expect(btn).to_have_text("◲")
     assert corner() == "br"
     tab(page, 4)
@@ -241,6 +245,34 @@ def check_title_block_corner(page):
     btn.click()
     expect(btn).to_have_text("◲")
     expect(box).to_be_checked()
+
+
+def check_title_block_switches(page):
+    """Corner button and the title block's Plot box used in turn: on again goes where the button would go next,
+    so the title block never jumps (it went to bottom right after the box had turned it off in another corner)."""
+    page.evaluate("() => cmd('set_title_block', {corner: 'br'})")
+    btn, box = page.locator("#tbpos"), page.locator("#panel tr", has_text="Title block").locator("input[data-k=enabled]")
+    expect(btn).to_have_text("◲")
+    tab(page, 4)
+    icons = {"br": "◲", "bl": "◱", "tl": "◰", "tr": "◳", "off": "▢"}
+    steps = [("button", "bl"), ("button", "tl"), ("untick", "off"), ("button", "tl"),   # back where the box left it
+             ("untick", "off"), ("tick", "tl"), ("button", "tr"), ("button", "off"),
+             ("tick", "br"), ("button", "bl")]                                            # off by the button: the cycle goes on
+    for i, (action, want) in enumerate(steps):
+        if action == "button":
+            with page.expect_response(lambda r: "/api/cmd" in r.url):
+                btn.click()
+        elif action == "tick":
+            box.check()
+        else:
+            box.uncheck()
+        expect(btn).to_have_text(icons[want])
+        if want == "off":
+            expect(box).not_to_be_checked()
+            expect(page.locator("#strokes path.tb")).to_have_count(0)
+        else:
+            expect(box).to_be_checked()
+            assert tb_corner(page) == want, (i, action, want, tb_corner(page))
 
 
 def check_paper_fields_and_orientation(page):
@@ -683,7 +715,7 @@ def check_drag_drawing(page):
 
 CHECKS = [check_connect_and_home, check_steps_fit_without_scrolling, check_keyboard_jog_and_pen,
           check_console, check_paper_and_title_block, check_paper_fields_and_orientation, check_units,
-          check_splitter, check_zoom_and_pan, check_title_block_corner, check_reset_button,
+          check_splitter, check_zoom_and_pan, check_title_block_corner, check_title_block_switches, check_reset_button,
           check_plot_with_pause, check_stop_with_escape, check_stop_button, check_test_drawing_dropdown,
           check_outside_sheet_warning, check_travel_trace_during_plot, check_model_dropdown,
           check_resume_from_path, check_path_picker, check_path_stepping, check_large_drawing, check_plot_estimate, check_view_survives_reload, check_hidden_lines, check_placement_adjust, check_drag_drawing]

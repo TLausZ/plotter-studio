@@ -106,7 +106,7 @@ DrawCore enumerates as CH340 (USB VID:PID 1A86:7523), 115200 baud, `rts`/`dtr` o
 
 ## Status
 
-As of 1 October 2026. Built and exercised in the simulator: all five steps, jog, pen, profiles, unit switch, test drawings, plot with layer pause, stop, free placement (position, scale, rotation, align, drag on the board), path picker (click a path on the board, resume from path N or plot only that path), plot time estimate with a time factor per model from the last real plot, progress, preview with rulers and title block, hidden-line removal, transport timeouts, LAN access. The e2e suite has 27 checks.
+As of 1 October 2026. Built and exercised in the simulator: all five steps, jog, pen, profiles, unit switch, test drawings, plot with layer pause, stop, free placement (position, scale, rotation, align, drag on the board), path picker (click a path on the board, resume from path N or plot only that path), plot time estimate with a time factor per model from the last real plot, progress, preview with rulers and title block, hidden-line removal, transport timeouts, LAN access. The e2e suite has 28 checks.
 
 Not verified on the device yet:
 
