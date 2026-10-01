@@ -215,7 +215,7 @@ Plotted paths turn dark, travel moves are dotted. Moves made by hand (jog, conso
 
 The title block (sheet, scale, pen, feed, file) is plotted in single-stroke text as the last layer, "Title block". The corner button on the board moves it through the four corners and off. It can also be unticked in the layer list.
 
-<img src="docs/ui/title-block.png" alt="Title block on the sheet: sheet A4 297.0 x 210.0 mm, scale 1:1, pen Default 0.3 mm, feed 2000 / 8000 mm/min, file idraw_demo.svg" width="197">
+<img src="docs/ui/title-block.png" alt="Title block: sheet A4 297.0 x 210.0 mm, scale 1:1, pen draw 0.3 mm, feed 2000 / 8000 mm/min, file A4-landscape-pen-height.svg" width="508">
 
 The line between board and log can be dragged to change their size; double-click resets it.
 
