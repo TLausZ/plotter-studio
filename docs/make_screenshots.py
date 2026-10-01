@@ -26,10 +26,11 @@ docs/ui/<name>.png (MANUAL.md, next to the paragraph that describes the element)
     connected and homed: app-bar (status to Stop), placement (Position, scale, rotation unfolded),
     layers, run (Start plot to the estimate), outside-notice and outside-dialog (sheet A5),
     pause-dialog (before "!2 Detail red"), board-tools (corner button and
-    zoom), sheet-machine, title-block (its corner of the sheet), splitter, console, command-reference,
+    zoom), sheet-machine, title-block (its corner of the sheet), splitter, command-reference,
     reset-dialog. The MANUAL.md width of each is half its pixel width.
     Made by hand, not by this script (native dropdowns and tooltips are drawn outside the page):
-    model-dropdown, test-drawing-dropdown, estimate-tooltip, path-number-tooltip. Take them again
+    model-dropdown, test-drawing-dropdown, estimate-tooltip, path-number-tooltip, console-log (log and
+    input line after a stopped plot). Take them again
     with Shift-Cmd-4 on a Retina screen when these controls change.
 
 The other pictures (manual-connect, manual-paper, manual-pen, manual-steps) are cut from single
@@ -191,7 +192,6 @@ def ui_crops(page):
     page.wait_for_function("() => S.strokes.some(s => s.layer !== S.tb_index)")
     sp = page.locator("#splitter").bounding_box()
     shot("splitter", clip={"x": sp["x"] + sp["width"] / 2 - 140, "y": sp["y"] - 24, "width": 280, "height": 64})
-    shot("console", page.locator(".cliRow"))
     page.click("#refBtn")
     shot("command-reference", clip=dialog("#ref"))
     page.click("#refClose")

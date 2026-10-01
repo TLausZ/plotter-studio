@@ -237,7 +237,7 @@ Keys work when no input field has focus.
 
 The line under the log sends a G-code or `$` command as typed, for example `G1 X-20 Y-10 F3000` or `$H`. The reply appears in the log. Up and Down in the line go through the history. The ? button opens a command reference; a click on a command puts it into the line.
 
-<img src="docs/ui/console.png" alt="Console input line with the placeholder G-code or $ command and the ? button" width="600">
+<img src="docs/ui/console-log.png" alt="Console after a stopped plot: the log with the sent G-code lines and Plot stopped, below it the input line and the ? button" width="600">
 
 <img src="docs/ui/command-reference.png" alt="Command reference dialog DrawCore / GRBL commands, a table of command, purpose and reply" width="420">
 
