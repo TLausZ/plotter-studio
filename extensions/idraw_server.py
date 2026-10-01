@@ -64,8 +64,9 @@ class Session:
         self.orient = self.settings.get("orient", "landscape")
         self.pos_mode = self.settings.get("pos_mode", "jog")
         self.tb_corner = self.settings.get("tb_corner", "br")   # title block: tl, tr, br, bl or off
+        self.tb_last = self.settings.get("tb_last", "br")       # the corner its Plot box turns it on in
         self.hiding = bool(self.settings.get("hiding", False))  # hidden-line removal on load
-        self.tb_layer = core.Layer("Title block", [])          # virtual last layer; enabled = plot it
+        self.tb_layer = core.Layer("Title block", [])          # virtual last layer, shown and plotted unless tb_corner is off
         self.placement = "1:1"     # a preset (core.PLACEMENTS) or "custom", which uses self.tf
         self.tf = core.preset("1:1", (297.0, 210.0), core.PAPER_FORMATS["A4"])
         self.page = (297.0, 210.0)
@@ -168,9 +169,6 @@ class Session:
         self.tb_layer.paths = core.title_block_strokes(self.paper, self.tb_corner, self.tb_rows())
         return layers + [self.tb_layer]
 
-    def all_layers(self):
-        return self.layers + ([] if self.tb_corner == "off" else [self.tb_layer])
-
     def tb_rows(self):
         """Label/value rows of the title block, ASCII only (single-stroke font)."""
         k, d = {"mm": 1, "cm": 10, "in": 25.4}[self.unit], {"mm": 1, "cm": 2, "in": 2}[self.unit]
@@ -217,9 +215,9 @@ class Session:
             "tf": self.cur_tf(), "content": self.content(),
             "tb_index": len(self.layers) if self.tb_corner != "off" else None,   # stroke layer index of the title block
             "page": self.page, "svg_name": self.svg_name, "svg_error": self.svg_error,
-            "layers": [{"name": l.name, "enabled": l.enabled, "pause": l.pause, "n": len(l.paths)}
-                       for l in self.all_layers()]
-                      + ([{"name": self.tb_layer.name, "off": True}] if self.tb_corner == "off" else []),   # row stays, greyed
+            "layers": [{"name": l.name, "enabled": l.enabled, "pause": l.pause, "n": len(l.paths)} for l in self.layers]
+                      + [{"name": self.tb_layer.name, "enabled": self.tb_corner != "off", "pause": self.tb_layer.pause,
+                          "n": len(self.tb_layer.paths) if self.tb_corner != "off" else None}],   # Plot box = title block on/off
             "tb_corner": self.tb_corner, "hiding": self.hiding,
             "pen_s": p.pen_seconds, "time_factor": self.settings.get("time_factor", {}).get(p.model),   # plot time estimate
             "test_files": self.test_files(), "test_file": self.test_file,
@@ -235,7 +233,7 @@ class Session:
     def save(self):
         self.settings.update(unit=self.unit, paper=self.paper, paper_name=self.paper_name,
                              orient=self.orient, pos_mode=self.pos_mode, model=self.plotter.model,
-                             tb_corner=self.tb_corner, hiding=self.hiding,
+                             tb_corner=self.tb_corner, tb_last=self.tb_last, hiding=self.hiding,
                              last_profile=self.profile_name)
         core.save_settings(self.settings)
 
@@ -412,7 +410,14 @@ class Session:
                 return {"error": "Bad number."}
             return {"ok": True}
         if cmd == "set_layer":
-            i, layers = int(a.get("index", -1)), self.all_layers()
+            i, layers = int(a.get("index", -1)), self.layers
+            if i == len(layers):   # the title block row: its Plot box turns the title block on (last corner) and off
+                if "enabled" in a:
+                    self.tb_corner = self.tb_last if a["enabled"] else "off"
+                    self.save()
+                if "pause" in a:
+                    self.tb_layer.pause = bool(a["pause"])
+                return {"ok": True}
             if not 0 <= i < len(layers):
                 return {"error": "Unknown layer."}
             if "enabled" in a:
@@ -445,6 +450,8 @@ class Session:
             if a.get("corner") not in ("tl", "tr", "br", "bl", "off"):
                 return {"error": "Unknown corner."}
             self.tb_corner = a["corner"]
+            if self.tb_corner != "off":
+                self.tb_last = self.tb_corner
             self.save()
             return {"ok": True}
         if cmd == "set_model":

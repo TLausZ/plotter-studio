@@ -205,7 +205,7 @@ def check_zoom_and_pan(page):
 
 
 def check_title_block_corner(page):
-    """The title block is a server setting and a virtual last layer; the board shows it as strokes."""
+    """The title block is a server setting and a virtual last layer whose Plot box turns it on and off; the board shows it as strokes."""
     btn = page.locator("#tbpos")
     tb_layer = page.locator("#panel tr", has_text="Title block")
     def corner():
@@ -222,24 +222,25 @@ def check_title_block_corner(page):
         btn.click()
         expect(btn).to_have_text(icon)
         assert corner() == want, (want, corner())
-    btn.click()                                            # off: the row stays with both boxes empty and disabled, no strokes
+    box = tb_layer.locator("input[data-k=enabled]")
+    btn.click()                                            # off: the row stays, its Plot box empty, no strokes
     expect(btn).to_have_text("▢")
     expect(tb_layer).to_have_count(1)
-    expect(tb_layer).to_contain_text("off")
-    for box in tb_layer.locator("input").all():
-        expect(box).to_be_disabled()
-        expect(box).not_to_be_checked()
+    expect(box).not_to_be_checked()
+    expect(box).to_be_enabled()
     expect(page.locator("#strokes path.tb")).to_have_count(0)
     assert page.evaluate("() => S.tb_corner") == "off"
     page.reload()
-    expect(page.locator("#tbpos")).to_have_text("▢")     # remembered on the server
-    page.locator("#tbpos").click()
-    expect(page.locator("#tbpos")).to_have_text("◲")
-    tab(page, 4)
-    expect(tb_layer.locator("input[data-k=enabled]")).to_be_enabled()          # on again: the box is back, as it was
-    expect(tb_layer.locator("input[data-k=enabled]")).to_be_checked()
-    page.locator("#panel tr", has_text="Title block").locator("input[data-k=enabled]").uncheck()
-    page.wait_for_function("() => !S.strokes.some(s => s.layer === S.layers.length - 1)")   # unticked: not in the strokes, so neither plotted nor drawn
+    expect(btn).to_have_text("▢")                          # remembered on the server
+    box.check()                                            # the box turns it on in the last corner
+    expect(btn).to_have_text("◳")
+    assert corner() == "tr"
+    box.uncheck()                                          # and off again, like the corner button
+    expect(btn).to_have_text("▢")
+    page.wait_for_function("() => !S.strokes.some(s => s.layer === S.layers.length - 1)")   # neither plotted nor drawn
+    btn.click()
+    expect(btn).to_have_text("◲")
+    expect(box).to_be_checked()
 
 
 def check_paper_fields_and_orientation(page):

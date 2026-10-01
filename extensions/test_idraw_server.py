@@ -40,8 +40,13 @@ def main():
     assert len([s for s in snap["strokes"] if s["layer"] < 2]) == 8
     assert call(base + "/api/cmd", {"cmd": "set_title_block", "corner": "off"}) == {"ok": True}
     snap = call(base + "/api/snapshot")
-    assert len(snap["strokes"]) == 8 and snap["layers"][-1] == {"name": "Title block", "off": True}   # row stays, off
-    assert "error" in call(base + "/api/cmd", {"cmd": "set_layer", "index": 2, "enabled": True})
+    assert len(snap["strokes"]) == 8 and snap["layers"][-1]["enabled"] is False, snap["layers"]   # row stays, box off
+    assert call(base + "/api/cmd", {"cmd": "set_layer", "index": 2, "enabled": True}) == {"ok": True}   # box on: back in br
+    snap = call(base + "/api/snapshot")
+    assert snap["tb_corner"] == "br" and len(snap["strokes"]) > 8 and snap["layers"][-1]["enabled"] is True
+    assert call(base + "/api/cmd", {"cmd": "set_layer", "index": 2, "enabled": False}) == {"ok": True}  # box off: corner off
+    assert call(base + "/api/snapshot")["tb_corner"] == "off"
+    assert "error" in call(base + "/api/cmd", {"cmd": "set_layer", "index": 3, "enabled": True})
     assert call(base + "/api/cmd", {"cmd": "connect", "port": "Simulation"}) == {"ok": True}
     assert call(base + "/api/cmd", {"cmd": "home"}) == {"ok": True}
     st = wait_idle(base)

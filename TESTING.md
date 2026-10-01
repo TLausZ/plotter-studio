@@ -4,7 +4,7 @@ Three levels, all plain scripts that print `ok` (no test framework). Run them fr
 
 Logic, `python3 test_idraw_core.py`: axis mapping and G-code of a plot run, origin after jog and `G92`, stop ends after the current line, resume from path N, plot only one path, plot time estimate and the timing of a run (pauses left out, none after a stop), placement modes, rotation and alignment, test patterns, console parser (G0/G1, G90/G91, G92, `$H`, `$1`).
 
-Server, `python3 test_idraw_server.py`: starts the server with the simulator on a free port and talks HTTP: snapshot with layers and strokes, connect, home, unit, placement (presets, rotate about the centre, align with margin, move, X field, bad values), layer flags, jog, plot to the end, frame around the drawing, plot only one path (no layer pause, bad ranges refused), time factor (not from the simulator or plots under a minute), error on an unknown command.
+Server, `python3 test_idraw_server.py`: starts the server with the simulator on a free port and talks HTTP: snapshot with layers and strokes, connect, home, unit, placement (presets, rotate about the centre, align with margin, move, X field, bad values), layer flags (the title block row's Plot box turns the title block on in the last corner and off), jog, plot to the end, frame around the drawing, plot only one path (no layer pause, bad ranges refused), time factor (not from the simulator or plots under a minute), error on an unknown command.
 
 Browser, `python3 test_idraw_e2e.py`: starts the server with the simulator (40× faster) and drives the page in headless Chromium with Playwright (once: `pip install playwright`, `playwright install chromium`; `--headed` shows the browser). `reset(page)` runs before every check: fresh page without browser storage, mm, A4 landscape, 1:1, connected to the simulator, homed, pen up. Checks are therefore independent of their order, and one or more can be run by name: `python3 test_idraw_e2e.py splitter zoom_and_pan`. One function per check:
 
@@ -19,7 +19,7 @@ Browser, `python3 test_idraw_e2e.py`: starts the server with the simulator (40×
 | units | cm in readout and title block, back to mm |
 | splitter | drag resizes the board, minimums for console and board, double-click resets and forgets |
 | zoom_and_pan | 4× quarters the viewBox around the centre, drag pans, 0.5× doubles it, double-click resets |
-| title_block_corner | button cycles the four corners and off with the matching icon, the title block is a virtual last layer with its own checkbox; off keeps the row with both boxes empty and disabled and no strokes, on again brings the box back as it was; the choice is a server setting and survives a reload |
+| title_block_corner | button cycles the four corners and off with the matching icon, the title block is a virtual last layer; off keeps the row with its Plot box empty and no strokes; the box turns it on in the last corner and off again, in step with the corner button; the choice is a server setting and survives a reload |
 | reset_button | Reset in the app bar opens a dialog; Cancel changes nothing; Reset restores mm, A4, 1:1, view, layers, clears browser storage (the reloaded page starts at step 1 and stores only its new view), keeps the connection |
 | plot_with_pause | plot runs, pause dialog before the `!` layer, continue, finished with all strokes done (drawing plus title block) |
 | stop_with_escape | Esc stops a running plot, pen up, status ready |
