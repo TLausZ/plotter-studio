@@ -1,72 +1,25 @@
 # Plotter Studio
 
-Interactive pen plotter control as an Inkscape extension with a local web UI. Built for the UUNA TEK iDraw (DrawCore board, GRBL dialect); AxiDraw (EBB) and plain GRBL plotters are supported but untested. Wizard flow: Connect, Paper, Pen, Speed, Plot. Runs without a device in simulation mode, and on an iPad in the same network.
+Pen plotter control for Inkscape with a local web UI. Built for the UUNA TEK iDraw; AxiDraw and plain GRBL plotters are supported but untested. Five steps: Connect, Paper, Pen, Speed, Plot. Runs without a device in a simulator, and on an iPad in the same network.
 
-**Alpha.** This is an early version. Everything runs in the simulator, but nothing has been tested on a real plotter yet, so expect bugs and changes. Help is very welcome: test reports from an iDraw, AxiDraw or other GRBL plotter, bug reports and pull requests.
+**Alpha.** Everything runs in the simulator, nothing has run on a real plotter yet. Have a plotter? Try it and tell us how it went in [issue #1](https://github.com/TLausZ/plotter-studio/issues/1); a note like "homing went to the wrong corner" already helps. Bug reports, pull requests and other plotters are welcome.
 
-Have a pen plotter? You can help. Try Plotter Studio on your machine and tell us how it went in [issue #1](https://github.com/TLausZ/plotter-studio/issues/1); a short note like "homing went to the wrong corner" already helps. New features, other platforms and other plotters are welcome too. The rest of this README is written for people and agents who want to build on the code.
-
-Manual: how to use Plotter Studio step by step, with keys, console and troubleshooting, in [MANUAL.md](MANUAL.md).
-
-Online: [tlausz.github.io/plotter-studio/MANUAL.html](https://tlausz.github.io/plotter-studio/MANUAL.html)
+How to use it: [MANUAL.md](MANUAL.md), online at [tlausz.github.io/plotter-studio/MANUAL.html](https://tlausz.github.io/plotter-studio/MANUAL.html).
 
 ![Plotter Studio: web UI plotting the iDraw A3 test sheet in the simulator](docs/screenshot.png)
 
-## Folders
-
-```
-plotter-studio/
-  README.md                          this file
-  DESIGN.md                          Material Design 3 components on the drafting palette; tokens and rationale of the web UI
-  MANUAL.md                          how to use Plotter Studio: the five steps, board, keys, console, troubleshooting
-  TESTING.md                         the three test levels, what each check verifies, how to add one
-  TODO.md                            tasks and ideas
-  iDraw Extension Analysis 2026-09-02.md   how the original plugin works, firmware commands, axis mapping
-  docs/screenshot.png                web UI in the simulator, plotting the A3 test sheet (picture above)
-  docs/manual-*.png                  pictures for MANUAL.md
-  docs/tests/*.png                   pictures of the test drawings for MANUAL.md, rasterized from extensions/tests/
-  docs/ui/*.png                      crops of single controls and dialogs for MANUAL.md
-  docs/make_screenshots.py           makes screenshot.png, manual-resume.png, docs/tests/ and docs/ui/ again; says what each shows
-  extensions/                        working copy; Inkscape reads ~/Library/Application Support/org.inkscape.Inkscape/config/inkscape/extensions
-    idraw_core.py                    plotter logic without UI (transport, state, plot run, tests, SVG loading)
-    idraw_server.py                  local HTTP server: one Session around a Plotter, JSON commands, server-sent events
-    idraw_web.html                   the web UI, one file (HTML, CSS, JS), served by idraw_server.py
-    idraw_interactive.py             Inkscape entry point: copies the document, starts the server detached, returns
-    idraw_interactive.inx            menu entry Extensions > Plotter > Plotter Studio
-    idraw_demo.svg                   example with three layers (normal, !-pause, %-notes)
-    tests/                           test drawings, offered in the Speed step as a dropdown: the four built-in patterns as SVG
-                                     (A4-landscape-line-width, -speed-rows, -accuracy, -pen-height; make_test_svgs.py writes them),
-                                     A4-landscape-hidden-lines.svg (hidden-line removal), A3-landscape-line-width.svg (Piter Pasma's
-                                     line test), A3-portrait-iDraw-test-sheet.svg (the manufacturer's A3 test sheet),
-                                     A3-portrait-pen-calibration.svg (DrawingBotV3 calibration sheet) and
-                                     A4-portrait-mother.svg (an engraving after Dorothea Lange's
-                                     photograph of 1936, 31'550 paths, the stress test)
-    HersheySans1.svg                 single-stroke font for the plotted title block (Hershey Fonts, see HersheySans1-LICENSE.txt)
-    test_idraw_core.py               self-test for idraw_core
-    test_idraw_server.py             self-test for the server (simulator, no browser)
-    test_idraw_e2e.py                end-to-end test of the web UI with Playwright (simulator, headless Chromium)
-    idraw_interactive_settings.json  created on first run: paper, profiles, model, unit (not in git)
-    idraw_interactive_last.svg       copy of the document handed over by Inkscape (not in git)
-    idraw2_0.inx, idraw2_0_control.py, idraw2_0_conf.py, idraw_plot_utils_import.py
-                                     original "iDraw 2.0 Control" by UUNA TEK, unchanged, as fallback and reference
-    idraw_deps/                      dependencies of the original; the new plugin uses its SVG digest
-                                     (idraw2_0internal, ink_extensions, drawcore_plotink) and pyserial as a fallback
-```
-
 ## Running
 
-Demo without a device, from the terminal:
+Without a device:
 
 ```
 cd extensions
 /usr/local/bin/python3 idraw_server.py idraw_demo.svg --sim
 ```
 
-The server prints its address (default `http://127.0.0.1:8765/`) and opens the browser. Options: `--port N`, `--no-browser`, `--lan` to accept connections from other devices (the LAN address is printed; open it on the iPad). Any Python 3.8+ with lxml works; pyserial is optional, without it the pure-Python copy in `idraw_deps/serial` is used. Inkscape's own Python has both.
+The browser opens at `http://127.0.0.1:8765/`. Other options are `--port N`, `--no-browser` and `--lan` for the iPad. Needs Python 3.8 or newer with lxml. With `--lan` anyone on the network can move the plotter, there is no login.
 
-Tests: `python3 test_idraw_core.py`, `python3 test_idraw_server.py` and `python3 test_idraw_e2e.py` each print `ok`; what they cover and how to add a check is in [TESTING.md](TESTING.md).
-
-In Inkscape: copy the five new files into Inkscape's extension folder (the originals are already there):
+In Inkscape, copy the five files into the extension folder:
 
 ```
 cp extensions/idraw_core.py extensions/idraw_server.py extensions/idraw_web.html \
@@ -74,59 +27,70 @@ cp extensions/idraw_core.py extensions/idraw_server.py extensions/idraw_web.html
    ~/Library/Application\ Support/org.inkscape.Inkscape/config/inkscape/extensions/
 ```
 
-Restart Inkscape, open a document, Extensions > Plotter > Plotter Studio. The model defaults to iDraw A4; pick yours in step 1 (Connect), it is remembered. Tick "Simulation" for a dry run, "Allow other devices" for the iPad. The extension returns at once; Inkscape stays usable and the SVG is not modified. Run the extension again to load a changed drawing (it starts a second server on the next free port only if the first was closed; close the old browser tab first).
+Restart Inkscape, then Extensions > Plotter > Plotter Studio. After changing the drawing, close the browser tab and run the extension again.
+
+Tests: `python3 test_idraw_core.py`, `test_idraw_server.py` and `test_idraw_e2e.py` in `extensions/`, each prints `ok`. More in [TESTING.md](TESTING.md).
+
+## Files
+
+```
+MANUAL.md, DESIGN.md, TESTING.md, TODO.md
+iDraw Extension Analysis 2026-09-02.md   the original plugin and the firmware commands
+docs/                        pictures for the manual; make_screenshots.py makes them again
+extensions/
+  idraw_core.py              plotter logic: transport, state, plot run, SVG loading
+  idraw_server.py            local HTTP server
+  idraw_web.html             the web UI in one file
+  idraw_interactive.py/.inx  Inkscape entry point and menu entry
+  idraw_demo.svg             example with three layers
+  tests/                     test drawings for the Speed step
+  test_idraw_*.py            tests
+  idraw2_0*, idraw_deps/     the original iDraw 2.0 plugin by UUNA TEK, unchanged, and its dependencies
+```
 
 ## Architecture
-
-Three layers so the UI stays replaceable:
 
 ```
 browser (idraw_web.html)  <-- HTTP/SSE -->  idraw_server.Session  -->  idraw_core.Plotter  -->  Transport (Serial, Sim)
 ```
 
-`idraw_core.Plotter` holds the machine state (position in document mm, pen, status, profile) and produces G-code in exactly two places: `_move_abs` (XY, where the axis mapping X = −y, Y = −x lives) and `_z` (pen height). Commands run on its worker thread; it reports through a queue of events.
+`Plotter` holds the machine state and writes all G-code in two methods: `_move_abs` (XY, with the axis mapping) and `_z` (pen). `Session` adds the drawing, paper, placement and profiles. The server has three routes: `GET /api/snapshot`, `GET /api/events` and `POST /api/cmd`; the commands are listed at the top of `idraw_server.py`. Another UI only has to speak these three routes.
 
-`idraw_server.Session` adds what a UI needs: the loaded SVG (page, layers), paper, placement, unit, profiles, and a fan-out of the plotter's events to every connected browser. The HTTP interface is three routes: `GET /api/snapshot` (everything), `GET /api/events` (server-sent events), `POST /api/cmd` (`{"cmd": name, ...}`). The command list is in the module docstring of `idraw_server.py`.
+## Other plotters
 
-`idraw_web.html` keeps one snapshot object, re-renders the step panel from it, and draws the board as inline SVG in millimetre units, so the preview is exact by construction. The view fits the sheet by default; the Sheet/Machine toggle zooms out to the travel range, the zoom slider (0.5× to 8×) and drag-to-pan look closer.
+`MODELS` in `idraw_core.py` lists the models, `dialect()` picks the command set: `drawcore` for the iDraw, `grbl` for GRBL 1.1 with Z as the pen, `ebb` for the AxiDraw. The AxiDraw and GRBL code is written from the vendors' code and has never run on a device, so start with small moves.
 
-### Building another UI
+## Adding features
 
-Any client that speaks the three routes works: a native app, a CLI, a different web page. Nothing in `idraw_core` or `idraw_server` knows about the HTML. For a very different interaction (for example a Tk window) use `idraw_core.Plotter` directly, as the archived Tk UI did (see `archive/tk-ui/` in commit 5256766).
-
-### Other plotters
-
-No model has been run on a device yet; the iDraw H A1 is the one to test first (see Status). Every other model is marked "(untested)" in the Model dropdown and the page says so when one is selected. `MODELS` in `idraw_core.py` lists the travel ranges, `dialect()` picks the command set from the model name: `drawcore` (iDraw: GRBL with the original's axis mapping and homing dance), `grbl` (any GRBL 1.1 pen plotter with Z as the pen and home switches, document axes sent as they are), `ebb` (AxiDraw EiBotBoard: `SM` moves in mixed motor steps, `SC`/`SP` for the servo, `EM` for the motors, no home switches, pen heights are servo percent 0-100). `SerialTransport.open()` accepts a DrawCore, an EBB or a plain GRBL banner. The AxiDraw and GRBL branches were written from the vendors' code, so verify axis directions and pen heights with small moves first.
-
-### New features
-
-- Test drawings: drop an SVG into `extensions/tests/`, it appears in the Speed step dropdown. The generated patterns in `idraw_core.TESTS` are only used by `tests/make_test_svgs.py` (and `Plotter.run_test`, which no button calls any more).
-- Placement: `preset()` makes the transform for the buttons in step 5, `place()` applies it (rotation about the page centre in degrees, the UI uses 15° steps; scale; shift), `align()` moves the drawing's box; free moves are server commands (`set_transform`, `move_by`, `rotate`, `align`).
-- Path sorting: apply `plot_optimizations.reorder` from `idraw_deps/idraw2_0internal` to the digest before `load_svg` builds the layers.
-
-## Firmware, short version
-
-DrawCore enumerates as CH340 (USB VID:PID 1A86:7523), 115200 baud, `rts`/`dtr` off. Send one line, wait for `ok`. `$H` homing, `$X` clear alarm, `$SLP` sleep, `$1=254`/`$1=255` motors released/held, `G92 X0 Y0` set origin, `G1 X Y F` move, `G1 Z F` pen, `$B` pause button, `$QP` pen state. Full table and sources in the analysis document.
+- Test drawings: drop an SVG into `extensions/tests/`, it shows up in the Speed step.
+- Placement: `preset()` builds the transform for the buttons in step 5, `place()` applies it, `align()` moves the drawing's box.
+- Path sorting: run `plot_optimizations.reorder` from `idraw_deps/idraw2_0internal` on the digest before `load_svg` builds the layers.
 
 ## Status
 
-As of 1 October 2026. Built and exercised in the simulator: all five steps, jog, pen, profiles, unit switch, test drawings, plot with layer pause, stop, free placement (position, scale, rotation, align, drag on the board), path picker (click a path on the board, resume from path N or plot only that path), plot time estimate with a time factor per model from the last real plot, progress, preview with rulers and title block, hidden-line removal, transport timeouts, LAN access. The e2e suite has 28 checks.
+As of 2 October 2026. Working in the simulator:
 
-Not verified on the device yet:
+- all five steps, jog, pen, profiles, mm and inch
+- test drawings, including a stress test with 31'550 paths
+- plot with layer pause, stop and progress
+- resume from path N, or plot a single path picked on the board
+- free placement: position, scale, rotation, align, drag on the board
+- plot time estimate that learns from the last real plot
+- preview with rulers and title block
+- hidden-line removal
+- transport timeouts
+- a reload keeps the view
+- LAN access
 
-- Homing sequence and the sign of the axis mapping (taken from the original).
-- Whether the firmware knows realtime commands (`!` feed hold, `~` resume, `?` status during a move, `$J=` jog). Stop therefore takes effect after the current G-code line; a stroke is at most one segment long.
-- Behaviour after `$SLP` (does the firmware need a reset?).
-- `G92` after releasing the motors.
+Not verified on a device yet, the iDraw H A1 comes first:
 
-Security note: with `--lan` anyone on the network can move the plotter. There is no authentication; use it only on a trusted network.
+- homing and the direction of the axes
+- realtime commands; until then stop waits for the current G-code line
+- behaviour after `$SLP`
+- `G92` after releasing the motors
 
 Not built: copies, laser, multiple devices, webhook, path sorting.
 
-## Related projects
-
-[terraForge](https://github.com/theworkisthework/terraForge) is a desktop app (Electron) for FluidNC pen plotters such as the TerraPen. It imports SVG and PDF, arranges the artwork on the bed (move, scale, rotate, align), optimises the path order and runs the G-code from the controller's SD card. If your plotter runs FluidNC, have a look there.
-
 ## License
 
-GPL-3.0-or-later, see [LICENSE](LICENSE). The bundled original code in `extensions/idraw_deps/` keeps its own licenses: `idraw2_0internal` and `ink_extensions` (Evil Mad Scientist Laboratories, UUNA TEK) are GPL-2.0-or-later, `drawcore_plotink` and `serial` are MIT/BSD. The Hershey font has its own license in `extensions/HersheySans1-LICENSE.txt`.
+GPL-3.0-or-later, see [LICENSE](LICENSE). The bundled original code in `extensions/idraw_deps/` keeps its own licenses: `idraw2_0internal` and `ink_extensions` are GPL-2.0-or-later, `drawcore_plotink` and `serial` are MIT/BSD. The Hershey font has its own license in `extensions/HersheySans1-LICENSE.txt`.
