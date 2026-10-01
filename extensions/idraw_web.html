@@ -618,7 +618,7 @@ const REF = [
   ['M5', 'Laser/PWM off *', 'ok'],
 ];
 { const tb = document.querySelector('#ref tbody');
-  tb.innerHTML = REF.map(r => r.length === 1 ? `<tr><th colspan="3">${r[0]}</th></tr>` : `<tr data-c="${r[0]}"><td>${esc(r[0])}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
+  tb.innerHTML = REF.map(r => r.length === 1 ? `<tr><th colspan="3">${r[0]}</th></tr>` : `<tr data-c="${r[0]}"><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join('');
   tb.onclick = e => { const tr = e.target.closest('tr[data-c]'); if (tr) { $('cli').value = tr.dataset.c; $('ref').close(); $('cli').focus(); } };
   $('refBtn').onclick = () => { $('ref').showModal(); $('ref').scrollTop = 0; };
   $('refClose').onclick = () => $('ref').close();

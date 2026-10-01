@@ -133,6 +133,7 @@ def check_console(page):
     cli.fill("")
     page.click("#refBtn")
     expect(page.locator("#ref")).to_be_visible()
+    expect(page.locator("#ref tr[data-c='?']")).to_contain_text("<Idle|MPos:...> or Alarm")   # escaped, not swallowed as a tag
     page.click("#ref tr[data-c='$QP'] td")
     expect(page.locator("#ref")).to_be_hidden()
     expect(cli).to_have_value("$QP")
