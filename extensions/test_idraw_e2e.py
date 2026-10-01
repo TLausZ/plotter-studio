@@ -339,7 +339,7 @@ def check_reset_button(page):
     expect(page.locator("#steps li")).to_have_count(5)   # page reloaded
     expect(page.locator("#steps li").nth(0)).to_have_class(re.compile("active"))   # the saved view is gone
     expect(page.locator("#pos")).to_contain_text("mm")
-    wait_paper(page, "A4", 297, 210)
+    wait_paper(page, "A3", 420, 297)                     # paper stays
     assert page.evaluate("() => S.placement") == "1:1"
     expect(page.locator("#zoomlbl")).to_have_text("1×")
     expect(page.locator("#tbpos")).to_have_text("◲")

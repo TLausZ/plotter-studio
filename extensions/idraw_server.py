@@ -473,8 +473,8 @@ class Session:
             p.emit("state", None)
             return {"ok": True}
         if cmd == "reset":
-            # everything but the connection and the saved pen profiles goes back to the defaults
-            self.unit, self.paper, self.paper_name, self.orient = "mm", core.PAPER_FORMATS["A4"], "A4", "landscape"
+            # everything but the connection, paper, saved pen profiles and time factor goes back to the defaults
+            self.unit = "mm"
             self.pos_mode, self.placement = "jog", "1:1"
             self.tf = core.preset("1:1", self.page, self.paper)
             for lyr in self.layers:
