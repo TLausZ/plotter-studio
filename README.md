@@ -25,6 +25,8 @@ How to use it: [MANUAL.md](MANUAL.md), online at [tlausz.github.io/plotter-studi
 
 ![Plotter Studio: web UI plotting the iDraw A3 test sheet in the simulator](docs/screenshot.png)
 
+![Plotter Studio in the simulator: the stress test drawing is plotted, zoomed in, stopped, then a path is picked and plotted again](docs/plotter-studio.webp)
+
 ## Running
 
 Without a device:

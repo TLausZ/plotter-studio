@@ -129,6 +129,10 @@ Below them you pick a path: drag the slider across the full width, click a path 
 
 ![After a stop: a click on the curve picked path 5, drawn thick, path number 5 next to the arrows, Resume from 5 and Plot this path in the Run group](docs/manual-resume.png)
 
+In the animation the stress test drawing runs in the simulator: plot, zoom in, stop, pick a path with the slider and the arrows, then Resume from N and Plot this path.
+
+![Plotter Studio in the simulator: the stress test drawing is plotted, zoomed in, stopped, then a path is picked and plotted again](docs/plotter-studio.webp)
+
 ## Test drawings
 
 The files in `extensions/tests/`, offered under Test drawing in step 4. A test drawing replaces your document until you pick your document again; placement, layers, the path picker and the plot work as with your own drawing. The four A4 landscape patterns come from code, `tests/make_test_svgs.py` writes them.
