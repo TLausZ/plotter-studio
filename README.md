@@ -2,9 +2,9 @@
 
 Interactive pen plotter control as an Inkscape extension with a local web UI. Built for the UUNA TEK iDraw (DrawCore board, GRBL dialect); AxiDraw (EBB) and plain GRBL plotters are supported but untested. Wizard flow: Connect, Paper, Pen, Speed, Plot. Runs without a device in simulation mode, and on an iPad in the same network.
 
-**Alpha.** This is an early version. Everything runs in the simulator, but nothing has been tested on a real plotter yet, so expect bugs and changes. Help is very welcome: test reports from an iDraw, AxiDraw or other GRBL plotter, bug reports and pull requests. Open an issue to get in touch.
+**Alpha.** This is an early version. Everything runs in the simulator, but nothing has been tested on a real plotter yet, so expect bugs and changes. Help is very welcome: test reports from an iDraw, AxiDraw or other GRBL plotter, bug reports and pull requests.
 
-This document is for people and agents building on it: other features, other platforms, other plotters.
+Have a pen plotter? You can help. Try Plotter Studio on your machine and tell us how it went in [issue #1](https://github.com/TLausZ/plotter-studio/issues/1); a short note like "homing went to the wrong corner" already helps. New features, other platforms and other plotters are welcome too. The rest of this README is written for people and agents who want to build on the code.
 
 ![Plotter Studio: web UI plotting the iDraw A3 test sheet in the simulator](docs/screenshot.png)
 
