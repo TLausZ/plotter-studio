@@ -116,6 +116,10 @@ Security note: with `--lan` anyone on the network can move the plotter. There is
 
 Not built: copies, laser, multiple devices, webhook, path sorting, free positioning with the mouse on the board.
 
+## Related projects
+
+[terraForge](https://github.com/theworkisthework/terraForge) is a desktop app (Electron) for FluidNC pen plotters such as the TerraPen. It imports SVG and PDF, arranges the artwork on the bed (move, scale, rotate, align), optimises the path order and runs the G-code from the controller's SD card. If your plotter runs FluidNC, have a look there.
+
 ## License
 
 GPL-3.0-or-later, see [LICENSE](LICENSE). The bundled original code in `extensions/idraw_deps/` keeps its own licenses: `idraw2_0internal` and `ink_extensions` (Evil Mad Scientist Laboratories, UUNA TEK) are GPL-2.0-or-later, `drawcore_plotink` and `serial` are MIT/BSD. The Hershey font has its own license in `extensions/HersheySans1-LICENSE.txt`.
