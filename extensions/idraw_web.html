@@ -184,6 +184,8 @@ dialog.dialog{border:0;border-top:4px solid var(--md-primary);max-height:80vh;ov
 .dialog h3{font:400 24px/32px var(--f);margin:0 0 16px}
 .dialog p{color:var(--md-on-surface-variant);margin:0 0 24px}
 .dialog .actions{display:flex;justify-content:flex-end;gap:8px}
+dialog.busy{outline:0;width:auto;min-width:360px;max-width:560px;align-items:center;gap:24px} dialog.busy[open]{display:flex} dialog.busy p{margin:0;font-family:var(--f-mono)} dialog.busy h3{margin-bottom:4px}
+.spinner{width:64px;height:64px;flex:0 0 64px;color:var(--md-primary)}
 
 @media (max-width: 900px){
   body{overflow:auto;height:auto}
@@ -215,6 +217,11 @@ dialog.dialog{border:0;border-top:4px solid var(--md-primary);max-height:80vh;ov
   <h3>Plot outside the sheet?</h3>
   <p id="outText"></p>
   <div class="actions"><button class="btn text" id="outCancel">Cancel</button><button class="btn filled" id="outGo">Plot anyway</button></div>
+</dialog>
+<dialog id="busyDlg" class="dialog busy" aria-live="polite">
+  <!-- spinner "spinner-multiple-2" from magecdn.com/tools/svg-loaders, MIT -->
+  <svg class="spinner" viewBox="-500 -500 1000 1000" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="5.3"><circle r="160"/><circle r="240"/><circle r="320"/><circle r="400"/><circle r="480"/></g><g fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="square"><circle r="160" stroke-dasharray="500 2013"><animateTransform attributeName="transform" type="rotate" from="0" to="-360" dur="5s" repeatCount="indefinite"/></circle><circle r="240" stroke-dasharray="1000 1513"><animateTransform attributeName="transform" type="rotate" from="0" to="-360" dur="4s" repeatCount="indefinite"/></circle><circle r="320" stroke-dasharray="320 320"><animateTransform attributeName="transform" type="rotate" from="0" to="-360" dur="2s" repeatCount="indefinite"/></circle><circle r="400" stroke-dasharray="1500 1013"><animateTransform attributeName="transform" type="rotate" from="0" to="-360" dur="5s" repeatCount="indefinite"/></circle><circle r="480" stroke-dasharray="2000 513"><animateTransform attributeName="transform" type="rotate" from="0" to="-360" dur="5s" repeatCount="indefinite"/></circle></g></svg>
+  <div><h3 id="busyTitle">Working</h3><p><span id="busySec">0</span> s</p></div>
 </dialog>
 <dialog id="resetDlg" class="dialog">
   <h3>Reset everything?</h3>
@@ -279,19 +286,56 @@ const fmt = mm => toU(mm) + ' ' + u();
 const size = ([w, h]) => `${+toU(w)} × ${+toU(h)} ${u()}`;   // 297 × 210 mm: unit once, no trailing zeros
 
 // ---------------------------------------------------------------- server
+// busy dialog: a command that takes longer than 300 ms (loading a drawing, hidden lines) shows it
+// until the server has answered and the snapshot it sends has been drawn
+let busyN = 0, busyTimer = null, busyTick = null, snaps = 0, snapWait = null;
+function busyShow() {
+  clearTimeout(busyTimer);
+  if ($('busyDlg').open) return;
+  const t0 = Date.now(); $('busySec').textContent = 0; $('busyDlg').showModal();
+  busyTick = setInterval(() => { $('busySec').textContent = Math.round((Date.now() - t0) / 1000); }, 1000);
+}
+function busyOn(title, now) {   // now: show at once, also when a command already waits for its 300 ms
+  if (!busyN++) { $('busyTitle').textContent = title; if (!now) busyTimer = setTimeout(busyShow, 300); }
+  if (now) busyShow();
+}
+function busyOff() {
+  if (--busyN) return;
+  clearTimeout(busyTimer); clearInterval(busyTick);
+  if ($('busyDlg').open) $('busyDlg').close();
+}
+$('busyDlg').addEventListener('cancel', e => e.preventDefault());   // Esc does not hide work in progress
+const SNAP_CMDS = ['set_paper', 'set_placement', 'set_layer', 'load_profile', 'set_unit', 'set_pos_mode', 'connect', 'disconnect', 'set_model',
+  'set_title_block', 'save_profile', 'reset', 'load_test', 'set_hiding', 'set_transform', 'move_by', 'rotate', 'align'];   // as in idraw_server.py
+const busyTitle = (name, args) => name === 'load_test' ? 'Loading ' + (args.name || S.svg_name)
+  : name === 'set_hiding' ? (args.on ? 'Removing hidden lines' : 'Loading all lines') : 'Working';
 async function cmd(name, args) {
-  const r = await fetch('/api/cmd', {method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(Object.assign({cmd:name}, args || {}))});
-  const j = await r.json();
-  if (j.error) logLine('! ' + j.error);
-  return j;
+  args = args || {};
+  busyOn(busyTitle(name, args));
+  const s0 = snaps;
+  try {
+    const r = await fetch('/api/cmd', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(Object.assign({cmd:name}, args))});
+    const j = await r.json();
+    if (j.error) logLine('! ' + j.error);
+    // the server sends the snapshot before it answers, but on another connection: wait until it is drawn
+    if (SNAP_CMDS.includes(name) && snaps === s0) await new Promise(res => { snapWait = res; setTimeout(res, 30000); });
+    return j;
+  } finally { busyOff(); }
 }
 function connectEvents() {
   const es = new EventSource('/api/events');
-  es.addEventListener('snapshot', e => {
-    const prev = S; S = JSON.parse(e.data); done = S.progress ? S.progress.i : 0; pick = null;
+  const onSnapshot = data => {
+    const prev = S; S = JSON.parse(data); done = S.progress ? S.progress.i : 0; pick = null;
     if (prev && (prev.svg_name !== S.svg_name || prev.test_file !== S.test_file)) trace.length = 0;   // another drawing: old journey is meaningless
     renderAll();
+    snaps++; if (snapWait) { snapWait(); snapWait = null; }
+  };
+  es.addEventListener('snapshot', e => {
+    // a big drawing takes seconds to parse and draw: show the busy dialog first, then let it paint
+    if (e.data.length < 1e6 || $('busyDlg').open) return onSnapshot(e.data);
+    busyOn('Loading drawing', true);
+    requestAnimationFrame(() => setTimeout(() => { try { onSnapshot(e.data); } finally { busyOff(); } }, 0));
   });
   es.addEventListener('state', e => { if (!S) return; const prev = S.state; S.state = JSON.parse(e.data); addTrace(prev, S.state); renderReadout(); renderPen(); if (step === 2) syncPenFields();
     if (step === 4 && (prev.status === 'plotting') !== (S.state.status === 'plotting')) renderPanel(); });   // the Run group differs while plotting (resume slider)

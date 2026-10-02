@@ -183,6 +183,7 @@ Used in code, comments and conversation.
 - Console: below the board, a bottom sheet made of the log and, under a divider, the input line with the ? button that opens the command reference dialog.
 - Side column: the right column, made of the step tabs (1 Connect to 5 Plot), and the step panel with the current step's groups. Steps are switched with the tabs only.
 - Pause dialog: shown before a `!` layer.
+- Busy dialog: shown when a command takes longer than 300 ms (loading a drawing, hidden-line removal) and when a large snapshot is drawn; it closes once the board shows the result. Spinner on the left, the action as headline, the seconds elapsed below in monospace. No buttons, Esc does not close it.
 
 ### Arrangement
 
@@ -211,7 +212,7 @@ Text fields: outlined, 56 px, label floating in the outline, unit as a suffix; s
 
 Segmented buttons: unit switch, jog step, placement. Checkboxes and radios use the platform control tinted with primary.
 
-Dialog: pause before a layer, headline, body, text Stop and filled Continue.
+Dialog: pause before a layer, headline, body, text Stop and filled Continue. The busy dialog is narrower and has no actions; its spinner is "spinner-multiple-2" from magecdn.com/tools/svg-loaders (MIT), five rings in primary, 64 px.
 
 Linear progress: 4 px track in surface-container-highest, primary indicator, with a monospace readout below.
 
@@ -219,4 +220,4 @@ Board: unchanged from the drafting design: mat, machine frame, sheet, rulers in 
 
 ## Do's and Don'ts
 
-Follow M3 for anything a person touches; keep the board as a drawing. One filled button per step. Error colour only for Stop and pen-down. No custom shapes inside the chrome, no drop shadows on the board. Labels name what happens ("Set origin here", "Trace paper frame, pen up"). Units live in the field suffix or the label, never in the value. Motion is limited to state-layer opacity, the progress indicator, and strokes appearing on the sheet.
+Follow M3 for anything a person touches; keep the board as a drawing. One filled button per step. Error colour only for Stop and pen-down. No custom shapes inside the chrome, no drop shadows on the board. Labels name what happens ("Set origin here", "Trace paper frame, pen up"). Units live in the field suffix or the label, never in the value. Motion is limited to state-layer opacity, the progress indicator, the busy spinner, and strokes appearing on the sheet.

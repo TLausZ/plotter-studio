@@ -32,7 +32,7 @@ Browser, `python3 test_idraw_e2e.py`: starts the server with the simulator (40×
 | resume_from_path | After a stop the Run group shows a slider and Resume from N; the plot continues from there and finishes. |
 | path_picker | Without a stop first the Run group offers the picker at path 1; over a path the board shows the crosshair, a click picks it (thick, the paths before done), a click on the empty mat keeps the pick and drops the crosshair, Plot this path draws just that path, the head stays at its end and the picker moves on to the next; ⌂ next to Stop goes to the origin. |
 | path_stepping | The number field picks a path (Enter; beyond the last means the last), ‹ and › step one path per click and stop at the first, held down they run on and stop when released; Resume from N follows. |
-| large_drawing | Stress test: the engraving with 31'550 paths from tests/ loads and is drawn within 10 s, a click on the board picks a path; no plot (the 40× simulator outruns the page). |
+| large_drawing | Stress test: the engraving with 31'550 paths from tests/ loads and is drawn within 10 s with the busy dialog open meanwhile and closed afterwards, a click on the board picks a path; no plot (the 40× simulator outruns the page). |
 | plot_estimate | The time estimate next to Trace drawing frame equals `idraw_core.estimate` on the same paths and shows it with its parts in the hover text; a measured time factor for the model scales it. |
 | view_survives_reload | A reload keeps step 5, zoom 4× with the same viewBox, Machine and the open placement details; a reload during a plot comes back to step 5 with the plot running. |
 | hidden_lines | The checkbox in the Plot step reloads the drawing with lines behind fills split; the setting survives a reload. |

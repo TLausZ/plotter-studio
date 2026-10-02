@@ -580,10 +580,13 @@ def check_large_drawing(page):
     No plot: at 40x the simulator sends progress faster than the page draws it."""
     tab(page, 3)
     t0 = time.time()
-    select_cmd(page, "#testFile", "A4-portrait-mother.svg")
+    page.select_option("#testFile", "A4-portrait-mother.svg")
+    expect(page.locator("#busyDlg")).to_be_visible()          # busy dialog while the server loads
+    expect(page.locator("#busyTitle")).to_have_text("Loading A4-portrait-mother.svg")
     page.wait_for_function("() => S.svg_name === 'A4-portrait-mother.svg'", timeout=20000)
     assert page.evaluate("() => S.layers[0].n") == 31550
     expect(page.locator("#strokes path:not(.tb)")).to_have_count(31550, timeout=20000)
+    expect(page.locator("#busyDlg")).to_be_hidden()           # closed once the board is drawn
     loaded = time.time() - t0
     assert loaded < 10, "loading took %.1f s" % loaded
     tab(page, 4)
