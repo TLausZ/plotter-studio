@@ -3,13 +3,6 @@
 Needs Playwright (see TESTING.md). Runs the server with the simulator and an empty settings file,
 so the user's settings are not touched. Window 1440 x 900 at device scale 2, i.e. 2880 x 1800 px.
 
-docs/screenshot.png (README, picture above the folders):
-    The Plot step while a plot runs. Model iDraw A1 (its travel range fits an A3 sheet; with the
-    default iDraw A4 the sheet exceeds the travel and Start plot asks first), connected to the
-    simulator, homed, paper A3 portrait, test drawing A3-portrait-iDraw-test-sheet.svg from the
-    Speed step, placement 1:1. Taken at about path 213 of 471: plotted strokes black, the rest
-    grey, the dotted blue travel trace, the pen cross mid-sheet, the progress bar at about 90 %.
-
 docs/manual-resume.png (MANUAL.md, end of "Plot"):
     The path picker after a stop. Demo drawing idraw_demo.svg, paper A4 landscape, placement 1:1,
     pause before "!2 Detail red" switched off. The plot is stopped at about path 60, then the
@@ -77,24 +70,6 @@ def start(page, model):
 
 def tab(page, i):
     page.locator("#steps li").nth(i).click()
-
-
-def readme(page):
-    start(page, "iDraw A1")
-    tab(page, 1)
-    select(page, "#fmt", "A3")
-    select(page, "#orient", "portrait")
-    page.wait_for_function("() => S.paper_name === 'A3' && S.paper[0] === 297 && S.paper[1] === 420")
-    tab(page, 3)
-    select(page, "#testFile", "A3-portrait-iDraw-test-sheet.svg")
-    page.wait_for_function("() => S.svg_name === 'A3-portrait-iDraw-test-sheet.svg'")
-    tab(page, 4)
-    page.click("button[data-cmd=plot]")
-    page.wait_for_function("() => S.progress && S.progress.i >= 213", timeout=120000)
-    page.mouse.move(1000, 880)
-    page.screenshot(path=os.path.join(HERE, "screenshot.png"))
-    page.click("#stop")
-    page.wait_for_function("() => S.state.status === 'ready' && !S.state.busy", timeout=30000)
 
 
 def manual_resume(page):
@@ -226,7 +201,7 @@ def main():
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
             test_drawings(browser)
-            for shot in (readme, manual_resume, ui_crops):
+            for shot in (manual_resume, ui_crops):
                 page = browser.new_page(viewport={"width": 1440, "height": 900}, device_scale_factor=2)
                 page.goto("http://127.0.0.1:%d/" % httpd.server_address[1])
                 shot(page)
