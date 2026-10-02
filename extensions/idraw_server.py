@@ -46,8 +46,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import idraw_core as core
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-TB_CYCLE = ("br", "bl", "tl", "tr")
-LONG_LOAD = 1_000_000   # bytes; test drawings above this carry "(long load)" in the list   # title block corners in the order of the corner button
+TB_CYCLE = ("br", "bl", "tl", "tr")   # title block corners in the order of the corner button
 HTML_FILE = os.path.join(HERE, "idraw_web.html")
 
 
@@ -223,7 +222,6 @@ class Session:
             "tb_corner": self.tb_corner, "hiding": self.hiding,
             "pen_s": p.pen_seconds, "time_factor": self.settings.get("time_factor", {}).get(p.model),   # plot time estimate
             "test_files": self.test_files(), "test_file": self.test_file,
-            "test_long": [f for f in self.test_files() if os.path.getsize(os.path.join(self.TESTS_DIR, f)) > LONG_LOAD],
             "doc_name": os.path.basename(self.svg_path) if self.svg_path else "",
             "strokes": [{"pts": s[0], "layer": s[3], "out": o or b} for s, o, b in zip(strokes, out, beyond)],
             "ports": ["Simulation"] + core.SerialTransport.list_ports(),

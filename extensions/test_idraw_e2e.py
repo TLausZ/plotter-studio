@@ -362,7 +362,6 @@ def check_test_drawing_dropdown(page):
     tab(page, 3)
     files = page.locator("#testFile option").all_text_contents()
     assert files[0] == "idraw_demo.svg" and "A4-landscape-accuracy.svg" in files, files
-    assert [f for f in files if "(long load)" in f] == ["A4-portrait-mother.svg (long load)"], files   # over 1 MB
     groups = page.evaluate("() => [...document.querySelectorAll('#testFile optgroup')].map(g => [g.label, g.children.length])")
     assert groups == [["Document", 1], ["Test drawings", len(files) - 1]], groups
     select_cmd(page, "#testFile", "A4-landscape-accuracy.svg")

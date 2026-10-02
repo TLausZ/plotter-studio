@@ -81,7 +81,7 @@ Heights, feed rates and line width form a profile. Type a name under "Save as" a
 
 Feed rates for drawing and travel, in mm/min. Line width is the width you measured on paper; it is printed in the title block. Save profile stores the values in the current profile.
 
-Test drawing replaces your document with a calibration sheet from the `tests/` folder; [Test drawings](#test-drawings) below shows each one and what it is for. The first entry, under Document, brings your document back. Plot it from step 5. Your own SVGs dropped into `tests/` appear in the list too; files over 1 MB carry "(long load)", because loading them takes a few seconds. While a drawing loads, or hidden lines are removed, a dialog with a spinner shows what is going on and how many seconds it has taken so far.
+Test drawing replaces your document with a calibration sheet from the `tests/` folder; [Test drawings](#test-drawings) below shows each one and what it is for. The first entry, under Document, brings your document back. Plot it from step 5. Your own SVGs dropped into `tests/` appear in the list too. While a drawing loads, or hidden lines are removed, a dialog with a spinner shows what is going on and how many seconds it has taken so far.
 
 <img src="docs/ui/test-drawing-dropdown.png" alt="Test drawing list opened: under Document idraw_demo.svg, under Test drawings the nine files from the tests folder" width="420">
 
